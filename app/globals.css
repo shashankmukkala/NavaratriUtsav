@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
+/* BappaSeva — warm cream theme with a single saffron→marigold→rust orange
+   accent family for every trust/primary/commercial action, coral for
+   reject/error states, and a warm brown ink scale for text (never pure
+   black, to keep the festive/handmade paper feel). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --cream-50: #fffbf3;
+  --cream-100: #fdf3e0;
+  --cream-200: #f9e8c9;
+  --background: var(--cream-100);
+  --foreground: #2b1608;
+  --muted: rgba(43, 22, 8, 0.62);
+  --muted-soft: rgba(43, 22, 8, 0.4);
+  --accent: #ea6c1d;
+  --accent-soft: #f4a93c;
+  --accent-deep: #b8460c;
+  --coral: #e8543f;
+  --coral-deep: #c22b1f;
+  --gradient-accent: linear-gradient(135deg, var(--accent-soft), var(--accent) 60%, var(--accent-deep));
+  --gradient-panel: linear-gradient(145deg, #fffdf8, #fdf3e0);
+  --gradient-tint: linear-gradient(160deg, rgba(234, 108, 29, 0.14), rgba(234, 108, 29, 0.04));
 }
 
 @theme inline {
@@ -12,15 +30,593 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  height: 100%;
+  /* Light is the only theme here — without this, native controls (the
+     calendar icon inside <input type="date">, scrollbars, checkboxes)
+     render in the browser's dark-mode chrome by default on a dark-mode OS,
+     which on a cream background means a near-invisible white-on-cream icon. */
+  color-scheme: light;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+  overflow-x: hidden;
+}
+
+/* Scroll still works everywhere (page and every internal scroll container —
+   the sidebar list, mobile sheets, etc.) — this only hides the visible
+   track/thumb chrome so it doesn't compete with the festive imagery. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Soft warm wash behind every page. */
+body {
+  background:
+    radial-gradient(ellipse 55% 40% at 10% -5%, rgba(234, 108, 29, 0.10), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 10%, rgba(232, 84, 63, 0.06), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 50% 120%, rgba(234, 108, 29, 0.08), transparent 60%),
+    var(--background);
+}
+
+::selection {
+  background: rgba(234, 108, 29, 0.22);
+}
+
+/* The frosted cream-glass material for every floating panel over the map —
+   top bar, detail card, list sheet. One definition so the whole app reads
+   as one consistent surface instead of each panel picking its own opacity. */
+.panel-elevated {
+  background-color: rgba(255, 253, 248, 0.86);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(43, 22, 8, 0.06),
+    0 20px 48px -16px rgba(43, 22, 8, 0.22),
+    0 0 0 1px rgba(43, 22, 8, 0.05);
+}
+
+@media (pointer: coarse) {
+  .panel-elevated {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 }
 
-body {
-  background: var(--background);
+/* Map pin: icon-only by default, name only appears once selected — keeps a
+   map full of pandals readable instead of a wall of overlapping labels.
+   Bright and opaque on purpose since it sits on a light map, not the dark
+   chrome around it. */
+.map-pin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px rgba(20, 12, 4, 0.28), 0 0 0 1px rgba(120, 53, 15, 0.16);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease, padding 0.18s ease;
+}
+
+.map-pin:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(20, 12, 4, 0.34);
+}
+
+.map-pin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #fff7ed, #fed7aa);
+  box-shadow: inset 0 0 0 1px rgba(234, 88, 12, 0.14);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.map-pin-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-pin-label {
+  display: none;
+  font-size: 11px;
+  font-weight: 650;
+  color: #ffffff;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-pin-selected {
+  padding: 4px 12px 4px 5px;
+  background: var(--gradient-accent);
+  border-color: transparent;
+  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.48), 0 0 0 4px rgba(255, 209, 102, 0.35);
+}
+
+.map-pin-selected .map-pin-icon {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.map-pin-selected .map-pin-label {
+  display: inline;
+}
+
+/* Floating top bar / bottom sheet material used across the public map,
+   submit, sponsor, and admin pages. */
+.topbar-shell {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* One shared card surface for the pandal detail card, list sheet, and form
+   panels — warm cream gradient, generous rounding, a soft shadow so it
+   reads as floating rather than flat. */
+.card-elevated {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(234, 108, 29, 0.14);
+  background: var(--gradient-panel);
+  box-shadow: 0 32px 80px -22px rgba(43, 22, 8, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* A translucent, blurred variant of the card surface — used for the list
+   sheet, which sits directly over the map and should read as a frosted
+   overlay rather than an opaque card. */
+.card-glass {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 253, 248, 0.7);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow: 0 32px 80px -22px rgba(43, 22, 8, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-elevated,
+  .card-glass,
+  .map-panel,
+  .map-card {
+    animation: none;
+  }
+}
+
+/* The map itself stays in its natural light/day colors, so overlay chrome
+   that floats directly on top of it (topbar, list sheet, detail card) needs
+   to be light too — a dark-glass panel blurring a bright map behind it just
+   reads as a washed-out gray blob with unreadable white-on-light text.
+   Everything elsewhere in the app (hero, forms, admin) stays dark; only
+   these map-surface elements use this light variant. */
+/* Real backdrop-blur over MapLibre's WebGL canvas is unreliable across
+   browsers/GPUs even with preserveDrawingBuffer set — Chromium frequently
+   composites the canvas on a path backdrop-filter can't sample, silently
+   rendering zero blur with zero visible tint. So the glass look here comes
+   primarily from opacity + a diagonal light sheen + shadow (which always
+   render), with backdrop-filter layered on as a bonus for browsers where
+   it does work rather than the thing the effect depends on. */
+
+/* Brand mark and the Map/List button: kept noticeably white so they read
+   as clear, tappable chrome. */
+.map-panel {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 250, 244, 0.55);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 35%, rgba(255, 255, 255, 0) 60%);
+  backdrop-filter: blur(36px) saturate(320%);
+  -webkit-backdrop-filter: blur(36px) saturate(320%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 16px 40px -14px rgba(20, 12, 4, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.map-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background-color: rgba(255, 250, 244, 0.5);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.08) 40%, rgba(255, 255, 255, 0) 65%);
+  backdrop-filter: blur(32px) saturate(320%);
+  -webkit-backdrop-filter: blur(32px) saturate(320%);
+  color: #2a1200;
+  font-weight: 650;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.05rem;
+  box-shadow: 0 10px 24px -14px rgba(20, 12, 4, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.map-btn:hover {
+  background-color: rgba(255, 243, 232, 0.6);
+  transform: translateY(-1px);
+}
+
+/* List sheet and detail card: much less white than the topbar chrome, and
+   saturation pushed hard so the map's blues/greens survive the blur
+   instead of washing out to cream.
+   Deliberately no `position` here: Tailwind's utility classes live in
+   `@layer utilities`, and an unlayered rule like this one always beats a
+   layered one regardless of source order — so a `position: relative` baked
+   in here would silently override the `absolute` utility the list-sheet
+   usage applies to this same element. Each usage sets its own position
+   utility (`absolute` for the list sheet, `relative` for the detail card)
+   instead. Both still give GlassBlurLayer's absolutely-positioned host a
+   containing block, which is all it needs. */
+.map-card {
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background-color: rgba(255, 250, 244, 0.4);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.05) 32%, rgba(255, 255, 255, 0) 60%);
+  backdrop-filter: blur(46px) saturate(340%);
+  -webkit-backdrop-filter: blur(46px) saturate(340%);
+  box-shadow: 0 32px 70px -20px rgba(20, 12, 4, 0.32), 0 2px 6px rgba(20, 12, 4, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (pointer: coarse) {
+  .map-panel,
+  .map-card,
+  .map-btn {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Blur-mirror canvas GlassBlurLayer renders as a panel's first child — sits
+   at the very bottom of the panel's stack (z-index -1) so it paints behind
+   both the panel's own tint/background and its real (non-positioned) text
+   content, which always paints above any negative-z-index sibling. */
+.glass-blur-host {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.glass-blur-canvas {
+  position: absolute;
+  display: block;
+  filter: blur(8px);
+}
+
+@media (pointer: coarse) {
+  .glass-blur-canvas {
+    filter: blur(6px);
+  }
+}
+
+.map-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 0.9rem;
+  background: #fff3e8;
+  padding: 0.45rem 0.8rem;
+}
+
+.map-chip strong {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--accent-deep);
+}
+
+/* A gradient icon tile — used for the brand mark and small feature icons. */
+.icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 0.85rem;
+  background: var(--gradient-accent);
+  color: #2a1200;
+  box-shadow: 0 8px 20px -6px rgba(194, 65, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.icon-tile-saffron {
+  background: var(--gradient-accent);
+  color: #2a1200;
+  box-shadow: 0 8px 20px -6px rgba(194, 65, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.icon-tile-circle {
+  border-radius: 9999px;
+}
+
+/* One field style for every text input, textarea, and select across the
+   submit, sponsor, and admin-login forms. */
+.field-input {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(43, 22, 8, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.6rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.field-input::placeholder {
+  color: var(--muted-soft);
+}
+
+.field-input:focus {
+  border-color: rgba(234, 108, 29, 0.6);
+  background: #fffdf8;
+  box-shadow: 0 0 0 4px rgba(234, 108, 29, 0.14);
+}
+
+/* One button system: a single orange gradient for every primary/commercial
+   action, outline/ghost for secondary/tertiary. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff8f0;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.65rem 1.15rem;
+  box-shadow: 0 10px 24px -8px rgba(184, 70, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-commercial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff8f0;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.65rem 1.15rem;
+  box-shadow: 0 10px 24px -8px rgba(184, 70, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
+}
+
+.btn-commercial:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(43, 22, 8, 0.14);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--foreground);
+  font-weight: 650;
+  font-size: 0.875rem;
+  padding: 0.65rem 1.15rem;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(234, 108, 29, 0.1);
+  border-color: rgba(234, 108, 29, 0.4);
+  color: var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.9rem;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(43, 22, 8, 0.06);
+  color: var(--foreground);
+}
+
+/* Sponsor-banner chip, the digital stand-in for a physical event banner. */
+.sponsor-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(160deg, rgba(234, 108, 29, 0.16), rgba(234, 108, 29, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(234, 108, 29, 0.2);
+  padding: 0.45rem 0.8rem;
+}
+
+.sponsor-chip strong {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--accent-deep);
+}
+
+.status-pending {
+  background: rgba(234, 108, 29, 0.16);
+  color: var(--accent-deep);
+}
+.status-approved {
+  background: rgba(43, 22, 8, 0.08);
+  color: var(--foreground);
+}
+.status-rejected {
+  background: rgba(232, 84, 63, 0.14);
+  color: var(--coral-deep);
+}
+.status-badge {
+  display: inline-block;
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+/* Big-type hero landing page. */
+.hero-title {
+  font-size: clamp(2.25rem, 6.5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--foreground);
+}
+
+/* Small caps label above a heading ("GANESH CHATURTHI", "ADD ANNADHANAM"). */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+/* The rounded cream nav bar used on the hero and app top bars. */
+.nav-shell {
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 253, 248, 0.86);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 12px 30px -18px rgba(43, 22, 8, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Filter pills (All / Today / Open Now) above the sidebar list. */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  border: 1px solid rgba(43, 22, 8, 0.12);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: rgba(234, 108, 29, 0.35);
+  color: var(--accent-deep);
+}
+
+.filter-chip-active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  border-color: transparent;
+  color: #fff8f0;
+}
+
+.filter-chip-active:hover {
+  color: #fff8f0;
+}
+
+/* A sidebar/list row card — pandal thumbnail + name + meta. */
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1.1rem;
+  padding: 0.65rem;
+  text-align: left;
+  transition: background-color 0.16s ease;
+}
+
+.list-row:hover {
+  background: rgba(234, 108, 29, 0.08);
+}
+
+.list-row-active {
+  background: rgba(234, 108, 29, 0.12);
+}
+
+/* Small pill badges: "Serving Now" / "Open" / "Verified". */
+.badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 9999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  background: rgba(76, 155, 92, 0.14);
+  color: #2f7a41;
+}
+
+.badge-live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #3fa758;
+}
+
+.badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  color: var(--accent-deep);
 }

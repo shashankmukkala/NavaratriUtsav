@@ -1,0 +1,79 @@
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+
+// Public: only approved pandals are visible on the map.
+export async function GET() {
+  const { data, error } = await supabaseAdmin()
+    .from("pandals")
+    .select("*")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ pandals: data });
+}
+
+const REQUIRED_FIELDS = [
+  "name",
+  "organizer_name",
+  "contact_phone",
+  "address",
+  "lat",
+  "lng",
+  "event_date",
+  "timing_text",
+  "image_url",
+] as const;
+
+// Public: anyone can submit a pandal. It always starts as "pending" and only
+// becomes visible after an admin approves it in /admin.
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  if (!body) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  for (const field of REQUIRED_FIELDS) {
+    if (body[field] === undefined || body[field] === null || body[field] === "") {
+      return NextResponse.json({ error: `Missing field: ${field}` }, { status: 400 });
+    }
+  }
+
+  const lat = Number(body.lat);
+  const lng = Number(body.lng);
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    return NextResponse.json({ error: "Invalid latitude" }, { status: 400 });
+  }
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+    return NextResponse.json({ error: "Invalid longitude" }, { status: 400 });
+  }
+
+  const { data, error } = await supabaseAdmin()
+    .from("pandals")
+    .insert({
+      name: String(body.name).slice(0, 200),
+      organizer_name: String(body.organizer_name).slice(0, 200),
+      contact_phone: String(body.contact_phone).slice(0, 30),
+      address: String(body.address).slice(0, 500),
+      lat,
+      lng,
+      event_date: body.event_date,
+      timing_text: String(body.timing_text).slice(0, 200),
+      description: body.description ? String(body.description).slice(0, 2000) : null,
+      image_url: String(body.image_url),
+      banner_image_urls: Array.isArray(body.banner_image_urls)
+        ? body.banner_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 2)
+        : null,
+      banner_payment_proof_url: body.banner_payment_proof_url ? String(body.banner_payment_proof_url) : null,
+      status: "pending",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ pandal: data }, { status: 201 });
+}

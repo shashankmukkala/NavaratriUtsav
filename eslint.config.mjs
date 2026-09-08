@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored maplibre-gl worker scripts (copied verbatim by
+    // scripts/copy-maplibre-worker.mjs), not app source.
+    "public/maplibre-gl-worker.mjs",
+    "public/maplibre-gl-shared.mjs",
   ]),
 ]);
 
