@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import MultiImageUploadField from "@/components/MultiImageUploadField";
-import { ArrowLeftIcon, CheckCircleIcon, HeartIcon, LockIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
+import { CheckCircleIcon, HeartIcon, LockIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings } from "@/lib/types";
 
@@ -59,7 +59,7 @@ function SponsorPageInner() {
     setError(null);
 
     if (isPandalTarget && !pandalId) {
-      setError("Please choose which pandal this ad is for.");
+      setError("Please choose which mandapam this ad is for.");
       return;
     }
     if (bannerUrls.length === 0) {
@@ -97,12 +97,9 @@ function SponsorPageInner() {
       }}
     >
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
-        <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+        <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
+          <BackButton />
           <Brand />
-          <Link href="/map" className="btn-secondary">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to map
-          </Link>
         </nav>
 
         {done ? (
@@ -115,9 +112,7 @@ function SponsorPageInner() {
               <p className="text-sm text-[color:var(--muted)]">
                 We&apos;ll verify your payment and your ad will go live for 2 days shortly after.
               </p>
-              <Link href="/map" className="btn-primary">
-                Back to map
-              </Link>
+              <BackButton className="btn-primary self-start" />
             </div>
           </div>
         ) : (
@@ -125,18 +120,18 @@ function SponsorPageInner() {
             <div className="lg:sticky lg:top-8">
               <p className="eyebrow">{isPandalTarget ? "Advertise on a Mandapam Card" : "Advertise on the Map"}</p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
-                {isPandalTarget ? "Put your ad on one pandal's card." : "Put your ad in front of everyone."}
+                {isPandalTarget ? "Put your ad on one mandapam's card." : "Put your ad in front of everyone."}
               </h1>
               <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
                 {isPandalTarget
-                  ? "Your ad banner shows on the specific pandal's own card — seen by people who open it."
+                  ? "Your ad banner shows on the specific mandapam's own card — seen by people who open it."
                   : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for an Annadhanam nearby."}
               </p>
 
               <div className="mt-8 space-y-4">
                 <InfoRow icon={<MegaphoneIcon className="h-5 w-5" />} title={isPandalTarget ? "Shown on one card" : "Shown on the map"}>
                   {isPandalTarget
-                    ? "Your banner appears when someone opens that pandal's card."
+                    ? "Your banner appears when someone opens that mandapam's card."
                     : "Your banner appears in the sponsored slots everyone sees while browsing."}
                 </InfoRow>
                 <InfoRow icon={<VerifiedIcon className="h-5 w-5" />} title="Reviewed, not automatic">
@@ -166,10 +161,10 @@ function SponsorPageInner() {
               {isPandalTarget && (
                 <div>
                   <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-                    Which pandal? <span className="text-[color:var(--accent-deep)]">*</span>
+                    Which mandapam? <span className="text-[color:var(--accent-deep)]">*</span>
                   </label>
                   <select required value={pandalId} onChange={(e) => setPandalId(e.target.value)} className="field-input">
-                    <option value="">Select a pandal…</option>
+                    <option value="">Select a mandapam…</option>
                     {pandals.map((pandal) => (
                       <option key={pandal.id} value={pandal.id}>
                         {pandal.name} — {pandal.address}
@@ -178,7 +173,7 @@ function SponsorPageInner() {
                   </select>
                   {pandals.length === 0 && (
                     <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
-                      No approved pandals yet. Ask the organizer to submit theirs first.
+                      No approved mandapams yet. Ask the organizer to submit theirs first.
                     </p>
                   )}
                 </div>
@@ -286,7 +281,7 @@ function SponsorPageInner() {
                 <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
                   {detailsFilled
                     ? "Scan the QR or pay to the UPI ID with any app."
-                    : `Fill in the details above${isPandalTarget ? " (including the pandal)" : ""} to reveal this.`}
+                    : `Fill in the details above${isPandalTarget ? " (including the mandapam)" : ""} to reveal this.`}
                 </p>
               </div>
 

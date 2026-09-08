@@ -28,6 +28,7 @@ interface PandalDetailCardProps {
 
 export default function PandalDetailCard({ pandal, onClose, fullScreen = false, glass = false }: PandalDetailCardProps) {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [route, setRoute] = useState<{ distanceKm: number; durationMin: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +39,22 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
       cancelled = true;
     };
   }, [pandal.id]);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    let cancelled = false;
+    navigator.geolocation.getCurrentPosition((position) => {
+      const { latitude, longitude } = position.coords;
+      fetchJson<{ distanceKm: number; durationMin: number }>(
+        `/api/directions?from_lat=${latitude}&from_lng=${longitude}&to_lat=${pandal.lat}&to_lng=${pandal.lng}`
+      ).then((data) => {
+        if (!cancelled && data) setRoute(data);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pandal.id, pandal.lat, pandal.lng]);
 
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
   const eventDate = new Date(pandal.event_date + "T00:00:00");
@@ -90,6 +107,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
           </div>
 
           {pandal.description && <p className="text-sm text-[color:var(--muted)]">{pandal.description}</p>}
+
+          {route && (
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent-deep)]">
+              <DirectionsIcon className="h-4 w-4" />
+              {route.distanceKm < 10 ? route.distanceKm.toFixed(1) : Math.round(route.distanceKm)} km ·{" "}
+              {Math.round(route.durationMin)} min drive
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-2 pt-1">
             <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">

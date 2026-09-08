@@ -28,14 +28,16 @@ export default function HomePage() {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals").then((data) => setPandals(data?.pandals ?? []));
   }, []);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
+  // Only asked for once the user asks to find the nearest one — not
+  // automatically the moment the page loads.
+  const requestLocation = () => {
+    if (coords || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => setCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
       () => {},
       { enableHighAccuracy: false, timeout: 8000 }
     );
-  }, []);
+  };
 
   const nearest =
     pandals && pandals.length > 0
@@ -79,10 +81,6 @@ export default function HomePage() {
                 <MegaphoneIcon className="h-4 w-4" />
                 Publish Ads
               </Link>
-              <Link href="/submit" className="btn-secondary hidden sm:inline-flex">
-                <PlusIcon className="h-4 w-4" />
-                Add Seva
-              </Link>
               <Link href="/map" className="btn-primary">
                 <PinIcon className="h-4 w-4" />
                 View Map
@@ -99,11 +97,15 @@ export default function HomePage() {
                 Find Annadhanam being served around you this Ganesh Chaturthi.
               </p>
 
-              <div className="mt-8">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/map" className="btn-primary px-7 py-3.5 text-base">
                   <PinIcon className="h-5 w-5" />
                   Explore Annadhanam
                   <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+                <Link href="/submit" className="btn-secondary px-7 py-3.5 text-base">
+                  <PlusIcon className="h-5 w-5" />
+                  Register your Seva
                 </Link>
               </div>
 
@@ -177,6 +179,16 @@ export default function HomePage() {
                       <p className="mt-0.5 text-xs font-medium text-[color:var(--accent-deep)]">{nearest.timing_text}</p>
                     </div>
                   </div>
+                  {!coords && (
+                    <button
+                      type="button"
+                      onClick={requestLocation}
+                      className="pointer-events-auto mt-2 flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
+                    >
+                      <PinIcon className="h-3.5 w-3.5" />
+                      Use my location to find the nearest
+                    </button>
+                  )}
                   <Link href="/map" className="btn-primary pointer-events-auto mt-3 w-full py-2 text-sm">
                     View Details
                     <ArrowRightIcon className="h-3.5 w-3.5" />

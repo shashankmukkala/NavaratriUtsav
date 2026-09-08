@@ -13,6 +13,8 @@ import type { Pandal, Sponsor } from "@/lib/types";
 
 type Filter = "all" | "today" | "open";
 
+const NEARBY_RADIUS_KM = 5;
+
 function isToday(dateStr: string) {
   return dateStr === new Date().toISOString().slice(0, 10);
 }
@@ -42,14 +44,16 @@ export default function MapPage() {
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
   }, []);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
+  // Only asked for once the user actually opens the list (not automatically
+  // on page load) — the map itself works fine with no location at all.
+  const requestLocation = () => {
+    if (coords || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => setCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
       () => {},
       { enableHighAccuracy: false, timeout: 8000 }
     );
-  }, []);
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -62,6 +66,18 @@ export default function MapPage() {
   }, [pandals, filter, query]);
 
   const withDistance = (p: Pandal) => (coords ? distanceKm(coords.lat, coords.lng, p.lat, p.lng) : null);
+
+  // The sidebar/mobile list is scoped to nearby mandapams (sorted closest
+  // first) so it reads like a real "near you" list, not just every listing
+  // in publish order — the map pins themselves stay unfiltered by distance.
+  const nearby = useMemo(() => {
+    if (!coords) return filtered;
+    return filtered
+      .map((p) => ({ p, km: distanceKm(coords.lat, coords.lng, p.lat, p.lng) }))
+      .filter(({ km }) => km <= NEARBY_RADIUS_KM)
+      .sort((a, b) => a.km - b.km)
+      .map(({ p }) => p);
+  }, [filtered, coords]);
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
@@ -87,7 +103,14 @@ export default function MapPage() {
                 className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
               />
             </label>
-            <button type="button" onClick={() => setSidebarOpen((v) => !v)} className="btn-secondary flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setSidebarOpen((v) => !v);
+                requestLocation();
+              }}
+              className="btn-secondary flex-shrink-0"
+            >
               <ListIcon className="h-4 w-4" />
               List
             </button>
@@ -117,7 +140,9 @@ export default function MapPage() {
                     </button>
                   </div>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">
-                    Find where food is being served during Ganesh Chaturthi.
+                    {coords
+                      ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+                      : "Find where food is being served during Ganesh Chaturthi."}
                   </p>
                   <div className="mt-4 flex gap-2">
                     <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
@@ -133,11 +158,12 @@ export default function MapPage() {
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
                   <PandalList
-                    pandals={filtered}
+                    pandals={nearby}
                     loading={loading}
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
                     onSelect={setSelected}
+                    nearbyScoped={!!coords}
                   />
                 </div>
               </aside>
@@ -174,7 +200,9 @@ export default function MapPage() {
             <div className="flex-shrink-0 px-4 pb-3">
               <h2 className="text-lg font-bold text-[color:var(--foreground)]">Annadhanam Near You</h2>
               <p className="mt-1 text-sm text-[color:var(--muted)]">
-                Find where food is being served during Ganesh Chaturthi.
+                {coords
+                  ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+                  : "Find where food is being served during Ganesh Chaturthi."}
               </p>
               <label className="mt-3 flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2.5 text-sm text-[color:var(--muted)]">
                 <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -199,11 +227,12 @@ export default function MapPage() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-24">
               <PandalList
-                pandals={filtered}
+                pandals={nearby}
                 loading={loading}
                 selectedId={selected?.id ?? null}
                 distanceFor={withDistance}
                 onSelect={setSelected}
+                nearbyScoped={!!coords}
               />
             </div>
           </div>
@@ -222,7 +251,15 @@ export default function MapPage() {
             <div className="map-panel pointer-events-auto flex items-center gap-1 rounded-2xl p-1.5">
               <GlassBlurLayer />
               <TabButton active={!showList} icon={<MapIcon className="h-5 w-5" />} label="Map" onClick={() => setShowList(false)} />
-              <TabButton active={showList} icon={<ListIcon className="h-5 w-5" />} label="List" onClick={() => setShowList(true)} />
+              <TabButton
+                active={showList}
+                icon={<ListIcon className="h-5 w-5" />}
+                label="List"
+                onClick={() => {
+                  setShowList(true);
+                  requestLocation();
+                }}
+              />
               <Link href="/submit" className="flex flex-col items-center gap-0.5 rounded-xl px-5 py-2 text-[color:var(--muted)]">
                 <PlusIcon className="h-5 w-5" />
                 <span className="text-[0.6875rem] font-semibold">Add</span>
@@ -362,18 +399,29 @@ function PandalList({
   selectedId,
   distanceFor,
   onSelect,
+  nearbyScoped = false,
 }: {
   pandals: Pandal[];
   loading: boolean;
   selectedId: string | null;
   distanceFor: (p: Pandal) => number | null;
   onSelect: (p: Pandal) => void;
+  /** True once the list has been narrowed to a radius around the user's
+   * location, so the empty state can say "none nearby" instead of implying
+   * nothing has been published anywhere. */
+  nearbyScoped?: boolean;
 }) {
   if (loading) {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading pandals…</p>;
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading mandapams…</p>;
   }
   if (pandals.length === 0) {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">No pandals published yet. Be the first to add one!</p>;
+    return (
+      <p className="p-6 text-center text-sm text-[color:var(--muted)]">
+        {nearbyScoped
+          ? `No mandapams within ${NEARBY_RADIUS_KM} km yet.`
+          : "No mandapams published yet. Be the first to add one!"}
+      </p>
+    );
   }
   return (
     <ul className="space-y-1">

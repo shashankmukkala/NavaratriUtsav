@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import LocationPicker from "@/components/LocationPicker";
 import {
-  ArrowLeftIcon,
   CalendarIcon,
   CameraIcon,
   CheckCircleIcon,
@@ -28,6 +27,7 @@ export default function SubmitPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [bannerUrls, setBannerUrls] = useState<string[]>([]);
   const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -46,16 +46,21 @@ export default function SubmitPage() {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
+  const handleBannerChange = (urls: string[]) => {
+    setBannerUrls(urls);
+    if (urls.length > 0 && !bannerProofUrl) setShowPaymentModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!location) {
-      setError("Please set the pandal's location on the map.");
+      setError("Please set the mandapam's location on the map.");
       return;
     }
     if (!imageUrl) {
-      setError("Please upload a photo of the pandal.");
+      setError("Please upload a photo of the mandapam.");
       return;
     }
     if (!address.trim()) {
@@ -105,10 +110,7 @@ export default function SubmitPage() {
     >
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
         <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
-          <Link href="/map" className="btn-secondary">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back
-          </Link>
+          <BackButton />
           <Brand />
         </nav>
 
@@ -136,9 +138,60 @@ export default function SubmitPage() {
                 </p>
               </div>
 
-              <Link href="/map" className="btn-primary mt-2 w-full justify-center">
-                Back to Map
-              </Link>
+              <BackButton className="btn-secondary mt-2 self-start" />
+            </div>
+          </div>
+        )}
+
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="card-elevated relative w-full max-w-sm p-6">
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                aria-label="Close"
+                className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(43,22,8,0.06)] text-sm text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.12)]"
+              >
+                ×
+              </button>
+              <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Pay ₹200 for your banner</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">One-time payment — unlocks your banner for good.</p>
+
+              <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
+                {settings?.qr_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={settings.qr_image_url} alt="Payment QR code" className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover" />
+                ) : (
+                  <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
+                    QR code
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
+                    {settings?.upi_id ?? "annadhanam@upi"}
+                  </p>
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹200 to this UPI ID.</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <ImageUploadField
+                  label="Payment screenshot"
+                  folder="payment-proofs"
+                  required
+                  value={bannerProofUrl}
+                  onChange={setBannerProofUrl}
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={!bannerProofUrl}
+                onClick={() => setShowPaymentModal(false)}
+                className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Done
+              </button>
             </div>
           </div>
         )}
@@ -146,7 +199,7 @@ export default function SubmitPage() {
         {!done && (
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12 lg:pt-16">
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
-              <ImageUploadField label="Photo of the pandal" folder="pandals" required value={imageUrl} onChange={setImageUrl} />
+              <ImageUploadField label="Photo of the mandapam" folder="pandals" required value={imageUrl} onChange={setImageUrl} />
 
               <Field label="Association name" required>
                 <input
@@ -193,7 +246,7 @@ export default function SubmitPage() {
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Date" required>
+                <Field label="Annadhanam date" required>
                   <input
                     required
                     type="date"
@@ -266,10 +319,9 @@ export default function SubmitPage() {
                   dateLabel={previewDateLabel}
                   timingText={timingText}
                   bannerUrls={bannerUrls}
-                  onBannerChange={setBannerUrls}
+                  onBannerChange={handleBannerChange}
                   proofUrl={bannerProofUrl}
-                  onProofChange={setBannerProofUrl}
-                  settings={settings}
+                  onOpenPayment={() => setShowPaymentModal(true)}
                 />
               </div>
             </div>
@@ -305,8 +357,7 @@ function LivePreviewCard({
   bannerUrls,
   onBannerChange,
   proofUrl,
-  onProofChange,
-  settings,
+  onOpenPayment,
 }: {
   imageUrl: string | null;
   name: string;
@@ -316,8 +367,7 @@ function LivePreviewCard({
   bannerUrls: string[];
   onBannerChange: (urls: string[]) => void;
   proofUrl: string | null;
-  onProofChange: (url: string | null) => void;
-  settings: PaymentSettings | null;
+  onOpenPayment: () => void;
 }) {
   return (
     <div className="card-elevated max-w-md overflow-hidden">
@@ -367,56 +417,33 @@ function LivePreviewCard({
       </div>
 
       <div className="border-t border-[rgba(43,22,8,0.1)] p-5 pt-4">
-        <BannerUploader value={bannerUrls} onChange={onBannerChange} max={2} />
+        <BannerUploader value={bannerUrls} onChange={onBannerChange} />
 
         {bannerUrls.length === 0 ? (
           <p className="mt-2 text-xs text-[color:var(--muted)]">
             Optional, not required to list — a one-time ₹200 unlocks a banner on this card for good.
           </p>
+        ) : proofUrl ? (
+          <p className="mt-2 text-xs text-[color:var(--muted)]">
+            Payment screenshot received — submit the form below. We&apos;ll verify and turn your banner on.
+          </p>
         ) : (
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
-              {settings?.qr_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={settings.qr_image_url} alt="Payment QR code" className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover" />
-              ) : (
-                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
-                  QR code
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
-                  {settings?.upi_id ?? "annadhanam@upi"}
-                </p>
-                <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹200 to this UPI ID.</p>
-              </div>
-            </div>
-
-            <ImageUploadField
-              label="Payment screenshot"
-              folder="payment-proofs"
-              required
-              value={proofUrl}
-              onChange={onProofChange}
-            />
-
-            {proofUrl && (
-              <p className="text-xs text-[color:var(--muted)]">
-                Got it — submit the form below. We&apos;ll verify and turn your banner on.
-              </p>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={onOpenPayment}
+            className="mt-2 text-xs font-semibold text-[color:var(--accent-deep)] underline"
+          >
+            Complete the ₹200 payment
+          </button>
         )}
       </div>
     </div>
   );
 }
 
-/** A single rectangular upload slot — spans the full card width, matching
- * the shape the banner actually renders in — that accepts up to `max`
- * images: already-added ones stack above one "add" tile that stays until
- * the limit is reached. */
-function BannerUploader({ value, onChange, max }: { value: string[]; onChange: (urls: string[]) => void; max: number }) {
+/** A single rectangular upload slot spanning the full card width — matches
+ * the shape the banner actually renders in once live. */
+function BannerUploader({ value, onChange }: { value: string[]; onChange: (urls: string[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -429,13 +456,13 @@ function BannerUploader({ value, onChange, max }: { value: string[]; onChange: (
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Upload failed");
-      onChange([...value, data.url]);
+      onChange([data.url]);
     } finally {
       setUploading(false);
     }
   };
 
-  const removeAt = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+  const remove = () => onChange([]);
 
   return (
     <div className="space-y-2">
@@ -451,32 +478,26 @@ function BannerUploader({ value, onChange, max }: { value: string[]; onChange: (
         className="hidden"
       />
 
-      {value.map((url, i) => (
-        <div key={url} className="relative">
+      {value[0] ? (
+        <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" className="h-20 w-full rounded-xl object-cover" />
+          <img src={value[0]} alt="" className="h-20 w-full rounded-xl object-cover" />
           <button
             type="button"
-            onClick={() => removeAt(i)}
+            onClick={remove}
             className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-xs text-white hover:bg-black/70"
           >
             ×
           </button>
         </div>
-      ))}
-
-      {value.length < max && (
+      ) : (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 text-xs font-medium text-[color:var(--muted)] hover:border-[rgba(234,108,29,0.5)]"
         >
           <CameraIcon className="h-4 w-4" />
-          {uploading
-            ? "Uploading…"
-            : value.length === 0
-              ? "Add your association banner"
-              : `Add another (${value.length}/${max})`}
+          {uploading ? "Uploading…" : "Add your association banner"}
         </button>
       )}
     </div>

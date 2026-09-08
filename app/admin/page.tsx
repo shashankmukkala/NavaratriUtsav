@@ -85,7 +85,7 @@ export default function AdminPage() {
   };
 
   const deletePandal = async (id: string) => {
-    if (!confirm("Permanently delete this pandal listing?")) return;
+    if (!confirm("Permanently delete this mandapam listing?")) return;
     await sendJson(`/api/admin/pandals/${id}`, undefined, "DELETE");
     loadData();
   };
@@ -168,7 +168,7 @@ export default function AdminPage() {
 
       <div className="mb-4 flex gap-2">
         <TabButton active={tab === "pandals"} onClick={() => setTab("pandals")}>
-          Pandals ({pendingPandalsCount} pending)
+          Mandapams ({pendingPandalsCount} pending)
         </TabButton>
         <TabButton active={tab === "sponsors"} onClick={() => setTab("sponsors")}>
           Ads ({pendingSponsorsCount} pending)
@@ -195,7 +195,7 @@ export default function AdminPage() {
           />
 
           <div className="space-y-2">
-            {filteredPandals.length === 0 && <Empty>No pandals match this filter.</Empty>}
+            {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
               <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid}>
                 <StatusBadge status={pandal.status} />
@@ -231,7 +231,7 @@ export default function AdminPage() {
             }}
             search={sponsorSearch}
             onSearchChange={setSponsorSearch}
-            searchPlaceholder="Search by sponsor, phone, pandal…"
+            searchPlaceholder="Search by sponsor, phone, mandapam…"
           />
 
           <div className="space-y-2">
