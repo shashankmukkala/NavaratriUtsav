@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
+import ProfileNavLink from "@/components/ProfileNavLink";
 import { ArrowRightIcon, HeartIcon, MapIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
 
 export default function AdsChoicePage() {
@@ -13,9 +14,12 @@ export default function AdsChoicePage() {
       }}
     >
       <div className="mx-auto max-w-4xl px-4 pb-16 pt-4 sm:px-6">
-        <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
-          <BackButton />
-          <Brand />
+        <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <Brand />
+          </div>
+          <ProfileNavLink />
         </nav>
 
         <div className="mt-10 text-center sm:mt-16">
@@ -58,10 +62,10 @@ export default function AdsChoicePage() {
                 ₹200 / 2 days
               </span>
             </div>
-            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on a mandapam card</h2>
+            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on mandapam cards</h2>
             <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
-              Your banner shows only on one mandapam&apos;s own card — seen by people who open that specific
-              Annadhanam. Less reach, so it costs less.
+              Your banner shows inside mandapam detail cards — seen by people who open one to check details. Less
+              reach than the map, so it costs less.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-deep)]">
               Advertise now

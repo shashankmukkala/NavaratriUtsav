@@ -58,6 +58,7 @@ export interface Database {
           status: "pending" | "approved" | "rejected";
           expires_at: string | null;
           user_id: string | null;
+          placement: "map" | "card";
           created_at: string;
         };
         Insert: {
@@ -72,6 +73,7 @@ export interface Database {
           status?: "pending" | "approved" | "rejected";
           expires_at?: string | null;
           user_id?: string | null;
+          placement?: "map" | "card";
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;

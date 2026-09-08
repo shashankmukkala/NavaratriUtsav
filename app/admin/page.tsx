@@ -484,7 +484,7 @@ function PandalRow({
 
 function SponsorRow({ sponsor, children }: { sponsor: SponsorWithPandal; children: React.ReactNode }) {
   const images = sponsor.banner_image_urls?.length ? sponsor.banner_image_urls : sponsor.banner_image_url ? [sponsor.banner_image_url] : [];
-  const price = sponsor.pandals?.name ? 200 : 500;
+  const price = sponsor.placement === "card" ? 200 : 500;
 
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
@@ -504,7 +504,7 @@ function SponsorRow({ sponsor, children }: { sponsor: SponsorWithPandal; childre
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-semibold text-[color:var(--foreground)]">{sponsor.sponsor_name}</p>
         <p className="text-xs text-[color:var(--muted)]">
-          {sponsor.pandals?.name ? `For: ${sponsor.pandals.name}` : "Map-wide ad"} · ₹{price} / 2 days
+          {sponsor.placement === "card" ? "Mandapam card ad" : "Map-wide ad"} · ₹{price} / 2 days
         </p>
         <p className="text-xs text-[color:var(--muted)]">{sponsor.contact_phone}</p>
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">

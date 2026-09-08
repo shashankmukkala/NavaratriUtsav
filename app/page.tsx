@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import MapView from "@/components/MapView";
+import ProfileNavLink from "@/components/ProfileNavLink";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -85,6 +86,7 @@ export default function HomePage() {
                 <PinIcon className="h-4 w-4" />
                 View Map
               </Link>
+              <ProfileNavLink />
             </div>
           </nav>
 

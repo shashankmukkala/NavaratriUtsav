@@ -32,9 +32,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
 
   useEffect(() => {
     let cancelled = false;
-    fetchJson<{ sponsors: Sponsor[] }>(`/api/sponsors?pandal_id=${pandal.id}`).then(
-      (data) => !cancelled && setSponsors(data?.sponsors ?? [])
-    );
+    // "card"-placement ads aren't targeted at any one mandapam — they're a
+    // shared pool shown generically inside detail cards, so pick one at
+    // random each time a card opens rather than showing the same one always.
+    fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors?placement=card").then((data) => {
+      if (cancelled || !data) return;
+      const pool = data.sponsors;
+      setSponsors(pool.length > 0 ? [pool[Math.floor(Math.random() * pool.length)]] : []);
+    });
     return () => {
       cancelled = true;
     };

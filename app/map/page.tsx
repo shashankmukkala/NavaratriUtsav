@@ -6,6 +6,7 @@ import Brand from "@/components/Brand";
 import GlassBlurLayer from "@/components/GlassBlurLayer";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
+import ProfileNavLink from "@/components/ProfileNavLink";
 import { CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
@@ -92,7 +93,7 @@ export default function MapPage() {
         </div>
 
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
-          <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-6 py-3">
+          <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-4 py-2.5 sm:px-5">
             <Brand />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -122,13 +123,7 @@ export default function MapPage() {
               <PlusIcon className="h-4 w-4" />
               Add Seva
             </Link>
-            <Link
-              href="/profile"
-              aria-label="Your profile"
-              className="btn-secondary flex-shrink-0 !px-3"
-            >
-              <UserIcon className="h-4 w-4" />
-            </Link>
+            <ProfileNavLink />
           </header>
 
           <div className="flex min-h-0 flex-1 gap-4">

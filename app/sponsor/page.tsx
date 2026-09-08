@@ -6,15 +6,24 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import MultiImageUploadField from "@/components/MultiImageUploadField";
+import ProfileNavLink from "@/components/ProfileNavLink";
 import SignInPrompt from "@/components/SignInPrompt";
-import { CheckCircleIcon, HeartIcon, LockIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  HeartIcon,
+  LockIcon,
+  MegaphoneIcon,
+  PinIcon,
+  VerifiedIcon,
+} from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
-import type { Pandal, PaymentSettings } from "@/lib/types";
+import type { PaymentSettings } from "@/lib/types";
 
 const DRAFT_KEY = "bappaseva_sponsor_draft";
 
 interface SponsorDraft {
-  pandalId: string;
   sponsorName: string;
   contactPhone: string;
   linkUrl: string;
@@ -46,18 +55,17 @@ function readSponsorDraft(): SponsorDraft | null {
 }
 
 function SponsorPageInner() {
-  // ?target=pandal → a banner on one specific pandal's own card (cheaper,
-  // less reach). Anything else → the map-wide sponsored slots. useSearchParams
-  // (not a raw window.location check) resolves correctly during SSR, so the
-  // server and client render the same branch on the very first paint.
+  // ?target=pandal → the cheaper tier shown generically inside mandapam
+  // detail cards (not targeted at any one specific mandapam). Anything else
+  // → the map-wide sponsored slots. useSearchParams (not a raw
+  // window.location check) resolves correctly during SSR, so the server and
+  // client render the same branch on the very first paint.
   const searchParams = useSearchParams();
   const isPandalTarget = searchParams.get("target") === "pandal";
   const price = isPandalTarget ? 200 : 500;
 
   const [draft] = useState(readSponsorDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [pandals, setPandals] = useState<Pandal[]>([]);
-  const [pandalId, setPandalId] = useState(draft?.pandalId ?? "");
   const [sponsorName, setSponsorName] = useState(draft?.sponsorName ?? "");
   const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
   const [linkUrl, setLinkUrl] = useState(draft?.linkUrl ?? "");
@@ -70,11 +78,6 @@ function SponsorPageInner() {
   const [showSignIn, setShowSignIn] = useState(false);
 
   useEffect(() => {
-    if (!isPandalTarget) return;
-    fetchJson<{ pandals: Pandal[] }>("/api/pandals").then((data) => setPandals(data?.pandals ?? []));
-  }, [isPandalTarget]);
-
-  useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
@@ -85,17 +88,12 @@ function SponsorPageInner() {
   // Link is optional — the QR/UPI stays blurred until the required details
   // are filled, so it isn't just sitting exposed for anyone to screenshot
   // without actually being a real advertiser.
-  const detailsFilled =
-    sponsorName.trim() !== "" && contactPhone.trim() !== "" && bannerUrls.length > 0 && (!isPandalTarget || !!pandalId);
+  const detailsFilled = sponsorName.trim() !== "" && contactPhone.trim() !== "" && bannerUrls.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (isPandalTarget && !pandalId) {
-      setError("Please choose which mandapam this ad is for.");
-      return;
-    }
     if (bannerUrls.length === 0) {
       setError("Please upload at least one ad banner image.");
       return;
@@ -106,7 +104,7 @@ function SponsorPageInner() {
     }
 
     if (!session?.user) {
-      const draft: SponsorDraft = { pandalId, sponsorName, contactPhone, linkUrl, bannerUrls, proofUrl };
+      const draft: SponsorDraft = { sponsorName, contactPhone, linkUrl, bannerUrls, proofUrl };
       try {
         sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       } catch {
@@ -118,7 +116,7 @@ function SponsorPageInner() {
 
     setSubmitting(true);
     const result = await sendJson("/api/sponsors", {
-      pandal_id: isPandalTarget ? pandalId : null,
+      placement: isPandalTarget ? "card" : "map",
       sponsor_name: sponsorName,
       contact_phone: contactPhone,
       link_url: linkUrl || null,
@@ -142,9 +140,12 @@ function SponsorPageInner() {
       }}
     >
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
-        <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
-          <BackButton />
-          <Brand />
+        <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <Brand />
+          </div>
+          <ProfileNavLink />
         </nav>
 
         <SignInPrompt
@@ -170,20 +171,20 @@ function SponsorPageInner() {
         ) : (
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1.2fr] lg:items-start lg:gap-16 lg:pt-16">
             <div className="lg:sticky lg:top-8">
-              <p className="eyebrow">{isPandalTarget ? "Advertise on a Mandapam Card" : "Advertise on the Map"}</p>
+              <p className="eyebrow">{isPandalTarget ? "Advertise on Mandapam Cards" : "Advertise on the Map"}</p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
-                {isPandalTarget ? "Put your ad on one mandapam's card." : "Put your ad in front of everyone."}
+                {isPandalTarget ? "Put your ad on mandapam cards." : "Put your ad in front of everyone."}
               </h1>
               <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
                 {isPandalTarget
-                  ? "Your ad banner shows on the specific mandapam's own card — seen by people who open it."
+                  ? "Your ad banner shows inside mandapam detail cards — seen by anyone who opens one."
                   : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for an Annadhanam nearby."}
               </p>
 
               <div className="mt-8 space-y-4">
-                <InfoRow icon={<MegaphoneIcon className="h-5 w-5" />} title={isPandalTarget ? "Shown on one card" : "Shown on the map"}>
+                <InfoRow icon={<MegaphoneIcon className="h-5 w-5" />} title={isPandalTarget ? "Shown on mandapam cards" : "Shown on the map"}>
                   {isPandalTarget
-                    ? "Your banner appears when someone opens that mandapam's card."
+                    ? "Your banner appears when someone opens any mandapam's card."
                     : "Your banner appears in the sponsored slots everyone sees while browsing."}
                 </InfoRow>
                 <InfoRow icon={<VerifiedIcon className="h-5 w-5" />} title="Reviewed, not automatic">
@@ -212,22 +213,14 @@ function SponsorPageInner() {
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7">
               {isPandalTarget && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-                    Which mandapam? <span className="text-[color:var(--accent-deep)]">*</span>
-                  </label>
-                  <select required value={pandalId} onChange={(e) => setPandalId(e.target.value)} className="field-input">
-                    <option value="">Select a mandapam…</option>
-                    {pandals.map((pandal) => (
-                      <option key={pandal.id} value={pandal.id}>
-                        {pandal.name} — {pandal.address}
-                      </option>
-                    ))}
-                  </select>
-                  {pandals.length === 0 && (
-                    <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
-                      No approved mandapams yet. Ask the organizer to submit theirs first.
-                    </p>
-                  )}
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
+                    Where this shows up
+                  </p>
+                  <MandapamCardSkeleton />
+                  <p className="mt-2 text-xs text-[color:var(--muted-soft)]">
+                    Not tied to a specific mandapam — your ad rotates through mandapam cards generally, wherever
+                    someone opens one.
+                  </p>
                 </div>
               )}
 
@@ -333,7 +326,7 @@ function SponsorPageInner() {
                 <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
                   {detailsFilled
                     ? "Scan the QR or pay to the UPI ID with any app."
-                    : `Fill in the details above${isPandalTarget ? " (including the mandapam)" : ""} to reveal this.`}
+                    : "Fill in the details above to reveal this."}
                 </p>
               </div>
 
@@ -361,6 +354,41 @@ function InfoRow({ icon, title, children }: { icon: React.ReactNode; title: stri
       <div>
         <p className="text-sm font-semibold text-[color:var(--foreground)]">{title}</p>
         <p className="text-sm text-[color:var(--muted)]">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+/** A miniature, non-interactive mockup of a real mandapam detail card, with
+ * the ad slot highlighted — since there's no specific mandapam to select
+ * anymore, this is how someone sees exactly where their banner will land. */
+function MandapamCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[rgba(43,22,8,0.1)] bg-white/60">
+      <div className="h-24 w-full bg-[rgba(43,22,8,0.08)]" />
+      <div className="space-y-2 p-3">
+        <div className="h-3 w-2/3 rounded bg-[rgba(43,22,8,0.12)]" />
+        <div className="flex items-center gap-3 text-[color:var(--muted-soft)]">
+          <span className="inline-flex items-center gap-1 text-[0.65rem]">
+            <CalendarIcon className="h-3 w-3" />
+            <span className="h-2 w-10 rounded bg-[rgba(43,22,8,0.1)]" />
+          </span>
+          <span className="inline-flex items-center gap-1 text-[0.65rem]">
+            <ClockIcon className="h-3 w-3" />
+            <span className="h-2 w-10 rounded bg-[rgba(43,22,8,0.1)]" />
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 pt-1">
+          <PinIcon className="h-3 w-3 text-[color:var(--muted-soft)]" />
+          <div className="h-2 w-full max-w-[10rem] rounded bg-[rgba(43,22,8,0.08)]" />
+        </div>
+
+        <div className="mt-2 flex items-center gap-2 rounded-xl border-2 border-dashed border-[color:var(--accent)] bg-[rgba(234,108,29,0.08)] p-2">
+          <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-[rgba(234,108,29,0.2)]" />
+          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
+            Your ad appears here
+          </span>
+        </div>
       </div>
     </div>
   );

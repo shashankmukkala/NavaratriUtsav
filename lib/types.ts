@@ -32,6 +32,9 @@ export interface Sponsor {
   status: PandalStatus;
   expires_at: string | null;
   user_id: string | null;
+  /** "map" = map-wide sponsored slots. "card" = shown generically inside
+   * mandapam detail cards, not targeted at any one specific mandapam. */
+  placement: "map" | "card";
   created_at: string;
 }
 

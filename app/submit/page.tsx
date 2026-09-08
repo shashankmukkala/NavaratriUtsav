@@ -5,6 +5,7 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import LocationPicker from "@/components/LocationPicker";
+import ProfileNavLink from "@/components/ProfileNavLink";
 import SignInPrompt from "@/components/SignInPrompt";
 import {
   CalendarIcon,
@@ -171,9 +172,12 @@ export default function SubmitPage() {
       }}
     >
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
-        <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
-          <BackButton />
-          <Brand />
+        <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
+          <div className="flex items-center gap-4">
+            <BackButton />
+            <Brand />
+          </div>
+          <ProfileNavLink />
         </nav>
 
         {done && (

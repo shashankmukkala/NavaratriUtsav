@@ -4,20 +4,19 @@ import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: approved, not-yet-expired sponsor banners (each payment covers 2
-// days of display from approval). Pass pandal_id to get the banners tied to
-// that pandal's detail page; omit it to get the general map-wide ads
-// (pandal_id IS NULL) shown in the map's sponsored ad slots.
+// days of display from approval). ?placement=card returns ads shown
+// generically inside mandapam detail cards; anything else (the default)
+// returns the map-wide sponsored slots.
 export async function GET(request: NextRequest) {
-  const pandalId = request.nextUrl.searchParams.get("pandal_id");
+  const placement = request.nextUrl.searchParams.get("placement") === "card" ? "card" : "map";
 
-  let query = supabaseAdmin()
+  const { data, error } = await supabaseAdmin()
     .from("sponsors")
     .select("*")
     .eq("status", "approved")
-    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
-  query = pandalId ? query.eq("pandal_id", pandalId) : query.is("pandal_id", null);
-
-  const { data, error } = await query.order("created_at", { ascending: false });
+    .eq("placement", placement)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -27,8 +26,8 @@ export async function GET(request: NextRequest) {
 
 // Requires a signed-in Google account (see lib/authOptions.ts). Starts as
 // "pending" and only appears once an admin verifies payment and approves it
-// in /admin. pandal_id is optional — sponsors are ads shown on the map
-// screen itself, not tied to sponsoring a specific pandal.
+// in /admin. placement picks the tier: "card" (shown generically inside
+// mandapam detail cards) or "map" (the map-wide sponsored slots, default).
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
@@ -55,25 +54,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing field: banner_image_urls" }, { status: 400 });
   }
 
-  if (body.pandal_id) {
-    const { data: pandal, error: pandalError } = await supabaseAdmin()
-      .from("pandals")
-      .select("id")
-      .eq("id", body.pandal_id)
-      .maybeSingle();
-
-    if (pandalError) {
-      return NextResponse.json({ error: pandalError.message }, { status: 500 });
-    }
-    if (!pandal) {
-      return NextResponse.json({ error: "Pandal not found" }, { status: 404 });
-    }
-  }
+  const placement = body.placement === "card" ? "card" : "map";
 
   const { data, error } = await supabaseAdmin()
     .from("sponsors")
     .insert({
-      pandal_id: body.pandal_id || null,
       sponsor_name: String(body.sponsor_name).slice(0, 200),
       contact_phone: String(body.contact_phone).slice(0, 30),
       banner_image_url: bannerUrls[0],
@@ -81,6 +66,7 @@ export async function POST(request: NextRequest) {
       link_url: body.link_url ? String(body.link_url) : null,
       payment_proof_url: String(body.payment_proof_url),
       user_id: userId,
+      placement,
       status: "pending",
     })
     .select()

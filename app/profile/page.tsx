@@ -165,7 +165,7 @@ export default function ProfilePage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{sponsor.sponsor_name}</p>
                           <p className="truncate text-xs text-[color:var(--muted)]">
-                            {sponsor.pandals?.name ? `For: ${sponsor.pandals.name}` : "Map-wide ad"}
+                            {sponsor.placement === "card" ? "Mandapam card ad" : "Map-wide ad"}
                           </p>
                           <span className={`status-badge status-${sponsor.status} mt-1.5 inline-block`}>{sponsor.status}</span>
                         </div>
