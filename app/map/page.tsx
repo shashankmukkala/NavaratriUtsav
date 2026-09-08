@@ -6,7 +6,7 @@ import Brand from "@/components/Brand";
 import GlassBlurLayer from "@/components/GlassBlurLayer";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
-import { CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, VerifiedIcon } from "@/components/icons";
+import { CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -121,6 +121,13 @@ export default function MapPage() {
             <Link href="/submit" className="btn-primary flex-shrink-0">
               <PlusIcon className="h-4 w-4" />
               Add Seva
+            </Link>
+            <Link
+              href="/profile"
+              aria-label="Your profile"
+              className="btn-secondary flex-shrink-0 !px-3"
+            >
+              <UserIcon className="h-4 w-4" />
             </Link>
           </header>
 
@@ -263,6 +270,10 @@ export default function MapPage() {
               <Link href="/submit" className="flex flex-col items-center gap-0.5 rounded-xl px-5 py-2 text-[color:var(--muted)]">
                 <PlusIcon className="h-5 w-5" />
                 <span className="text-[0.6875rem] font-semibold">Add</span>
+              </Link>
+              <Link href="/profile" className="flex flex-col items-center gap-0.5 rounded-xl px-5 py-2 text-[color:var(--muted)]">
+                <UserIcon className="h-5 w-5" />
+                <span className="text-[0.6875rem] font-semibold">You</span>
               </Link>
             </div>
           </nav>
