@@ -5,6 +5,7 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import LocationPicker from "@/components/LocationPicker";
+import SignInPrompt from "@/components/SignInPrompt";
 import {
   CalendarIcon,
   CameraIcon,
@@ -17,22 +18,56 @@ import {
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { PaymentSettings } from "@/lib/types";
 
+const DRAFT_KEY = "bappaseva_submit_draft";
+
+interface SubmitDraft {
+  organizerName: string;
+  contactPhone: string;
+  eventDate: string;
+  timingText: string;
+  description: string;
+  imageUrl: string | null;
+  bannerUrls: string[];
+  bannerProofUrl: string | null;
+  location: { lat: number; lng: number; address: string } | null;
+  address: string;
+}
+
+// Reads (and clears) the form draft saved right before being sent off to
+// Google to sign in, so a first-time submitter doesn't lose their form.
+// Read once via a lazy useState initializer rather than an effect, since
+// it only matters for the very first render.
+function readSubmitDraft(): SubmitDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    window.sessionStorage.removeItem(DRAFT_KEY);
+    return JSON.parse(raw) as SubmitDraft;
+  } catch {
+    return null;
+  }
+}
+
 export default function SubmitPage() {
+  const [draft] = useState(readSubmitDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [organizerName, setOrganizerName] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [timingText, setTimingText] = useState("");
-  const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
-  const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(null);
+  const [organizerName, setOrganizerName] = useState(draft?.organizerName ?? "");
+  const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
+  const [eventDate, setEventDate] = useState(draft?.eventDate ?? "");
+  const [timingText, setTimingText] = useState(draft?.timingText ?? "");
+  const [description, setDescription] = useState(draft?.description ?? "");
+  const [imageUrl, setImageUrl] = useState<string | null>(draft?.imageUrl ?? null);
+  const [bannerUrls, setBannerUrls] = useState<string[]>(draft?.bannerUrls ?? []);
+  const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(draft?.bannerProofUrl ?? null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  const [address, setAddress] = useState("");
+  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(draft?.location ?? null);
+  const [address, setAddress] = useState(draft?.address ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
 
   const previewDateLabel = (() => {
     if (!eventDate) return "";
@@ -44,6 +79,10 @@ export default function SubmitPage() {
 
   useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, []);
+
+  useEffect(() => {
+    fetchJson<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
   }, []);
 
   const handleBannerChange = (urls: string[]) => {
@@ -65,6 +104,29 @@ export default function SubmitPage() {
     }
     if (!address.trim()) {
       setError("Please fill in the address.");
+      return;
+    }
+
+    if (!session?.user) {
+      const draft: SubmitDraft = {
+        organizerName,
+        contactPhone,
+        eventDate,
+        timingText,
+        description,
+        imageUrl,
+        bannerUrls,
+        bannerProofUrl,
+        location,
+        address,
+      };
+      try {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      } catch {
+        // Storage unavailable (private mode etc.) — sign-in still works,
+        // the form just won't survive the redirect.
+      }
+      setShowSignIn(true);
       return;
     }
 
@@ -195,6 +257,13 @@ export default function SubmitPage() {
             </div>
           </div>
         )}
+
+        <SignInPrompt
+          open={showSignIn}
+          onClose={() => setShowSignIn(false)}
+          callbackUrl="/submit"
+          message="We use your Google account just to know who added this, so you can get help editing it later — no accounts of our own to manage."
+        />
 
         {!done && (
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12 lg:pt-16">

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: only approved pandals are visible on the map.
@@ -27,9 +29,16 @@ const REQUIRED_FIELDS = [
   "image_url",
 ] as const;
 
-// Public: anyone can submit a pandal. It always starts as "pending" and only
-// becomes visible after an admin approves it in /admin.
+// Requires a signed-in Google account, so a submission can be tagged with
+// who made it (for later editing) — see lib/authOptions.ts. It always starts
+// as "pending" and only becomes visible after an admin approves it in /admin.
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Please sign in with Google first." }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -67,6 +76,7 @@ export async function POST(request: NextRequest) {
         ? body.banner_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 2)
         : null,
       banner_payment_proof_url: body.banner_payment_proof_url ? String(body.banner_payment_proof_url) : null,
+      user_id: userId,
       status: "pending",
     })
     .select()

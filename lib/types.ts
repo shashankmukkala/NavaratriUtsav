@@ -15,6 +15,7 @@ export interface Pandal {
   banner_image_urls: string[] | null;
   banner_payment_proof_url: string | null;
   banner_paid: boolean;
+  user_id: string | null;
   status: PandalStatus;
   created_at: string;
 }
@@ -30,6 +31,7 @@ export interface Sponsor {
   payment_proof_url: string;
   status: PandalStatus;
   expires_at: string | null;
+  user_id: string | null;
   created_at: string;
 }
 

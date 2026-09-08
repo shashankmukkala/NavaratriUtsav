@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: approved, not-yet-expired sponsor banners (each payment covers 2
@@ -23,11 +25,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ sponsors: data });
 }
 
-// Public: anyone can submit a sponsor banner enquiry with payment proof. It
-// starts as "pending" and only appears once an admin verifies payment and
-// approves it in /admin. pandal_id is optional — sponsors are ads shown on
-// the map screen itself, not tied to sponsoring a specific pandal.
+// Requires a signed-in Google account (see lib/authOptions.ts). Starts as
+// "pending" and only appears once an admin verifies payment and approves it
+// in /admin. pandal_id is optional — sponsors are ads shown on the map
+// screen itself, not tied to sponsoring a specific pandal.
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Please sign in with Google first." }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -72,6 +80,7 @@ export async function POST(request: NextRequest) {
       banner_image_urls: bannerUrls,
       link_url: body.link_url ? String(body.link_url) : null,
       payment_proof_url: String(body.payment_proof_url),
+      user_id: userId,
       status: "pending",
     })
     .select()

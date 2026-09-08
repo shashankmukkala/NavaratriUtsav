@@ -19,6 +19,7 @@ export interface Database {
           banner_image_urls: string[] | null;
           banner_payment_proof_url: string | null;
           banner_paid: boolean;
+          user_id: string | null;
           status: "pending" | "approved" | "rejected";
           created_at: string;
         };
@@ -37,6 +38,7 @@ export interface Database {
           banner_image_urls?: string[] | null;
           banner_payment_proof_url?: string | null;
           banner_paid?: boolean;
+          user_id?: string | null;
           status?: "pending" | "approved" | "rejected";
           created_at?: string;
         };
@@ -55,6 +57,7 @@ export interface Database {
           payment_proof_url: string;
           status: "pending" | "approved" | "rejected";
           expires_at: string | null;
+          user_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -68,6 +71,7 @@ export interface Database {
           payment_proof_url: string;
           status?: "pending" | "approved" | "rejected";
           expires_at?: string | null;
+          user_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;

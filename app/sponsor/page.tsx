@@ -6,9 +6,21 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import MultiImageUploadField from "@/components/MultiImageUploadField";
+import SignInPrompt from "@/components/SignInPrompt";
 import { CheckCircleIcon, HeartIcon, LockIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings } from "@/lib/types";
+
+const DRAFT_KEY = "bappaseva_sponsor_draft";
+
+interface SponsorDraft {
+  pandalId: string;
+  sponsorName: string;
+  contactPhone: string;
+  linkUrl: string;
+  bannerUrls: string[];
+  proofUrl: string | null;
+}
 
 export default function SponsorPage() {
   return (
@@ -16,6 +28,21 @@ export default function SponsorPage() {
       <SponsorPageInner />
     </Suspense>
   );
+}
+
+// Reads (and clears) the form draft saved right before being sent off to
+// Google to sign in. Read once via a lazy useState initializer rather than
+// an effect, since it only matters for the very first render.
+function readSponsorDraft(): SponsorDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    window.sessionStorage.removeItem(DRAFT_KEY);
+    return JSON.parse(raw) as SponsorDraft;
+  } catch {
+    return null;
+  }
 }
 
 function SponsorPageInner() {
@@ -27,17 +54,20 @@ function SponsorPageInner() {
   const isPandalTarget = searchParams.get("target") === "pandal";
   const price = isPandalTarget ? 200 : 500;
 
+  const [draft] = useState(readSponsorDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [pandals, setPandals] = useState<Pandal[]>([]);
-  const [pandalId, setPandalId] = useState("");
-  const [sponsorName, setSponsorName] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
-  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [pandalId, setPandalId] = useState(draft?.pandalId ?? "");
+  const [sponsorName, setSponsorName] = useState(draft?.sponsorName ?? "");
+  const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
+  const [linkUrl, setLinkUrl] = useState(draft?.linkUrl ?? "");
+  const [bannerUrls, setBannerUrls] = useState<string[]>(draft?.bannerUrls ?? []);
+  const [proofUrl, setProofUrl] = useState<string | null>(draft?.proofUrl ?? null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
 
   useEffect(() => {
     if (!isPandalTarget) return;
@@ -46,6 +76,10 @@ function SponsorPageInner() {
 
   useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, []);
+
+  useEffect(() => {
+    fetchJson<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
   }, []);
 
   // Link is optional — the QR/UPI stays blurred until the required details
@@ -68,6 +102,17 @@ function SponsorPageInner() {
     }
     if (!proofUrl) {
       setError("Please upload your payment screenshot.");
+      return;
+    }
+
+    if (!session?.user) {
+      const draft: SponsorDraft = { pandalId, sponsorName, contactPhone, linkUrl, bannerUrls, proofUrl };
+      try {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      } catch {
+        // Storage unavailable — sign-in still works, form just won't survive the redirect.
+      }
+      setShowSignIn(true);
       return;
     }
 
@@ -101,6 +146,13 @@ function SponsorPageInner() {
           <BackButton />
           <Brand />
         </nav>
+
+        <SignInPrompt
+          open={showSignIn}
+          onClose={() => setShowSignIn(false)}
+          callbackUrl={isPandalTarget ? "/sponsor?target=pandal" : "/sponsor"}
+          message="We use your Google account just to know who this ad belongs to — no accounts of our own to manage."
+        />
 
         {done ? (
           <div className="mx-auto mt-16 flex max-w-lg flex-col items-center gap-4 text-center">
