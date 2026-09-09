@@ -278,10 +278,10 @@ export default function HomePage() {
             <div>
               <p className="eyebrow">Be a part of it</p>
               <h2 className="mt-2 text-xl font-bold text-[color:var(--foreground)] sm:text-2xl">
-                Know an Annadhanam we&apos;re missing?
+                Anna Daanam is the greatest Seva.
               </h2>
               <p className="mt-2 max-w-md text-sm text-[color:var(--muted)]">
-                Help someone find a meal, a blessing, and a little more community.
+                Know one we&apos;re missing? Help someone find a meal, a blessing, and a little more community.
               </p>
               <Link href="/submit" className="btn-primary mt-5">
                 <PlusIcon className="h-4 w-4" />
