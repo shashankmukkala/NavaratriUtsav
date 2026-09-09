@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Cropper from "react-easy-crop";
 import { getCroppedImageBlob } from "@/lib/cropImage";
 
@@ -35,7 +36,13 @@ export default function ImageCropModal({ imageSrc, aspect, onCancel, onCropped }
     }
   };
 
-  return (
+  // Rendered into document.body via a portal — the form this opens from has
+  // an entrance animation that leaves a `transform` applied on the card
+  // (fill-mode: both), and any ancestor with a transform becomes the
+  // containing block for `position: fixed` descendants. Without the
+  // portal, "fixed, centered" ends up centered on that card instead of the
+  // actual viewport.
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
       <div className="card-elevated flex w-full max-w-md flex-col overflow-hidden p-5">
         <p className="text-base font-bold text-[color:var(--foreground)]">Adjust your photo</p>
@@ -78,6 +85,7 @@ export default function ImageCropModal({ imageSrc, aspect, onCancel, onCropped }
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
