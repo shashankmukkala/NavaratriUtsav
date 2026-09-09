@@ -64,26 +64,26 @@ export default function HomePage() {
           src="/images/hero-left.png"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 z-0 w-40 sm:w-56 lg:w-72"
+          className="pointer-events-none absolute left-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/hero-right.png"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 z-0 w-40 sm:w-56 lg:w-72"
+          className="pointer-events-none absolute right-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
         />
 
         <div className="relative z-10 mx-auto max-w-6xl">
           <nav className="nav-shell mt-2 flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5">
             <Brand tagline />
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link href="/ads" className="btn-secondary hidden! sm:inline-flex!">
-                <MegaphoneIcon className="h-4 w-4" />
+              <Link href="/ads" className="btn-secondary hidden! sm:inline-flex! px-3! py-1.5! text-xs!">
+                <MegaphoneIcon className="h-3.5 w-3.5" />
                 Publish Ads
               </Link>
-              <Link href="/map" className="btn-primary">
-                <PinIcon className="h-4 w-4" />
+              <Link href="/map" className="btn-primary px-3! py-1.5! text-xs!">
+                <PinIcon className="h-3.5 w-3.5" />
                 View Map
               </Link>
               <ProfileNavLink />
@@ -100,14 +100,14 @@ export default function HomePage() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/map" className="btn-primary px-7 py-3.5 text-base">
-                  <PinIcon className="h-5 w-5" />
+                <Link href="/map" className="btn-primary px-5! py-2.5! text-sm!">
+                  <PinIcon className="h-4 w-4" />
                   Explore Annadhanam
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
-                <Link href="/submit" className="btn-secondary px-7 py-3.5 text-base">
-                  <PlusIcon className="h-5 w-5" />
-                  Register your Seva
+                <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
+                  <PlusIcon className="h-4 w-4" />
+                  Add your Mandapam Seva
                 </Link>
               </div>
 
@@ -117,7 +117,6 @@ export default function HomePage() {
                   icon={<PinIcon className="h-5 w-5" />}
                   label={pandals ? `${pandals.length}+ Annadhanams` : "Annadhanams near you"}
                 />
-                <Stat icon={<HeartIcon className="h-5 w-5" />} label="Many smiles" />
               </div>
             </div>
 
@@ -251,7 +250,7 @@ export default function HomePage() {
               </p>
               <Link href="/submit" className="btn-primary mt-5">
                 <PlusIcon className="h-4 w-4" />
-                Add Seva
+                Add your Mandapam Seva
               </Link>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}

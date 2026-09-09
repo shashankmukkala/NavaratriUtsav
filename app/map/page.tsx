@@ -38,6 +38,10 @@ export default function MapPage() {
   // resolves, or when they search an area name. Pins/list filtering stay
   // driven by `query`/`coords` directly; this is purely camera movement.
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
+  // Set once a searched area name resolves — while active, this (not the
+  // user's own coords) is what "near you" is centered on, so searching
+  // Mumbai shows mandapams near Mumbai even if the user is really in Pune.
+  const [areaCenter, setAreaCenter] = useState<{ lat: number; lng: number } | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -51,10 +55,9 @@ export default function MapPage() {
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
   }, []);
 
-  // Only asked for once the user actually opens the list (not automatically
-  // on page load) — the map itself works fine with no location at all, but
-  // the "near you" list is genuinely meaningless without it, so we ask
-  // explicitly and show why, rather than silently listing everything.
+  // Asked for as soon as the map loads — the "near you" list is genuinely
+  // meaningless without a location, so we ask right away and show why if
+  // it's denied/unavailable, rather than silently listing everything.
   const requestLocation = () => {
     if (coords) {
       setLocationStatus("granted");
@@ -71,25 +74,45 @@ export default function MapPage() {
         setCoords(here);
         setFlyTarget(here);
         setLocationStatus("granted");
+        // Once we actually know where they are, go straight to showing the
+        // nearby list instead of leaving them looking at a bare map.
+        setSidebarOpen(true);
+        setShowList(true);
       },
       () => setLocationStatus("denied"),
       { enableHighAccuracy: false, timeout: 8000 }
     );
   };
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Searching an area name (not just filtering the pandal list by text)
-  // geocodes it and flies the map there, same proxy LocationPicker uses.
+  // geocodes it, flies the map there, and re-centers the "near you" list on
+  // that area instead of the user's real location — so searching "Mumbai"
+  // shows mandapams near Mumbai even if they're actually somewhere else.
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     const q = query.trim();
-    if (q.length < 3) return;
+    if (q.length < 3) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAreaCenter(null);
+      return;
+    }
 
     searchTimer.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
         const data = await res.json();
         const first = Array.isArray(data) ? data[0] : null;
-        if (first) setFlyTarget({ lat: Number(first.lat), lng: Number(first.lon) });
+        if (first) {
+          const at = { lat: Number(first.lat), lng: Number(first.lon) };
+          setFlyTarget(at);
+          setAreaCenter(at);
+        }
       } catch {
         // No connectivity to the geocoder — the text filter above still works.
       }
@@ -98,6 +121,10 @@ export default function MapPage() {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
   }, [query]);
+
+  // A searched area takes priority over the user's own location for "near
+  // you" purposes, whenever one is active.
+  const effectiveCenter = areaCenter ?? coords;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -109,19 +136,19 @@ export default function MapPage() {
       .filter((p) => (q ? p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) : true));
   }, [pandals, filter, query]);
 
-  const withDistance = (p: Pandal) => (coords ? distanceKm(coords.lat, coords.lng, p.lat, p.lng) : null);
+  const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
   // The sidebar/mobile list is scoped to nearby mandapams (sorted closest
   // first) so it reads like a real "near you" list, not just every listing
   // in publish order — the map pins themselves stay unfiltered by distance.
   const nearby = useMemo(() => {
-    if (!coords) return filtered;
+    if (!effectiveCenter) return filtered;
     return filtered
-      .map((p) => ({ p, km: distanceKm(coords.lat, coords.lng, p.lat, p.lng) }))
+      .map((p) => ({ p, km: distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) }))
       .filter(({ km }) => km <= NEARBY_RADIUS_KM)
       .sort((a, b) => a.km - b.km)
       .map(({ p }) => p);
-  }, [filtered, coords]);
+  }, [filtered, effectiveCenter]);
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
@@ -164,7 +191,7 @@ export default function MapPage() {
             </Link>
             <Link href="/submit" className="btn-primary flex-shrink-0">
               <PlusIcon className="h-4 w-4" />
-              Add Seva
+              Add your Mandapam Seva
             </Link>
             <ProfileNavLink />
           </header>
@@ -185,7 +212,7 @@ export default function MapPage() {
                     </button>
                   </div>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">
-                    {coords
+                    {effectiveCenter
                       ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
                       : "Your location is needed to show mandapams near you."}
                   </p>
@@ -202,7 +229,7 @@ export default function MapPage() {
                   </div>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-                  {locationStatus !== "granted" ? (
+                  {!effectiveCenter ? (
                     <LocationGate status={locationStatus} onRetry={requestLocation} />
                   ) : (
                     <PandalList
@@ -211,7 +238,7 @@ export default function MapPage() {
                       selectedId={selected?.id ?? null}
                       distanceFor={withDistance}
                       onSelect={setSelected}
-                      nearbyScoped={!!coords}
+                      nearbyScoped={!!effectiveCenter}
                     />
                   )}
                 </div>
@@ -235,8 +262,17 @@ export default function MapPage() {
       {/* ===== Mobile layout (single view + bottom tab bar) ===== */}
       <div className="relative flex h-full flex-col lg:hidden">
         <header className="pointer-events-none absolute inset-x-3 top-3 z-20">
-          <div className="nav-shell pointer-events-auto flex items-center px-4 py-2.5">
+          <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3">
             <Brand />
+            <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
+              <SearchIcon className="h-4 w-4 flex-shrink-0" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search your area or city…"
+                className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
+              />
+            </label>
           </div>
         </header>
 
@@ -261,19 +297,10 @@ export default function MapPage() {
                   </button>
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">
-                  {coords
+                  {effectiveCenter
                     ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
                     : "Your location is needed to show mandapams near you."}
                 </p>
-                <label className="mt-3 flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2.5 text-sm text-[color:var(--muted)]">
-                  <SearchIcon className="h-4 w-4 flex-shrink-0" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search your area or city…"
-                    className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
-                  />
-                </label>
                 <div className="mt-3 flex gap-2 overflow-x-auto">
                   <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
                     All
@@ -287,7 +314,7 @@ export default function MapPage() {
                 </div>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
-                {locationStatus !== "granted" ? (
+                {!effectiveCenter ? (
                   <LocationGate status={locationStatus} onRetry={requestLocation} />
                 ) : (
                   <PandalList
@@ -296,7 +323,7 @@ export default function MapPage() {
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
                     onSelect={setSelected}
-                    nearbyScoped={!!coords}
+                    nearbyScoped={!!effectiveCenter}
                   />
                 )}
               </div>
@@ -384,7 +411,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    <aside className="card-elevated pointer-events-auto hidden w-44 flex-shrink-0 flex-col gap-2 overflow-hidden p-2.5 xl:flex">
+    <aside className="card-elevated pointer-events-auto hidden w-64 flex-shrink-0 flex-col gap-3 overflow-hidden p-3 xl:flex">
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
@@ -405,10 +432,10 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
           href="/sponsor"
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.16)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.5)] hover:bg-[rgba(234,108,29,0.05)]"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
-            <MegaphoneIcon className="h-3.5 w-3.5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+            <MegaphoneIcon className="h-4 w-4" />
           </span>
-          <span className="text-[0.6875rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
+          <span className="text-xs font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
         </Link>
       ))}
     </aside>
@@ -426,7 +453,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
     <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto px-1 pb-0.5">
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
+        const className = "h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -441,10 +468,10 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
+          className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
         >
-          <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
-          <span className="text-[0.55rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
+          <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+          <span className="text-[0.625rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
         </Link>
       ))}
     </div>
@@ -508,7 +535,7 @@ function LocationGate({
   status,
   onRetry,
 }: {
-  status: "idle" | "pending" | "denied" | "unsupported";
+  status: "idle" | "pending" | "granted" | "denied" | "unsupported";
   onRetry: () => void;
 }) {
   if (status === "pending") {

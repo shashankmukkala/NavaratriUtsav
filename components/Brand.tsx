@@ -11,7 +11,7 @@ interface BrandProps {
 export default function Brand({ tagline = false, size = "sm" }: BrandProps) {
   const iconBox = size === "lg" ? "h-11 w-11" : "h-9 w-9";
   const iconSize = size === "lg" ? "h-7 w-7" : "h-6 w-6";
-  const nameSize = size === "lg" ? "text-xl" : "text-base";
+  const nameSize = size === "lg" ? "text-xl" : "text-sm";
 
   return (
     <Link href="/" className="flex items-center gap-2.5">

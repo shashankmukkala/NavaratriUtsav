@@ -271,7 +271,7 @@ export default function SubmitPage() {
 
         {!done && (
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12 lg:pt-16">
-            <form onSubmit={handleSubmit} className="card-elevated order-2 space-y-5 p-5 sm:p-7 lg:order-1">
+            <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
               <ImageUploadField label="Photo of the mandapam" folder="pandals" required value={imageUrl} onChange={setImageUrl} />
 
               <Field label="Association name" required>
@@ -359,9 +359,9 @@ export default function SubmitPage() {
               </p>
             </form>
 
-            <div className="order-1 min-w-0 space-y-6 lg:sticky lg:top-8 lg:order-2">
+            <div className="min-w-0 space-y-6 lg:sticky lg:top-8 lg:order-2">
               <div>
-                <p className="eyebrow">Add Seva</p>
+                <p className="eyebrow">Add your Mandapam Seva</p>
                 <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
                   Let the people know. Let the seva grow.
                 </h1>
