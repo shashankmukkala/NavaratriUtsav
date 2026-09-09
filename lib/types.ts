@@ -17,6 +17,12 @@ export interface Pandal {
   banner_paid: boolean;
   user_id: string | null;
   status: PandalStatus;
+  /** Owner has asked to edit an already-approved listing's core details. */
+  edit_requested: boolean;
+  /** Admin has approved that request — the owner can now save one core-detail
+   * edit before this resets and a new request is needed. Adding/replacing
+   * the banner is unaffected by either flag. */
+  edit_unlocked: boolean;
   created_at: string;
 }
 

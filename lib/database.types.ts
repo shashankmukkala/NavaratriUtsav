@@ -21,6 +21,8 @@ export interface Database {
           banner_paid: boolean;
           user_id: string | null;
           status: "pending" | "approved" | "rejected";
+          edit_requested: boolean;
+          edit_unlocked: boolean;
           created_at: string;
         };
         Insert: {
@@ -40,6 +42,8 @@ export interface Database {
           banner_paid?: boolean;
           user_id?: string | null;
           status?: "pending" | "approved" | "rejected";
+          edit_requested?: boolean;
+          edit_unlocked?: boolean;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["pandals"]["Insert"]>;

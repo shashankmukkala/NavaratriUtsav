@@ -367,15 +367,19 @@ export default function SubmitPage() {
                 />
               </div>
 
-              <Field label="Location / Address" required>
+              <Field label="Address (from the map pin above)" required>
                 <textarea
                   required
+                  readOnly
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
                   rows={2}
-                  placeholder="Street, area, landmark, city"
-                  className="field-input"
+                  placeholder="Drag the pin or search above to set this"
+                  className="field-input cursor-not-allowed bg-[rgba(43,22,8,0.04)] text-[color:var(--muted)]"
                 />
+                <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
+                  This always matches the pin — so &quot;Get Directions&quot; on the live listing takes people to the
+                  right place. To change it, move the pin or search a different spot above.
+                </p>
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
