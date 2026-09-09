@@ -280,6 +280,12 @@ export default function HomePage() {
             Made with a little extra love for PGs &amp; Hostelers. ❤️
           </p>
         </div>
+        <p className="mx-auto mt-4 max-w-6xl text-center text-xs text-[color:var(--muted)] sm:text-left">
+          Need help? Write to us at{" "}
+          <a href="mailto:bappaseva2026@gmail.com" className="font-semibold text-[color:var(--accent-deep)] hover:underline">
+            bappaseva2026@gmail.com
+          </a>
+        </p>
       </footer>
     </div>
   );

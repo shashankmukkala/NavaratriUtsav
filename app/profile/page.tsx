@@ -291,6 +291,13 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        <p className="mt-10 text-center text-xs text-[color:var(--muted)]">
+          Need help? Write to us at{" "}
+          <a href="mailto:bappaseva2026@gmail.com" className="font-semibold text-[color:var(--accent-deep)] hover:underline">
+            bappaseva2026@gmail.com
+          </a>
+        </p>
       </div>
 
       {editing && (
