@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
   // hard-restricting results the way the reference project's Hyderabad-only
   // viewbox does — a pandal could be pinned anywhere in the country.
   url.searchParams.set("countrycodes", "in");
+  // Needed so callers can tell which state a result is in — the app is
+  // currently only serving Telangana and Andhra Pradesh.
+  url.searchParams.set("addressdetails", "1");
 
   try {
     const res = await fetch(url.toString(), {
@@ -52,6 +55,7 @@ async function reverseGeocode(lat: string, lon: string) {
   url.searchParams.set("lon", lon);
   url.searchParams.set("format", "json");
   url.searchParams.set("zoom", "18");
+  url.searchParams.set("addressdetails", "1");
 
   try {
     const res = await fetch(url.toString(), {

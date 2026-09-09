@@ -23,6 +23,10 @@ export interface Pandal {
    * edit before this resets and a new request is needed. Adding/replacing
    * the banner is unaffected by either flag. */
   edit_unlocked: boolean;
+  /** A short note from admin to the owner — why an edit was denied, why a
+   * listing was rejected, etc. Shown on the owner's profile until they
+   * dismiss it. */
+  admin_note: string | null;
   created_at: string;
 }
 
@@ -57,4 +61,5 @@ export interface GeocodeResult {
   display_name: string;
   lat: string;
   lon: string;
+  address?: { state?: string };
 }

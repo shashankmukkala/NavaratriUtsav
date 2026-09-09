@@ -23,6 +23,7 @@ export interface Database {
           status: "pending" | "approved" | "rejected";
           edit_requested: boolean;
           edit_unlocked: boolean;
+          admin_note: string | null;
           created_at: string;
         };
         Insert: {
@@ -44,6 +45,7 @@ export interface Database {
           status?: "pending" | "approved" | "rejected";
           edit_requested?: boolean;
           edit_unlocked?: boolean;
+          admin_note?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["pandals"]["Insert"]>;

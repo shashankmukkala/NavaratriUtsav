@@ -161,7 +161,7 @@ export default function HomePage() {
               <MapView pandals={pandals ?? []} selectedId={selectedPandal?.id ?? null} onSelect={setSelectedPandal} />
 
               {selectedPandal && (
-                <div className="map-card pointer-events-auto absolute bottom-3 right-3 w-64 max-w-[80%] p-3">
+                <div className="card-elevated pointer-events-auto absolute bottom-3 right-3 w-64 max-w-[80%] p-3">
                   <button
                     type="button"
                     onClick={() => setSelectedPandal(null)}

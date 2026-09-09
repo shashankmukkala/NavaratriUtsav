@@ -9,11 +9,14 @@ import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
-import type { Pandal, Sponsor } from "@/lib/types";
+import { isServedState } from "@/lib/servedArea";
+import type { GeocodeResult, Pandal, Sponsor } from "@/lib/types";
 
 type Filter = "all" | "today" | "open";
+type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" | "outside-area";
 
 const NEARBY_RADIUS_KM = 5;
 
@@ -38,7 +41,14 @@ export default function MapPage() {
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationStatus, setLocationStatus] = useState<"idle" | "pending" | "granted" | "denied" | "unsupported">("idle");
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  // The state name Nominatim resolved a rejected GPS fix or search to, so
+  // the "not serving here" message can name it (e.g. "Karnataka").
+  const [outOfAreaName, setOutOfAreaName] = useState<string | null>(null);
+  // Set when a search resolves to a real place outside Telangana/Andhra
+  // Pradesh — kept separate from the GPS-only outOfAreaName/locationStatus
+  // since these are two different moments in the UI.
+  const [searchOutOfArea, setSearchOutOfArea] = useState<string | null>(null);
   // Whether location is actually being USED right now — separate from
   // browser permission (locationStatus), since a permission grant can't be
   // "switched off" once given, but the app's own use of it can be. Flipping
@@ -106,8 +116,24 @@ export default function MapPage() {
     }
     setLocationStatus("pending");
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const here = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // Only Telangana/Andhra Pradesh are served — a GPS fix elsewhere
+        // shouldn't silently center "near you" results on a place we have
+        // nothing to show for.
+        try {
+          const res = await fetch(`/api/geocode?lat=${here.lat}&lon=${here.lng}`);
+          const data = await res.json();
+          const state = data?.address?.state as string | undefined;
+          if (!isServedState(state)) {
+            setOutOfAreaName(state ?? null);
+            setLocationStatus("outside-area");
+            return;
+          }
+        } catch {
+          // Reverse-geocode failed — don't block a real GPS fix on a network hiccup.
+        }
+        setOutOfAreaName(null);
         setCoords(here);
         setLocationStatus("granted");
         setLocationOn(true);
@@ -148,6 +174,7 @@ export default function MapPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAreaCenter(null);
       areaCenterRef.current = null;
+      setSearchOutOfArea(null);
       return;
     }
 
@@ -155,12 +182,20 @@ export default function MapPage() {
     searchTimer.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
+        const data: GeocodeResult[] = await res.json();
         // A newer keystroke already started a fresher search — never let a
         // slower, stale request clobber it just because it resolved later.
         if (reqId !== searchReqId.current) return;
         const first = Array.isArray(data) ? data[0] : null;
         if (first) {
+          const state = first.address?.state;
+          if (!isServedState(state)) {
+            setSearchOutOfArea(state ?? "that area");
+            setAreaCenter(null);
+            areaCenterRef.current = null;
+            return;
+          }
+          setSearchOutOfArea(null);
           const at = { lat: Number(first.lat), lng: Number(first.lon) };
           setFlyTarget(at);
           setAreaCenter(at);
@@ -283,10 +318,11 @@ export default function MapPage() {
                     onUseMyLocation={useMyLocation}
                     filter={filter}
                     onFilterChange={setFilter}
+                    searchOutOfArea={searchOutOfArea}
                   />
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-                  {!effectiveCenter && <LocationPrompt status={locationStatus} onEnable={requestLocation} />}
+                  {!effectiveCenter && <LocationPrompt status={locationStatus} outOfAreaName={outOfAreaName} onEnable={requestLocation} />}
                   <PandalList
                     pandals={nearby}
                     loading={loading}
@@ -295,6 +331,8 @@ export default function MapPage() {
                     onSelect={setSelected}
                     nearbyScoped={!!effectiveCenter}
                     areaSearch={!!areaCenter}
+                    query={query}
+                    onQueryChange={setQuery}
                   />
                 </div>
               </aside>
@@ -353,10 +391,11 @@ export default function MapPage() {
                   filter={filter}
                   onFilterChange={setFilter}
                   scrollableFilters
+                  searchOutOfArea={searchOutOfArea}
                 />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
-                {!effectiveCenter && <LocationPrompt status={locationStatus} onEnable={requestLocation} />}
+                {!effectiveCenter && <LocationPrompt status={locationStatus} outOfAreaName={outOfAreaName} onEnable={requestLocation} />}
                 <PandalList
                   pandals={nearby}
                   loading={loading}
@@ -365,6 +404,8 @@ export default function MapPage() {
                   onSelect={setSelected}
                   nearbyScoped={!!effectiveCenter}
                   areaSearch={!!areaCenter}
+                  query={query}
+                  onQueryChange={setQuery}
                 />
               </div>
             </div>
@@ -546,7 +587,7 @@ function LocationToggle({
   on,
   onToggle,
 }: {
-  status: "idle" | "pending" | "granted" | "denied" | "unsupported";
+  status: LocationStatus;
   on: boolean;
   onToggle: () => void;
 }) {
@@ -557,6 +598,7 @@ function LocationToggle({
       onClick={onToggle}
       disabled={pending || status === "unsupported"}
       aria-pressed={on}
+      title={status === "outside-area" ? "Not available at your current location" : undefined}
       className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-[rgba(43,22,8,0.06)] py-1 pl-2.5 pr-1 text-xs font-semibold text-[color:var(--muted)] transition-colors disabled:opacity-60"
     >
       {pending ? "Locating…" : "Location"}
@@ -585,6 +627,7 @@ function NearbyListHeader({
   filter,
   onFilterChange,
   scrollableFilters = false,
+  searchOutOfArea = null,
 }: {
   areaCenter: { lat: number; lng: number } | null;
   query: string;
@@ -595,6 +638,7 @@ function NearbyListHeader({
   filter: Filter;
   onFilterChange: (f: Filter) => void;
   scrollableFilters?: boolean;
+  searchOutOfArea?: string | null;
 }) {
   const searchedPlace = query.trim();
   // "Near You" is only honest once we're actually centered on the user's
@@ -620,6 +664,12 @@ function NearbyListHeader({
           <CloseIcon className="h-4 w-4" />
         </button>
       </div>
+      {searchOutOfArea && (
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-[rgba(234,108,29,0.35)] bg-white p-2.5 text-xs text-[color:var(--foreground)] shadow-sm">
+          <PinIcon className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--accent-deep)]" />
+          We&apos;re not serving {searchOutOfArea} yet — try a place in Telangana or Andhra Pradesh, like Hyderabad.
+        </div>
+      )}
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {areaCenter
           ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} found`
@@ -660,9 +710,11 @@ function NearbyListHeader({
  * permission prompt unless it's triggered by a direct user gesture. */
 function LocationPrompt({
   status,
+  outOfAreaName,
   onEnable,
 }: {
-  status: "idle" | "pending" | "granted" | "denied" | "unsupported";
+  status: LocationStatus;
+  outOfAreaName: string | null;
   onEnable: () => void;
 }) {
   if (status === "pending") {
@@ -679,6 +731,16 @@ function LocationPrompt({
       <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         Location isn&apos;t supported here — search an area above to sort by distance.
+      </div>
+    );
+  }
+
+  if (status === "outside-area") {
+    return (
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
+        <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
+        We&apos;re not serving {outOfAreaName ?? "your area"} yet — search a place in Telangana or Andhra Pradesh
+        (e.g. Hyderabad) above.
       </div>
     );
   }
@@ -706,6 +768,8 @@ function PandalList({
   onSelect,
   nearbyScoped = false,
   areaSearch = false,
+  query,
+  onQueryChange,
 }: {
   pandals: Pandal[];
   loading: boolean;
@@ -720,26 +784,44 @@ function PandalList({
    * GPS — the empty state shouldn't claim a "5 km" radius that was never
    * actually applied to a searched area. */
   areaSearch?: boolean;
+  /** When given (GPS-based "near you" came back empty), an inline manual
+   * search offers a way out that doesn't depend on noticing the nav's
+   * search box on its own. */
+  query?: string;
+  onQueryChange?: (q: string) => void;
 }) {
   if (loading) {
     return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading annadhanams…</p>;
   }
   if (pandals.length === 0) {
     return (
-      <p className="p-6 text-center text-sm text-[color:var(--muted)]">
-        {nearbyScoped
-          ? areaSearch
-            ? "No annadhanams found in this area yet."
-            : `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
-          : "No annadhanams published yet. Be the first to add one!"}
-      </p>
+      <div className="space-y-3 p-6 text-center">
+        <p className="text-sm text-[color:var(--muted)]">
+          {nearbyScoped
+            ? areaSearch
+              ? "No annadhanams found in this area yet."
+              : `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
+            : "No annadhanams published yet. Be the first to add one!"}
+        </p>
+        {nearbyScoped && !areaSearch && onQueryChange && (
+          <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-left text-sm text-[color:var(--muted)]">
+            <SearchIcon className="h-4 w-4 flex-shrink-0" />
+            <input
+              value={query ?? ""}
+              onChange={(e) => onQueryChange(e.target.value)}
+              placeholder="Try a different area — e.g. Hyderabad"
+              className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
+            />
+          </label>
+        )}
+      </div>
     );
   }
   return (
     <ul className="space-y-1">
       {pandals.map((pandal) => {
         const km = distanceFor(pandal);
-        const live = isToday(pandal.event_date);
+        const eventStatus = getEventStatus(pandal.event_date);
         return (
           <li key={pandal.id}>
             <button onClick={() => onSelect(pandal)} className={`list-row w-full ${selectedId === pandal.id ? "list-row-active" : ""}`}>
@@ -756,7 +838,9 @@ function PandalList({
                   {formatEventDate(pandal.event_date)} · {pandal.timing_text}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className={live ? "badge-live" : "badge-live opacity-70"}>{live ? "Serving Now" : "Open"}</span>
+                  <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>
+                    {eventStatusLabel(eventStatus)}
+                  </span>
                   <span className="badge-verified">
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified

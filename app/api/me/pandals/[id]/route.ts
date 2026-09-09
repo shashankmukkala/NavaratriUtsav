@@ -51,6 +51,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.banner_payment_proof_url !== undefined) {
     update.banner_payment_proof_url = body.banner_payment_proof_url ? String(body.banner_payment_proof_url) : null;
   }
+  // Owners can only dismiss (clear) an admin note, never set one — writing
+  // the note itself is admin-only, from /admin.
+  if (body.admin_note === null) {
+    update.admin_note = null;
+  }
 
   const stringFields = ["name", "organizer_name", "contact_phone", "address", "event_date", "timing_text", "image_url"] as const;
   const wantsCoreEdit =

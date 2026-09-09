@@ -89,6 +89,11 @@ export default function AdminPage() {
     loadData();
   };
 
+  const sendAdminNote = async (id: string, note: string) => {
+    await sendJson(`/api/admin/pandals/${id}`, { admin_note: note }, "PATCH");
+    loadData();
+  };
+
   const deletePandal = async (id: string) => {
     if (!confirm("Permanently delete this mandapam listing?")) return;
     await sendJson(`/api/admin/pandals/${id}`, undefined, "DELETE");
@@ -202,7 +207,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
-              <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onSetEditUnlocked={setEditUnlocked}>
+              <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onSetEditUnlocked={setEditUnlocked} onSendNote={sendAdminNote}>
                 <StatusBadge status={pandal.status} />
                 {pandal.status !== "approved" && (
                   <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
@@ -429,12 +434,15 @@ function PandalRow({
   children,
   onSetBannerPaid,
   onSetEditUnlocked,
+  onSendNote,
 }: {
   pandal: Pandal;
   children: React.ReactNode;
   onSetBannerPaid: (id: string, paid: boolean) => void;
   onSetEditUnlocked: (id: string, unlocked: boolean) => void;
+  onSendNote: (id: string, note: string) => void;
 }) {
+  const [noteDraft, setNoteDraft] = useState(pandal.admin_note ?? "");
   const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
@@ -513,6 +521,24 @@ function PandalRow({
             </div>
           </div>
         )}
+
+        <div className="flex items-center gap-1.5 pt-1">
+          <input
+            type="text"
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder="Message to owner (e.g. why an edit was denied)…"
+            className="field-input flex-1 py-1 text-xs"
+          />
+          <button
+            type="button"
+            onClick={() => onSendNote(pandal.id, noteDraft.trim())}
+            disabled={noteDraft.trim() === (pandal.admin_note ?? "")}
+            className="btn-secondary flex-shrink-0 px-2.5 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {pandal.admin_note ? "Update" : "Send"}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
