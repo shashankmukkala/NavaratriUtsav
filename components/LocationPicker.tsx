@@ -37,6 +37,9 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
   const [searching, setSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [linkInput, setLinkInput] = useState("");
+  const [resolvingLink, setResolvingLink] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -123,6 +126,31 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
     setShowResults(false);
   };
 
+  // A pasted Google Maps link (or bare "lat, lng") is often more reliable
+  // than searching by name here — Nominatim's India coverage is patchy for
+  // small/local places, while most people already have Google Maps open
+  // and can just share the exact pin they mean.
+  const useMapsLink = async () => {
+    const trimmed = linkInput.trim();
+    if (!trimmed) return;
+    setResolvingLink(true);
+    setLinkError(null);
+    try {
+      const res = await fetch(`/api/resolve-location?input=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      if (!res.ok || typeof data?.lat !== "number" || typeof data?.lng !== "number") {
+        setLinkError(data?.error || "Couldn't find a location in that link.");
+        return;
+      }
+      await movePinRef.current(data.lat, data.lng);
+      setLinkInput("");
+    } catch {
+      setLinkError("Couldn't reach the server — try again.");
+    } finally {
+      setResolvingLink(false);
+    }
+  };
+
   const useMyLocation = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
@@ -175,6 +203,34 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
           {locating ? "Locating…" : "My location"}
         </button>
       </div>
+
+      <div className="flex items-center gap-2 text-xs text-[color:var(--muted-soft)]">
+        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
+        or paste a Google Maps link
+        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={linkInput}
+          onChange={(e) => {
+            setLinkInput(e.target.value);
+            setLinkError(null);
+          }}
+          placeholder="Paste a Google Maps link or “lat, lng”…"
+          className="field-input flex-1 text-sm"
+        />
+        <button
+          type="button"
+          onClick={useMapsLink}
+          disabled={resolvingLink || !linkInput.trim()}
+          className="btn-secondary whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {resolvingLink ? "Finding…" : "Use link"}
+        </button>
+      </div>
+      {linkError && <p className="text-xs text-[color:var(--coral-deep)]">{linkError}</p>}
+
       <div className="relative h-64 w-full overflow-hidden rounded-2xl border border-[rgba(43,22,8,0.12)]">
         {!loaded && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-[color:var(--cream-200)] text-sm text-[color:var(--muted)]">
@@ -184,7 +240,7 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
         <div ref={containerRef} className="h-full w-full" onClick={() => setShowResults(false)} />
       </div>
       <p className="text-xs text-[color:var(--muted-soft)]">
-        Drag the pin, click the map, or search above to set the exact location.
+        Drag the pin, click the map, search, or paste a Google Maps link to set the exact location.
       </p>
     </div>
   );

@@ -338,18 +338,22 @@ export default function MapPage() {
               </aside>
             )}
 
-            {/* Empty spacer — the live map shows through here, unobstructed. */}
-            <div className="flex-1" />
+            {selected ? (
+              // Sharing this flex row with the ad panel (rather than
+              // floating as a separate absolutely-positioned overlay) means
+              // it's exactly as tall as the ad panel by construction, not
+              // by guessing at a matching max-height.
+              <div className="pointer-events-auto flex min-h-0 flex-1 justify-center">
+                <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} />
+              </div>
+            ) : (
+              // Empty spacer — the live map shows through here, unobstructed.
+              <div className="flex-1" />
+            )}
 
             <AdSlotPanel sponsors={sponsors} />
           </div>
         </div>
-
-        {selected && (
-          <div className="pointer-events-none absolute inset-4 flex items-start justify-end pt-24">
-            <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} />
-          </div>
-        )}
       </div>
 
       {/* ===== Mobile layout (single view + bottom tab bar) ===== */}

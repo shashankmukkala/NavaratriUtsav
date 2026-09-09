@@ -79,22 +79,19 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // A flat "85vh" cap could still exceed the room actually left after the
-  // floating popup's own offset from the top of the screen (the wrapper in
-  // app/map/page.tsx uses inset-4 + pt-24 above it and inset-4 below — 8rem
-  // total) — on a shorter browser window that clipped the bottom of the
-  // card (the ad banner, being last, took the hit) instead of scrolling.
-  // Sizing directly off the actual remaining viewport height fixes that.
+  // Shares the same flex row as the ad panel in app/map/page.tsx (rather
+  // than floating as a separate absolutely-positioned overlay), so h-full
+  // makes it exactly as tall as that panel by construction.
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex max-h-[calc(100vh-8rem)] w-full max-w-md flex-col overflow-hidden";
+    : "card-elevated pointer-events-auto flex h-full w-full max-w-md flex-col overflow-hidden";
 
   return (
     <div className={shellClassName}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="relative flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-44 w-full object-cover"} />
+          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-40 w-full object-cover"} />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
           <button
             onClick={onClose}
@@ -107,7 +104,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           </button>
         </div>
 
-        <div className="space-y-2.5 p-4">
+        <div className="flex min-h-0 flex-1 flex-col space-y-2.5 p-4">
           <div className="flex items-center gap-2">
             <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
             <span className="badge-verified">
@@ -130,33 +127,39 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
 
-          {route && (
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent-deep)]">
-              <DirectionsIcon className="h-4 w-4" />
-              {route.distanceKm < 10 ? route.distanceKm.toFixed(1) : Math.round(route.distanceKm)} km ·{" "}
-              {Math.round(route.durationMin)} min drive
-            </p>
+          {/* Get Directions / Call are mobile-only here — the desktop card
+              trades them for more room for the ad banner below, sharing its
+              exact height with the ad panel beside it. */}
+          {fullScreen && (
+            <>
+              {route && (
+                <p className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent-deep)]">
+                  <DirectionsIcon className="h-4 w-4" />
+                  {route.distanceKm < 10 ? route.distanceKm.toFixed(1) : Math.round(route.distanceKm)} km ·{" "}
+                  {Math.round(route.durationMin)} min drive
+                </p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary min-w-0 flex-1 px-2! py-2! text-sm!"
+                >
+                  <DirectionsIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Get Directions</span>
+                </a>
+                <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! py-2! text-sm!">
+                  <PhoneIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Call {pandal.contact_phone}</span>
+                </a>
+              </div>
+            </>
           )}
 
-          <div className="flex gap-2 pt-1">
-            <a
-              href={directionsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary min-w-0 flex-1 px-2! py-2! text-sm!"
-            >
-              <DirectionsIcon className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Get Directions</span>
-            </a>
-            <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! py-2! text-sm!">
-              <PhoneIcon className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Call {pandal.contact_phone}</span>
-            </a>
-          </div>
-
           {bannerImages.length > 0 && (
-            <div className="border-t border-[rgba(43,22,8,0.1)] pt-2">
-              <div className="h-24 overflow-hidden rounded-lg">
+            <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
+              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-24" : "min-h-24 flex-1"}`}>
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
             </div>
