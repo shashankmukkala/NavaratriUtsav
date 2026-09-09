@@ -213,7 +213,7 @@ export default function HomePage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/ganesh_mandapam.png"
+              src="/images/new_mandap.png"
               alt="A decorated Ganesh mandapam pandal with devotees gathered for aarti"
               className="w-full"
             />
