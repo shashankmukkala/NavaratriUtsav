@@ -292,7 +292,7 @@ export default function HomePage() {
             <img
               src="/images/food.png"
               alt="A traditional festival thali served on a banana leaf"
-              className="hidden h-full max-h-64 w-full object-cover sm:block"
+              className="h-48 w-full object-cover sm:h-full sm:max-h-64"
               style={{
                 WebkitMaskImage: "radial-gradient(ellipse 85% 78% at center, black 60%, transparent 100%)",
                 maskImage: "radial-gradient(ellipse 85% 78% at center, black 60%, transparent 100%)",

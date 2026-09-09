@@ -174,17 +174,15 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
 
-          {fullScreen && (
-            <a
-              href={directionsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary w-full justify-center py-2.5"
-            >
-              <DirectionsIcon className="h-4 w-4" />
-              Get Directions
-            </a>
-          )}
+          <a
+            href={directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary w-full justify-center py-2.5"
+          >
+            <DirectionsIcon className="h-4 w-4" />
+            Get Directions
+          </a>
 
           {bannerImages.length > 0 && (
             <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
