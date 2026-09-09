@@ -101,7 +101,7 @@ export default function HomePage() {
                 </Link>
                 <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
                   <PlusIcon className="h-4 w-4" />
-                  Add your Mandapam Seva
+                  Add Mandapam Seva
                 </Link>
               </div>
 
@@ -252,7 +252,7 @@ export default function HomePage() {
               </p>
               <Link href="/submit" className="btn-primary mt-5">
                 <PlusIcon className="h-4 w-4" />
-                Add your Mandapam Seva
+                Add Mandapam Seva
               </Link>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
