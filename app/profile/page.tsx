@@ -48,6 +48,11 @@ export default function ProfilePage() {
     loadData();
   };
 
+  const dismissAdminNote = async (id: string) => {
+    await sendJson(`/api/me/pandals/${id}`, { admin_note: null }, "PATCH");
+    loadData();
+  };
+
   const requestEdit = async (id: string) => {
     setRequestingEdit(id);
     await sendJson(`/api/me/pandals/${id}/request-edit`, undefined, "POST");
@@ -135,6 +140,23 @@ export default function ProfilePage() {
                             </span>
                           </div>
                           <span className={`status-badge status-${pandal.status} inline-block`}>{pandal.status}</span>
+
+                          {pandal.admin_note && (
+                            <div className="flex items-start gap-1.5 rounded-lg bg-[rgba(234,108,29,0.1)] px-2.5 py-1.5">
+                              <p className="flex-1 text-xs text-[color:var(--foreground)]">
+                                <span className="font-semibold text-[color:var(--accent-deep)]">Note from admin: </span>
+                                {pandal.admin_note}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => dismissAdminNote(pandal.id)}
+                                aria-label="Dismiss note"
+                                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.08)]"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )}
 
                           {hasBanner ? (
                             <p className="flex items-center gap-1.5 text-xs font-medium">

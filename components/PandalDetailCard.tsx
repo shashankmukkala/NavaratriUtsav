@@ -12,6 +12,7 @@ import {
   UserIcon,
   VerifiedIcon,
 } from "@/components/icons";
+import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
 
@@ -70,7 +71,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const dateLabel = Number.isNaN(eventDate.getTime())
     ? pandal.event_date
     : eventDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-  const isToday = pandal.event_date === new Date().toISOString().slice(0, 10);
+  const eventStatus = getEventStatus(pandal.event_date);
 
   // A pandal's own paid banner takes priority; otherwise rotate through the
   // generic sponsor pool. Either way it's shown as a plain rectangle, no
@@ -80,14 +81,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex max-h-[80vh] w-full max-w-sm flex-col overflow-hidden";
+    : "card-elevated pointer-events-auto flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden";
 
   return (
     <div className={shellClassName}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="relative flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-32 w-full object-cover"} />
+          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-44 w-full object-cover"} />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
           <button
             onClick={onClose}
@@ -100,9 +101,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           </button>
         </div>
 
-        <div className="space-y-2 p-4">
+        <div className="space-y-2.5 p-4">
           <div className="flex items-center gap-2">
-            <span className={isToday ? "badge-live" : "badge-live opacity-70"}>{isToday ? "Serving Now" : "Open"}</span>
+            <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
             <span className="badge-verified">
               <VerifiedIcon className="h-3.5 w-3.5" />
               Verified
@@ -149,7 +150,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           {bannerImages.length > 0 && (
             <div className="border-t border-[rgba(43,22,8,0.1)] pt-2">
-              <div className="h-12 overflow-hidden rounded-lg">
+              <div className="h-20 overflow-hidden rounded-lg">
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
             </div>

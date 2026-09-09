@@ -15,8 +15,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const status = body?.status;
   const bannerPaid = body?.banner_paid;
   const editUnlocked = body?.edit_unlocked;
+  const adminNote = body?.admin_note;
 
-  const update: { status?: "pending" | "approved" | "rejected"; banner_paid?: boolean; edit_unlocked?: boolean; edit_requested?: boolean } = {};
+  const update: {
+    status?: "pending" | "approved" | "rejected";
+    banner_paid?: boolean;
+    edit_unlocked?: boolean;
+    edit_requested?: boolean;
+    admin_note?: string | null;
+  } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -31,6 +38,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // just said no shouldn't leave it sitting there looking unanswered.
     update.edit_unlocked = Boolean(editUnlocked);
     update.edit_requested = false;
+  }
+  if (adminNote !== undefined) {
+    update.admin_note = adminNote ? String(adminNote).slice(0, 500) : null;
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
