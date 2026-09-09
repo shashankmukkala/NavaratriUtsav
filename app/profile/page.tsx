@@ -431,7 +431,7 @@ function EditPandalModal({
         </p>
 
         <div className="mt-4 space-y-4">
-          <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} />
+          <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association name</label>
@@ -550,7 +550,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
         </p>
 
         <div className="mt-4">
-          <ImageUploadField label="Banner image" folder="pandals" value={bannerUrl} onChange={setBannerUrl} />
+          <ImageUploadField label="Banner image" folder="pandals" value={bannerUrl} onChange={setBannerUrl} aspect={16 / 9} />
         </div>
 
         {!alreadyPaid && bannerUrl && (
@@ -644,7 +644,7 @@ function EditSponsorModal({
         <p className="mt-1 text-xs text-[color:var(--muted)]">Saving sends it back for a quick review before it&apos;s live again.</p>
 
         <div className="mt-4 space-y-4">
-          <ImageUploadField label="Banner image" folder="sponsors" value={bannerUrl} onChange={setBannerUrl} />
+          <ImageUploadField label="Banner image" folder="sponsors" value={bannerUrl} onChange={setBannerUrl} aspect={16 / 9} />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Sponsor name</label>

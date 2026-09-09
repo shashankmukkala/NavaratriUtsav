@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageCropModal from "@/components/ImageCropModal";
 import { CameraIcon, CloseIcon } from "@/components/icons";
 
 interface ImageUploadFieldProps {
@@ -9,16 +10,23 @@ interface ImageUploadFieldProps {
   required?: boolean;
   value: string | null;
   onChange: (url: string | null) => void;
+  /** When given, a selected photo goes through a drag/zoom crop step at this
+   * aspect ratio before uploading — for photos shown in a fixed-shape frame
+   * (mandapam photos, banners), where object-cover would otherwise silently
+   * chop off whatever didn't fit. Omit for images that should stay exactly
+   * as uploaded (payment screenshots, QR codes). */
+  aspect?: number;
 }
 
 /** Uploads an image via /api/upload and reports back the public URL. A
  * dropzone-style picker — click or drag a photo in — instead of the raw
  * native file input, which looks inconsistent across browsers. */
-export default function ImageUploadField({ label, folder, required, value, onChange }: ImageUploadFieldProps) {
+export default function ImageUploadField({ label, folder, required, value, onChange, aspect }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     setUploading(true);
@@ -40,6 +48,27 @@ export default function ImageUploadField({ label, folder, required, value, onCha
     }
   };
 
+  // With an aspect ratio given, a picked file goes to the crop step first
+  // instead of straight to upload — see ImageCropModal.
+  const pickFile = (file: File) => {
+    if (aspect) {
+      setCropSrc(URL.createObjectURL(file));
+    } else {
+      handleFile(file);
+    }
+  };
+
+  const closeCropModal = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const handleCropped = (blob: Blob) => {
+    closeCropModal();
+    handleFile(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+  };
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-[color:var(--foreground)]">
@@ -53,7 +82,7 @@ export default function ImageUploadField({ label, folder, required, value, onCha
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFile(file);
+          if (file) pickFile(file);
         }}
         className="hidden"
       />
@@ -91,7 +120,7 @@ export default function ImageUploadField({ label, folder, required, value, onCha
             e.preventDefault();
             setDragActive(false);
             const file = e.dataTransfer.files?.[0];
-            if (file) handleFile(file);
+            if (file) pickFile(file);
           }}
           className={`flex h-36 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors ${
             dragActive ? "border-[color:var(--accent)] bg-[rgba(234,108,29,0.08)]" : "border-[rgba(43,22,8,0.18)] bg-white/50 hover:border-[rgba(234,108,29,0.5)]"
@@ -112,6 +141,8 @@ export default function ImageUploadField({ label, folder, required, value, onCha
       )}
 
       {error && <p className="text-xs text-[color:var(--coral-deep)]">{error}</p>}
+
+      {cropSrc && aspect && <ImageCropModal imageSrc={cropSrc} aspect={aspect} onCancel={closeCropModal} onCropped={handleCropped} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ImageCropModal from "@/components/ImageCropModal";
 import { CameraIcon, CloseIcon } from "@/components/icons";
 
 interface MultiImageUploadFieldProps {
@@ -11,6 +12,9 @@ interface MultiImageUploadFieldProps {
   hint?: string;
   value: string[];
   onChange: (urls: string[]) => void;
+  /** When given, each photo goes through a drag/zoom crop step at this
+   * aspect ratio before uploading — see ImageUploadField for why. */
+  aspect?: number;
 }
 
 /** Same dropzone pattern as ImageUploadField, but for up to `max` images —
@@ -24,11 +28,13 @@ export default function MultiImageUploadField({
   hint,
   value,
   onChange,
+  aspect,
 }: MultiImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     setUploading(true);
@@ -49,6 +55,24 @@ export default function MultiImageUploadField({
     }
   };
 
+  const pickFile = (file: File) => {
+    if (aspect) {
+      setCropSrc(URL.createObjectURL(file));
+    } else {
+      handleFile(file);
+    }
+  };
+
+  const closeCropModal = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+
+  const handleCropped = (blob: Blob) => {
+    closeCropModal();
+    handleFile(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+  };
+
   const removeAt = (i: number) => onChange(value.filter((_, idx) => idx !== i));
 
   return (
@@ -65,7 +89,7 @@ export default function MultiImageUploadField({
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFile(file);
+          if (file) pickFile(file);
           e.target.value = "";
         }}
         className="hidden"
@@ -100,7 +124,7 @@ export default function MultiImageUploadField({
               e.preventDefault();
               setDragActive(false);
               const file = e.dataTransfer.files?.[0];
-              if (file) handleFile(file);
+              if (file) pickFile(file);
             }}
             className={`flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed transition-colors ${
               dragActive
@@ -125,6 +149,8 @@ export default function MultiImageUploadField({
       </div>
 
       {error && <p className="text-xs text-[color:var(--coral-deep)]">{error}</p>}
+
+      {cropSrc && aspect && <ImageCropModal imageSrc={cropSrc} aspect={aspect} onCancel={closeCropModal} onCropped={handleCropped} />}
     </div>
   );
 }

@@ -279,6 +279,7 @@ function SponsorPageInner() {
                 }
                 value={bannerUrls}
                 onChange={setBannerUrls}
+                aspect={1}
               />
 
               <div>
