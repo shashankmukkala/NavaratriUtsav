@@ -48,6 +48,11 @@ export default function MapPage() {
   // the camera back to their real location, clobbering the search.
   const areaCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Bumped on every search keystroke (not just every fetch) so an older
+  // in-flight geocode request can never overwrite a newer one that happens
+  // to resolve first — e.g. typing "jubilee", pausing long enough for that
+  // request to go out, then continuing to "jubilee hills" before it returns.
+  const searchReqId = useRef(0);
 
   useEffect(() => {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals")
@@ -105,16 +110,21 @@ export default function MapPage() {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     const q = query.trim();
     if (q.length < 3) {
+      searchReqId.current += 1;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAreaCenter(null);
       areaCenterRef.current = null;
       return;
     }
 
+    const reqId = ++searchReqId.current;
     searchTimer.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
         const data = await res.json();
+        // A newer keystroke already started a fresher search — never let a
+        // slower, stale request clobber it just because it resolved later.
+        if (reqId !== searchReqId.current) return;
         const first = Array.isArray(data) ? data[0] : null;
         if (first) {
           const at = { lat: Number(first.lat), lng: Number(first.lon) };
@@ -130,6 +140,23 @@ export default function MapPage() {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
   }, [query]);
+
+  // Drops the searched area and goes back to showing mandapams around the
+  // user's real location — without this, once someone searches an area
+  // there was no way back to "near me" short of clearing the search box.
+  const useMyLocation = () => {
+    searchReqId.current += 1;
+    setQuery("");
+    setAreaCenter(null);
+    areaCenterRef.current = null;
+    if (coords) {
+      setFlyTarget(coords);
+      setSidebarOpen(true);
+      setShowList(true);
+    } else {
+      requestLocation();
+    }
+  };
 
   // A searched area takes priority over the user's own location for "near
   // you" purposes, whenever one is active.
@@ -210,33 +237,16 @@ export default function MapPage() {
             {sidebarOpen && (
               <aside className="card-elevated pointer-events-auto flex w-[380px] flex-shrink-0 flex-col overflow-hidden">
                 <div className="flex-shrink-0 p-5 pb-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-lg font-bold text-[color:var(--foreground)]">Annadhanam Near You</h2>
-                    <button
-                      type="button"
-                      aria-label="Close list"
-                      onClick={() => setSidebarOpen(false)}
-                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)] hover:text-[color:var(--foreground)]"
-                    >
-                      <CloseIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">
-                    {effectiveCenter
-                      ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-                      : "Your location is needed to show mandapams near you."}
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-                      All
-                    </FilterChip>
-                    <FilterChip active={filter === "today"} onClick={() => setFilter("today")}>
-                      Today
-                    </FilterChip>
-                    <FilterChip active={filter === "open"} onClick={() => setFilter("open")}>
-                      Open Now
-                    </FilterChip>
-                  </div>
+                  <NearbyListHeader
+                    areaCenter={areaCenter}
+                    query={query}
+                    effectiveCenter={effectiveCenter}
+                    nearbyCount={nearby.length}
+                    onClose={() => setSidebarOpen(false)}
+                    onUseMyLocation={useMyLocation}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                  />
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
                   {!effectiveCenter ? (
@@ -298,33 +308,17 @@ export default function MapPage() {
             <div className="absolute inset-x-0 bottom-0 z-10 flex max-h-[72%] flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)]">
               <div className="flex-shrink-0 px-4 pb-3 pt-3">
                 <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[rgba(43,22,8,0.15)]" />
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-lg font-bold text-[color:var(--foreground)]">Annadhanam Near You</h2>
-                  <button
-                    type="button"
-                    aria-label="Close list"
-                    onClick={() => setShowList(false)}
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)]"
-                  >
-                    <CloseIcon className="h-4 w-4" />
-                  </button>
-                </div>
-                <p className="mt-1 text-sm text-[color:var(--muted)]">
-                  {effectiveCenter
-                    ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-                    : "Your location is needed to show mandapams near you."}
-                </p>
-                <div className="mt-3 flex gap-2 overflow-x-auto">
-                  <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-                    All
-                  </FilterChip>
-                  <FilterChip active={filter === "today"} onClick={() => setFilter("today")}>
-                    Today
-                  </FilterChip>
-                  <FilterChip active={filter === "open"} onClick={() => setFilter("open")}>
-                    Open Now
-                  </FilterChip>
-                </div>
+                <NearbyListHeader
+                  areaCenter={areaCenter}
+                  query={query}
+                  effectiveCenter={effectiveCenter}
+                  nearbyCount={nearby.length}
+                  onClose={() => setShowList(false)}
+                  onUseMyLocation={useMyLocation}
+                  filter={filter}
+                  onFilterChange={setFilter}
+                  scrollableFilters
+                />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
                 {!effectiveCenter ? (
@@ -424,7 +418,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    <aside className="card-elevated pointer-events-auto hidden w-48 flex-shrink-0 flex-col gap-2.5 overflow-hidden p-2.5 xl:flex">
+    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-hidden p-3 xl:flex">
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
@@ -445,10 +439,10 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
           href="/sponsor"
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.16)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.5)] hover:bg-[rgba(234,108,29,0.05)]"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
-            <MegaphoneIcon className="h-3.5 w-3.5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+            <MegaphoneIcon className="h-4 w-4" />
           </span>
-          <span className="text-[0.6875rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
+          <span className="text-xs font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
         </Link>
       ))}
     </aside>
@@ -466,7 +460,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
     <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto px-1 pb-0.5">
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
+        const className = "h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -481,10 +475,10 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
+          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
         >
           <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
-          <span className="text-[0.6rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
+          <span className="text-[0.625rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
         </Link>
       ))}
     </div>
@@ -568,6 +562,77 @@ function LocationBadge({
       <span className={`h-1.5 w-1.5 rounded-full ${on ? "bg-green-600" : "bg-[color:var(--muted-soft)]"}`} />
       {status === "pending" ? "Locating…" : on ? "Location: On" : "Location: Off"}
     </button>
+  );
+}
+
+/** Shared title/subtitle/filter-chip header for the desktop sidebar and the
+ * mobile bottom sheet — was duplicated between the two with a title that
+ * never changed, even when the list was actually centered on a searched
+ * area rather than the user's real location. */
+function NearbyListHeader({
+  areaCenter,
+  query,
+  effectiveCenter,
+  nearbyCount,
+  onClose,
+  onUseMyLocation,
+  filter,
+  onFilterChange,
+  scrollableFilters = false,
+}: {
+  areaCenter: { lat: number; lng: number } | null;
+  query: string;
+  effectiveCenter: { lat: number; lng: number } | null;
+  nearbyCount: number;
+  onClose: () => void;
+  onUseMyLocation: () => void;
+  filter: Filter;
+  onFilterChange: (f: Filter) => void;
+  scrollableFilters?: boolean;
+}) {
+  const searchedPlace = query.trim();
+  const title = areaCenter && searchedPlace ? `Mandapams near "${searchedPlace}"` : "Annadhanam Near You";
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-lg font-bold text-[color:var(--foreground)]">{title}</h2>
+        <button
+          type="button"
+          aria-label="Close list"
+          onClick={onClose}
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)] hover:text-[color:var(--foreground)]"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+      </div>
+      <p className="mt-1 text-sm text-[color:var(--muted)]">
+        {effectiveCenter
+          ? `${nearbyCount} mandapam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          : "Your location is needed to show mandapams near you."}
+      </p>
+      {areaCenter && (
+        <button
+          type="button"
+          onClick={onUseMyLocation}
+          className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
+        >
+          <PinIcon className="h-3.5 w-3.5" />
+          Near me instead
+        </button>
+      )}
+      <div className={`mt-3 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
+        <FilterChip active={filter === "all"} onClick={() => onFilterChange("all")}>
+          All
+        </FilterChip>
+        <FilterChip active={filter === "today"} onClick={() => onFilterChange("today")}>
+          Today
+        </FilterChip>
+        <FilterChip active={filter === "open"} onClick={() => onFilterChange("open")}>
+          Open Now
+        </FilterChip>
+      </div>
+    </>
   );
 }
 
