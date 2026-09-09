@@ -33,6 +33,11 @@ export default function MapPage() {
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Pandal | null>(null);
+  // Clicking the already-selected pandal again — its map pin or its list
+  // row — closes the detail card instead of just re-opening the same one.
+  const toggleSelected = (pandal: Pandal) => {
+    setSelected((prev) => (prev?.id === pandal.id ? null : pandal));
+  };
   const [showList, setShowList] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Picks up ?q= from the homepage's "Annadhanam near you" search box.
@@ -270,7 +275,7 @@ export default function MapPage() {
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} flyTo={flyTarget} />
         </div>
 
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
@@ -331,7 +336,7 @@ export default function MapPage() {
                     loading={loading}
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
-                    onSelect={setSelected}
+                    onSelect={toggleSelected}
                     nearbyScoped={!!effectiveCenter}
                     areaSearch={!!areaCenter}
                     query={query}
@@ -380,7 +385,7 @@ export default function MapPage() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} flyTo={flyTarget} />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
               the map stays visible above it for context. */}
@@ -408,7 +413,7 @@ export default function MapPage() {
                   loading={loading}
                   selectedId={selected?.id ?? null}
                   distanceFor={withDistance}
-                  onSelect={setSelected}
+                  onSelect={toggleSelected}
                   nearbyScoped={!!effectiveCenter}
                   areaSearch={!!areaCenter}
                   query={query}
