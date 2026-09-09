@@ -228,6 +228,14 @@ export default function MapPage() {
     }
   };
 
+  // Picking a mandapam from the list closes the list panel — otherwise the
+  // detail card and the list sat side by side, squeezing both (and the ad
+  // panel) into cramped slivers of the map.
+  const selectFromList = (pandal: Pandal) => {
+    setSelected(pandal);
+    setSidebarOpen(false);
+  };
+
   // A searched area takes priority over the user's own location for "near
   // you" purposes, whenever one is active. Location only counts when the
   // toggle is actually on — a permission grant alone doesn't mean it's in use.
@@ -328,7 +336,7 @@ export default function MapPage() {
                     loading={loading}
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
-                    onSelect={setSelected}
+                    onSelect={selectFromList}
                     nearbyScoped={!!effectiveCenter}
                     areaSearch={!!areaCenter}
                     query={query}
