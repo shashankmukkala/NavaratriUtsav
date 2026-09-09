@@ -75,14 +75,14 @@ export default function HomePage() {
         />
 
         <div className="relative z-10 mx-auto max-w-6xl">
-          <nav className="nav-shell mt-2 flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5">
+          <nav className="nav-shell mt-2 flex items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5">
             <Brand tagline />
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link href="/ads" className="btn-secondary hidden! sm:inline-flex! px-3! py-1.5! text-xs!">
+            <div className="flex items-center gap-1.5 sm:gap-3">
+              <Link href="/ads" className="btn-secondary px-2.5! py-1.5! text-[0.7rem]! sm:px-4! sm:py-2! sm:text-sm!">
                 <MegaphoneIcon className="h-3.5 w-3.5" />
                 Publish Ads
               </Link>
-              <Link href="/map" className="btn-primary px-3! py-1.5! text-xs!">
+              <Link href="/map" className="btn-primary px-2.5! py-1.5! text-[0.7rem]! sm:px-4! sm:py-2! sm:text-sm!">
                 <PinIcon className="h-3.5 w-3.5" />
                 View Map
               </Link>
