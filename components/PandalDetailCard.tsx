@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, PinIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -17,6 +17,7 @@ interface PandalDetailCardProps {
 export default function PandalDetailCard({ pandal, onClose, fullScreen = false }: PandalDetailCardProps) {
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [addressCopied, setAddressCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const copyAddress = async () => {
     try {
@@ -27,6 +28,29 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       // Clipboard access can be blocked (permissions, non-secure context) —
       // failing silently is fine, the address text is still right there to
       // select and copy by hand.
+    }
+  };
+
+  const share = async () => {
+    const url = `${window.location.origin}/map?pandal=${pandal.id}`;
+    // Native share sheet (WhatsApp, Instagram, Messages, etc.) wherever it's
+    // available; a plain clipboard copy elsewhere (most desktop browsers).
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: pandal.name, text: `${pandal.name} on BappaSeva`, url });
+      } catch {
+        // User cancelled the share sheet, or the OS rejected it — nothing to
+        // recover from, and definitely not an error worth surfacing.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      // Same as copyAddress — clipboard access can be blocked; failing
+      // silently is fine since the button itself already shows the intent.
     }
   };
 
@@ -86,13 +110,27 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <button
+              onClick={share}
+              aria-label="Share"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
+            >
+              <ShareIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
+            >
+              <CloseIcon className="h-4 w-4" />
+            </button>
+          </div>
+          {linkCopied && (
+            <span className="absolute right-3 top-14 rounded-full bg-black/70 px-2.5 py-1 text-xs font-medium text-white">
+              Link copied
+            </span>
+          )}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col space-y-2.5 p-4">
