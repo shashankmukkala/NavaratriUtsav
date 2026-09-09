@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
   CheckIcon,
   CloseIcon,
+  CrownIcon,
   HeartIcon,
   LeafIcon,
   MegaphoneIcon,
@@ -198,6 +199,38 @@ export default function HomePage() {
                   </Link>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== A pandal for Bappa's homecoming ===== */}
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
+          <div
+            className="overflow-hidden rounded-[2rem]"
+            style={{ boxShadow: "0 28px 70px -30px rgba(43,22,8,0.35)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/ganesh_mandapam.png"
+              alt="A decorated Ganesh mandapam pandal with devotees gathered for aarti"
+              className="w-full"
+            />
+          </div>
+          <div>
+            <p className="eyebrow">Mandapam</p>
+            <h2 className="mt-2 text-2xl font-bold leading-snug text-[color:var(--foreground)] sm:text-3xl">
+              A sacred homecoming. Ten days of blessings for the whole neighborhood.
+            </h2>
+            <p className="mt-4 max-w-md text-sm text-[color:var(--muted)] sm:text-base">
+              Every Ganesh Chaturthi, neighborhoods come together to build a mandapam — inviting Bappa home with
+              music, flowers and prayer, and welcoming everyone in for darshan.
+            </p>
+            <div className="mt-6 space-y-3">
+              <Checklist icon={<CrownIcon className="h-5 w-5" />}>Bappa&apos;s sacred stay</Checklist>
+              <Checklist icon={<HeartIcon className="h-5 w-5" />}>Built with devotion</Checklist>
+              <Checklist icon={<UsersIcon className="h-5 w-5" />}>Open to all for darshan</Checklist>
             </div>
           </div>
         </div>
