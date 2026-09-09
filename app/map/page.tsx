@@ -354,7 +354,7 @@ export default function MapPage() {
               <div className="flex-1" />
             )}
 
-            <AdSlotPanel sponsors={sponsors} />
+            {!selected && <AdSlotPanel sponsors={sponsors} />}
           </div>
         </div>
       </div>
