@@ -80,11 +80,7 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
       movePinRef.current(e.lngLat.lat, e.lngLat.lng);
     });
 
-    map.on("load", () => {
-      setLoaded(true);
-      // Report the default center immediately so the form has a valid starting value.
-      movePinRef.current(DEFAULT_MAP_CENTER[1], DEFAULT_MAP_CENTER[0], false);
-    });
+    map.on("load", () => setLoaded(true));
 
     return () => {
       map.remove();
