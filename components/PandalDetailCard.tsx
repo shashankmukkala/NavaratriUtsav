@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { CalendarIcon, CloseIcon, CopyIcon, PinIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, PinIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -62,6 +62,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       })()
     : null;
   const eventStatus = getEventStatus(pandal.event_date);
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
 
   // A pandal's own paid banner takes priority; otherwise rotate through the
   // generic sponsor pool. Either way it's shown as a plain rectangle, no
@@ -134,6 +135,18 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           </div>
 
           {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
+
+          {fullScreen && (
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary w-full justify-center py-2.5"
+            >
+              <DirectionsIcon className="h-4 w-4" />
+              Get Directions
+            </a>
+          )}
 
           {bannerImages.length > 0 && (
             <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
