@@ -32,6 +32,7 @@ export default function MapPage() {
   );
   const [filter, setFilter] = useState<Filter>("all");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "pending" | "granted" | "denied" | "unsupported">("idle");
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
 
   useEffect(() => {
@@ -46,12 +47,25 @@ export default function MapPage() {
   }, []);
 
   // Only asked for once the user actually opens the list (not automatically
-  // on page load) — the map itself works fine with no location at all.
+  // on page load) — the map itself works fine with no location at all, but
+  // the "near you" list is genuinely meaningless without it, so we ask
+  // explicitly and show why, rather than silently listing everything.
   const requestLocation = () => {
-    if (coords || !navigator.geolocation) return;
+    if (coords) {
+      setLocationStatus("granted");
+      return;
+    }
+    if (!navigator.geolocation) {
+      setLocationStatus("unsupported");
+      return;
+    }
+    setLocationStatus("pending");
     navigator.geolocation.getCurrentPosition(
-      (position) => setCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
-      () => {},
+      (position) => {
+        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
       { enableHighAccuracy: false, timeout: 8000 }
     );
   };
@@ -144,7 +158,7 @@ export default function MapPage() {
                   <p className="mt-1 text-sm text-[color:var(--muted)]">
                     {coords
                       ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-                      : "Find where food is being served during Ganesh Chaturthi."}
+                      : "Your location is needed to show mandapams near you."}
                   </p>
                   <div className="mt-4 flex gap-2">
                     <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
@@ -159,14 +173,18 @@ export default function MapPage() {
                   </div>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-                  <PandalList
-                    pandals={nearby}
-                    loading={loading}
-                    selectedId={selected?.id ?? null}
-                    distanceFor={withDistance}
-                    onSelect={setSelected}
-                    nearbyScoped={!!coords}
-                  />
+                  {locationStatus !== "granted" ? (
+                    <LocationGate status={locationStatus} onRetry={requestLocation} />
+                  ) : (
+                    <PandalList
+                      pandals={nearby}
+                      loading={loading}
+                      selectedId={selected?.id ?? null}
+                      distanceFor={withDistance}
+                      onSelect={setSelected}
+                      nearbyScoped={!!coords}
+                    />
+                  )}
                 </div>
               </aside>
             )}
@@ -188,58 +206,74 @@ export default function MapPage() {
       {/* ===== Mobile layout (single view + bottom tab bar) ===== */}
       <div className="relative flex h-full flex-col lg:hidden">
         <header className="pointer-events-none absolute inset-x-3 top-3 z-20">
-          <div className="nav-shell pointer-events-auto flex items-center justify-between gap-3 px-4 py-2.5">
+          <div className="nav-shell pointer-events-auto flex items-center px-4 py-2.5">
             <Brand />
-            <ProfileNavLink />
           </div>
         </header>
 
-        {!showList ? (
-          <div className="relative flex-1">
-            <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} />
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col overflow-hidden bg-[color:var(--cream-50)] pt-16">
-            <div className="flex-shrink-0 px-4 pb-3">
-              <h2 className="text-lg font-bold text-[color:var(--foreground)]">Annadhanam Near You</h2>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">
-                {coords
-                  ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-                  : "Find where food is being served during Ganesh Chaturthi."}
-              </p>
-              <label className="mt-3 flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2.5 text-sm text-[color:var(--muted)]">
-                <SearchIcon className="h-4 w-4 flex-shrink-0" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search your area or city…"
-                  className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
-                />
-              </label>
-              <div className="mt-3 flex gap-2 overflow-x-auto">
-                <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-                  All
-                </FilterChip>
-                <FilterChip active={filter === "today"} onClick={() => setFilter("today")}>
-                  Today
-                </FilterChip>
-                <FilterChip active={filter === "open"} onClick={() => setFilter("open")}>
-                  Open Now
-                </FilterChip>
+        <div className="relative flex-1">
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} />
+
+          {/* Half-screen bottom sheet, over the map (not a separate page) —
+              the map stays visible above it for context. */}
+          {showList && (
+            <div className="absolute inset-x-0 bottom-0 z-10 flex max-h-[72%] flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)]">
+              <div className="flex-shrink-0 px-4 pb-3 pt-3">
+                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[rgba(43,22,8,0.15)]" />
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-lg font-bold text-[color:var(--foreground)]">Annadhanam Near You</h2>
+                  <button
+                    type="button"
+                    aria-label="Close list"
+                    onClick={() => setShowList(false)}
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)]"
+                  >
+                    <CloseIcon className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
+                  {coords
+                    ? `${nearby.length} mandapam${nearby.length === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+                    : "Your location is needed to show mandapams near you."}
+                </p>
+                <label className="mt-3 flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2.5 text-sm text-[color:var(--muted)]">
+                  <SearchIcon className="h-4 w-4 flex-shrink-0" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search your area or city…"
+                    className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
+                  />
+                </label>
+                <div className="mt-3 flex gap-2 overflow-x-auto">
+                  <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
+                    All
+                  </FilterChip>
+                  <FilterChip active={filter === "today"} onClick={() => setFilter("today")}>
+                    Today
+                  </FilterChip>
+                  <FilterChip active={filter === "open"} onClick={() => setFilter("open")}>
+                    Open Now
+                  </FilterChip>
+                </div>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
+                {locationStatus !== "granted" ? (
+                  <LocationGate status={locationStatus} onRetry={requestLocation} />
+                ) : (
+                  <PandalList
+                    pandals={nearby}
+                    loading={loading}
+                    selectedId={selected?.id ?? null}
+                    distanceFor={withDistance}
+                    onSelect={setSelected}
+                    nearbyScoped={!!coords}
+                  />
+                )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-24">
-              <PandalList
-                pandals={nearby}
-                loading={loading}
-                selectedId={selected?.id ?? null}
-                distanceFor={withDistance}
-                onSelect={setSelected}
-                nearbyScoped={!!coords}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Full-screen detail view, mobile only */}
         {selected && (
@@ -434,6 +468,45 @@ function FilterChip({
     <button type="button" onClick={onClick} className={`filter-chip ${active ? "filter-chip-active" : ""}`}>
       {children}
     </button>
+  );
+}
+
+/** Blocks the "near you" list until location is actually granted — showing
+ * everything unfiltered when we don't know where the user is would defeat
+ * the point of a "near you" list, so this is a hard requirement, not a
+ * silent fallback. */
+function LocationGate({
+  status,
+  onRetry,
+}: {
+  status: "idle" | "pending" | "denied" | "unsupported";
+  onRetry: () => void;
+}) {
+  if (status === "pending") {
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Finding mandapams near you…</p>;
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl bg-[rgba(43,22,8,0.04)] p-6 text-center">
+      <span className="icon-tile icon-tile-circle h-11 w-11">
+        <PinIcon className="h-5 w-5" />
+      </span>
+      <div>
+        <p className="text-sm font-semibold text-[color:var(--foreground)]">Location required</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          {status === "unsupported"
+            ? "Your browser doesn't support location — try a different browser to see mandapams near you."
+            : status === "denied"
+              ? "We need your location to show mandapams near you. Enable location for this site in your browser/phone settings, then try again."
+              : "We need your location to show mandapams near you."}
+        </p>
+      </div>
+      {status !== "unsupported" && (
+        <button type="button" onClick={onRetry} className="btn-primary py-2 text-sm">
+          Enable Location
+        </button>
+      )}
+    </div>
   );
 }
 

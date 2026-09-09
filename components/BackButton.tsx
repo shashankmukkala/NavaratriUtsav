@@ -12,9 +12,9 @@ interface BackButtonProps {
 export default function BackButton({ className = "btn-secondary" }: BackButtonProps) {
   const router = useRouter();
   return (
-    <button type="button" onClick={() => router.back()} className={className}>
+    <button type="button" onClick={() => router.back()} className={className} aria-label="Back">
       <ArrowLeftIcon className="h-4 w-4" />
-      Back
+      <span className="hidden sm:inline">Back</span>
     </button>
   );
 }

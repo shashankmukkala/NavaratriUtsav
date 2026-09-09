@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
@@ -14,6 +15,7 @@ type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type SessionUser = { name?: string; email?: string; image?: string };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [session, setSession] = useState<{ user?: SessionUser } | null>(null);
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
@@ -71,7 +73,7 @@ export default function ProfilePage() {
             </div>
             <SignInPrompt
               open
-              onClose={() => {}}
+              onClose={() => router.back()}
               callbackUrl="/profile"
               message="Sign in with the same Google account you used to submit, to see your uploads."
             />
