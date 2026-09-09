@@ -420,11 +420,11 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date (optional)</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date</label>
               <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time (optional)</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time</label>
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>
