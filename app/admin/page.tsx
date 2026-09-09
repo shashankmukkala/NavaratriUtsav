@@ -9,7 +9,7 @@ import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "card" | "map";
-type Analytics = { users: number; totalViews: number; views24h: number; views7d: number };
+type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -210,8 +210,9 @@ export default function AdminPage() {
       </div>
 
       {analytics && (
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           <StatTile label="Registered users" value={analytics.users} />
+          <StatTile label="Unique visitors" value={analytics.uniqueVisitors} />
           <StatTile label="Visits (24h)" value={analytics.views24h} />
           <StatTile label="Visits (7d)" value={analytics.views7d} />
           <StatTile label="Visits (all time)" value={analytics.totalViews} />
