@@ -281,7 +281,7 @@ export default function MapPage() {
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
           <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-5 py-3 sm:px-6">
             <Brand />
-            <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} outOfAreaName={outOfAreaName} />
+            <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -370,7 +370,7 @@ export default function MapPage() {
           <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3.5">
             <div className="flex items-center justify-between gap-2">
               <Brand />
-              <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} outOfAreaName={outOfAreaName} />
+              <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
             </div>
             <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -456,6 +456,28 @@ export default function MapPage() {
           </div>
         )}
       </div>
+
+      {locationStatus === "outside-area" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="card-elevated w-full max-w-sm p-6 text-center">
+            <span className="icon-tile icon-tile-circle mx-auto h-12 w-12">
+              <PinIcon className="h-5 w-5" />
+            </span>
+            <p className="mt-4 text-lg font-bold text-[color:var(--foreground)]">Not available in your area yet</p>
+            <p className="mt-1.5 text-sm text-[color:var(--muted)]">
+              Sorry, we&apos;re not servicing {outOfAreaName ?? "your location"} right now — BappaSeva currently
+              covers Telangana and Andhra Pradesh only. Try searching a place there instead, like Hyderabad.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLocationStatus("idle")}
+              className="btn-primary mt-5 w-full justify-center py-2.5"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -598,25 +620,23 @@ function LocationToggle({
   status,
   on,
   onToggle,
-  outOfAreaName,
 }: {
   status: LocationStatus;
   on: boolean;
   onToggle: () => void;
-  outOfAreaName: string | null;
 }) {
   const pending = status === "pending";
   // Clicking the toggle and having nothing visibly happen (still off, no
   // explanation) reads as broken — this makes the reason explicit instead
-  // of silently failing.
+  // of silently failing. "outside-area" gets its own popup instead of a
+  // tooltip (see the modal in the parent), since that one needs more room
+  // to explain than a small hint bubble.
   const hint =
     status === "denied"
       ? "Blocked — allow location for this site in your browser's settings, then try again."
       : status === "unsupported"
         ? "Location isn't supported on this browser."
-        : status === "outside-area"
-          ? `We're not serving ${outOfAreaName ?? "your area"} yet.`
-          : null;
+        : null;
   return (
     <div className="relative flex-shrink-0">
       <button
