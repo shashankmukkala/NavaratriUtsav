@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import Brand from "@/components/Brand";
-import GlassBlurLayer from "@/components/GlassBlurLayer";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
@@ -498,8 +497,7 @@ export default function MapPage() {
         {!selected && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-3">
             {!showList && <MobileAdStrip sponsors={sponsors} />}
-            <nav className="map-panel pointer-events-auto flex items-center gap-1 rounded-2xl p-1.5">
-              <GlassBlurLayer />
+            <nav className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-[rgba(43,22,8,0.08)] bg-[color:var(--cream-50)] p-1.5 shadow-[0_16px_40px_-14px_rgba(20,12,4,0.28)]">
               <TabButton
                 active={!showList}
                 icon={<MapIcon className="h-5 w-5" />}
@@ -598,7 +596,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "min-h-0 flex-1 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.1)]";
+        const className = "min-h-0 flex-1 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -613,7 +611,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.16)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.5)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
             <MegaphoneIcon className="h-4 w-4" />
@@ -636,7 +634,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
     <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto px-1 pb-0.5">
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
+        const className = "h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)] shadow-sm";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -651,7 +649,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
+          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] bg-white/70 text-center"
         >
           <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
           <span className="text-[0.625rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
