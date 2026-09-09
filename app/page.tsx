@@ -97,12 +97,12 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/annadhanams" className="btn-primary px-5! py-2.5! text-sm!">
                   <PinIcon className="h-4 w-4" />
-                  Explore Mandapams/Annadhanams
+                  Explore Mandapams
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
                 <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
                   <PlusIcon className="h-4 w-4" />
-                  Add Mandapam/Annadhanam
+                  Add Mandapam
                 </Link>
               </div>
 
@@ -285,7 +285,7 @@ export default function HomePage() {
               </p>
               <Link href="/submit" className="btn-primary mt-5">
                 <PlusIcon className="h-4 w-4" />
-                Add Annadhanam
+                Add Annadhanam Seva
               </Link>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
