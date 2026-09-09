@@ -121,14 +121,19 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
             </p>
           )}
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
-              <DirectionsIcon className="h-4 w-4" />
-              Get Directions
+          <div className="flex gap-2 pt-1">
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary min-w-0 flex-1 px-2! text-sm!"
+            >
+              <DirectionsIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Get Directions</span>
             </a>
-            <a href={`tel:${pandal.contact_phone}`} className="btn-secondary">
-              <PhoneIcon className="h-4 w-4" />
-              Call {pandal.contact_phone}
+            <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! text-sm!">
+              <PhoneIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Call {pandal.contact_phone}</span>
             </a>
           </div>
 

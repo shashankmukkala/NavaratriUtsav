@@ -7,6 +7,7 @@ import MapView from "@/components/MapView";
 import {
   ArrowRightIcon,
   CheckIcon,
+  CloseIcon,
   HeartIcon,
   LeafIcon,
   MegaphoneIcon,
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [pandals, setPandals] = useState<Pandal[] | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [query, setQuery] = useState("");
+  const [selectedPandal, setSelectedPandal] = useState<Pandal | null>(null);
 
   useEffect(() => {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals").then((data) => setPandals(data?.pandals ?? []));
@@ -39,14 +41,8 @@ export default function HomePage() {
     );
   };
 
-  const nearest =
-    pandals && pandals.length > 0
-      ? [...pandals].sort((a, b) => {
-          if (!coords) return 0;
-          return distanceKm(coords.lat, coords.lng, a.lat, a.lng) - distanceKm(coords.lat, coords.lng, b.lat, b.lng);
-        })[0]
-      : null;
-  const nearestKm = nearest && coords ? distanceKm(coords.lat, coords.lng, nearest.lat, nearest.lng) : null;
+  const selectedKm =
+    selectedPandal && coords ? distanceKm(coords.lat, coords.lng, selectedPandal.lat, selectedPandal.lng) : null;
 
   return (
     <div
@@ -162,33 +158,41 @@ export default function HomePage() {
             </div>
 
             <div className="relative h-72 overflow-hidden rounded-[1.5rem] border border-[rgba(43,22,8,0.08)] sm:h-80">
-              <MapView pandals={pandals ?? []} selectedId={nearest?.id ?? null} onSelect={() => {}} />
+              <MapView pandals={pandals ?? []} selectedId={selectedPandal?.id ?? null} onSelect={setSelectedPandal} />
 
-              {nearest && (
-                <div className="map-card pointer-events-none absolute bottom-3 right-3 w-64 max-w-[80%] p-3">
-                  <div className="flex gap-2.5">
+              {selectedPandal && (
+                <div className="map-card pointer-events-auto absolute bottom-3 right-3 w-64 max-w-[80%] p-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPandal(null)}
+                    aria-label="Close"
+                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
+                  >
+                    <CloseIcon className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="flex gap-2.5 pr-5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={nearest.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+                    <img src={selectedPandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{nearest.name}</p>
+                      <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{selectedPandal.name}</p>
                       <p className="truncate text-xs text-[color:var(--muted)]">
-                        {nearestKm !== null ? `${nearestKm.toFixed(1)} km away · ` : ""}
-                        {nearest.address}
+                        {selectedKm !== null ? `${selectedKm.toFixed(1)} km away · ` : ""}
+                        {selectedPandal.address}
                       </p>
-                      <p className="mt-0.5 text-xs font-medium text-[color:var(--accent-deep)]">{nearest.timing_text}</p>
+                      <p className="mt-0.5 text-xs font-medium text-[color:var(--accent-deep)]">{selectedPandal.timing_text}</p>
                     </div>
                   </div>
                   {!coords && (
                     <button
                       type="button"
                       onClick={requestLocation}
-                      className="pointer-events-auto mt-2 flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
+                      className="mt-2 flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
                     >
                       <PinIcon className="h-3.5 w-3.5" />
-                      Use my location to find the nearest
+                      Use my location to see distance
                     </button>
                   )}
-                  <Link href="/map" className="btn-primary pointer-events-auto mt-3 w-full py-2 text-sm">
+                  <Link href="/map" className="btn-primary mt-3 w-full py-2 text-sm">
                     View Details
                     <ArrowRightIcon className="h-3.5 w-3.5" />
                   </Link>

@@ -33,6 +33,12 @@ export default function MapPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "pending" | "granted" | "denied" | "unsupported">("idle");
+  // Whether location is actually being USED right now — separate from
+  // browser permission (locationStatus), since a permission grant can't be
+  // "switched off" once given, but the app's own use of it can be. Flipping
+  // this off just stops using the cached coords; flipping it back on reuses
+  // them without asking the browser again.
+  const [locationOn, setLocationOn] = useState(false);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   // Where the map should fly to next — set when the user's own location
   // resolves, or when they search an area name. Pins/list filtering stay
@@ -73,6 +79,10 @@ export default function MapPage() {
   const requestLocation = () => {
     if (coords) {
       setLocationStatus("granted");
+      setLocationOn(true);
+      if (!areaCenterRef.current) setFlyTarget(coords);
+      setSidebarOpen(true);
+      setShowList(true);
       return;
     }
     if (!navigator.geolocation) {
@@ -85,6 +95,7 @@ export default function MapPage() {
         const here = { lat: position.coords.latitude, lng: position.coords.longitude };
         setCoords(here);
         setLocationStatus("granted");
+        setLocationOn(true);
         // Don't fly the camera away from an area the user already searched
         // for — this GPS fix may have just been slow to resolve.
         if (!areaCenterRef.current) setFlyTarget(here);
@@ -96,6 +107,18 @@ export default function MapPage() {
       () => setLocationStatus("denied"),
       { enableHighAccuracy: false, timeout: 8000 }
     );
+  };
+
+  // The navbar location toggle: off -> on reuses cached coords instantly (or
+  // asks the browser if we don't have any yet); on -> off just stops using
+  // them for "near you" purposes without forgetting them, so switching back
+  // on is instant.
+  const toggleLocation = () => {
+    if (locationOn) {
+      setLocationOn(false);
+      return;
+    }
+    requestLocation();
   };
 
   // Searching an area name (not just filtering the pandal list by text)
@@ -146,6 +169,7 @@ export default function MapPage() {
     setAreaCenter(null);
     areaCenterRef.current = null;
     if (coords) {
+      setLocationOn(true);
       setFlyTarget(coords);
       setSidebarOpen(true);
       setShowList(true);
@@ -155,8 +179,9 @@ export default function MapPage() {
   };
 
   // A searched area takes priority over the user's own location for "near
-  // you" purposes, whenever one is active.
-  const effectiveCenter = areaCenter ?? coords;
+  // you" purposes, whenever one is active. Location only counts when the
+  // toggle is actually on — a permission grant alone doesn't mean it's in use.
+  const effectiveCenter = areaCenter ?? (locationOn ? coords : null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -201,7 +226,7 @@ export default function MapPage() {
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
           <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-5 py-3 sm:px-6">
             <Brand />
-            <LocationBadge status={locationStatus} onNearMe={useMyLocation} />
+            <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -280,7 +305,7 @@ export default function MapPage() {
           <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3.5">
             <div className="flex items-center justify-between gap-2">
               <Brand />
-              <LocationBadge status={locationStatus} onNearMe={useMyLocation} />
+              <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
             </div>
             <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -528,31 +553,37 @@ function FilterChip({
  * everything unfiltered when we don't know where the user is would defeat
  * the point of a "near you" list, so this is a hard requirement, not a
  * silent fallback. */
-/** Doubles as both the "is location on?" status chip and a persistent
- * "Near Me" action — click it any time to jump the map + list to the
- * user's real location, even while a manually searched area is active,
- * instead of only being able to enable location once and never revisit it. */
-function LocationBadge({
+/** A real on/off switch for location in the nav — flipping it on jumps the
+ * map + list to the user's location (asking the browser only the first
+ * time; cached coords are reused after that), flipping it off just stops
+ * using them, without revoking anything at the browser level (which isn't
+ * possible from the page anyway). */
+function LocationToggle({
   status,
-  onNearMe,
+  on,
+  onToggle,
 }: {
   status: "idle" | "pending" | "granted" | "denied" | "unsupported";
-  onNearMe: () => void;
+  on: boolean;
+  onToggle: () => void;
 }) {
-  const on = status === "granted";
+  const pending = status === "pending";
   return (
     <button
       type="button"
-      onClick={onNearMe}
-      disabled={status === "pending" || status === "unsupported"}
-      className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-        on
-          ? "bg-[rgba(34,139,34,0.12)] text-green-800 hover:bg-[rgba(34,139,34,0.18)]"
-          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(234,108,29,0.1)]"
-      }`}
+      onClick={onToggle}
+      disabled={pending || status === "unsupported"}
+      aria-pressed={on}
+      className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-[rgba(43,22,8,0.06)] py-1 pl-2.5 pr-1 text-xs font-semibold text-[color:var(--muted)] transition-colors disabled:opacity-60"
     >
-      <PinIcon className="h-3 w-3" />
-      {status === "pending" ? "Locating…" : on ? "Near Me" : "Location: Off"}
+      {pending ? "Locating…" : "Location"}
+      <span
+        className={`relative h-4 w-7 flex-shrink-0 rounded-full transition-colors ${on ? "bg-green-600" : "bg-[rgba(43,22,8,0.2)]"}`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${on ? "translate-x-3" : "translate-x-0"}`}
+        />
+      </span>
     </button>
   );
 }
@@ -583,7 +614,15 @@ function NearbyListHeader({
   scrollableFilters?: boolean;
 }) {
   const searchedPlace = query.trim();
-  const title = areaCenter && searchedPlace ? `Annadhanams near "${searchedPlace}"` : "Annadhanam Near You";
+  // "Near You" is only honest once we're actually centered on the user's
+  // real location — otherwise (no location, or a searched area) it's a
+  // claim about proximity we can't back up.
+  const title =
+    areaCenter && searchedPlace
+      ? `Annadhanams near "${searchedPlace}"`
+      : effectiveCenter
+        ? "Annadhanam Near You"
+        : "All Annadhanams";
 
   return (
     <>
@@ -645,7 +684,7 @@ function LocationPrompt({
 }) {
   if (status === "pending") {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3 text-sm text-[color:var(--foreground)]">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         Finding your location…
       </div>
@@ -654,7 +693,7 @@ function LocationPrompt({
 
   if (status === "unsupported") {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3 text-sm text-[color:var(--foreground)]">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         Location isn&apos;t supported here — search an area above to sort by distance.
       </div>
@@ -662,7 +701,7 @@ function LocationPrompt({
   }
 
   return (
-    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3">
+    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3">
       <p className="flex items-center gap-2 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         {status === "denied"
