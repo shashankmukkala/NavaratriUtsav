@@ -9,6 +9,7 @@ import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "card" | "map";
+type Analytics = { users: number; totalViews: number; views24h: number; views7d: number };
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -23,21 +24,26 @@ export default function AdminPage() {
   const [pandalSearch, setPandalSearch] = useState("");
   const [sponsorFilter, setSponsorFilter] = useState<StatusFilter>("pending");
   const [sponsorSearch, setSponsorSearch] = useState("");
+  const [bannerFilter, setBannerFilter] = useState<"all" | "unpaid" | "paid">("unpaid");
+  const [bannerSearch, setBannerSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   useEffect(() => {
     fetchJson<{ loggedIn: boolean }>("/api/admin/session").then((data) => setLoggedIn(data?.loggedIn ?? false));
   }, []);
 
   const loadData = async () => {
-    const [pandalsRes, sponsorsRes, settingsRes] = await Promise.all([
+    const [pandalsRes, sponsorsRes, settingsRes, analyticsRes] = await Promise.all([
       fetchJson<{ pandals: Pandal[] }>("/api/admin/pandals"),
       fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/admin/sponsors"),
       fetchJson<{ settings: PaymentSettings }>("/api/admin/settings"),
+      fetchJson<Analytics>("/api/admin/analytics"),
     ]);
     setPandals(pandalsRes?.pandals ?? []);
     setSponsors(sponsorsRes?.sponsors ?? []);
     setSettings(settingsRes?.settings ?? null);
+    setAnalytics(analyticsRes ?? null);
   };
 
   const refresh = async () => {
@@ -80,6 +86,12 @@ export default function AdminPage() {
 
   const setBannerPaid = async (id: string, banner_paid: boolean) => {
     await sendJson(`/api/admin/pandals/${id}`, { banner_paid }, "PATCH");
+    loadData();
+  };
+
+  const denyBanner = async (id: string) => {
+    if (!confirm("Deny this banner? It will be cleared and the owner can resubmit.")) return;
+    await sendJson(`/api/admin/pandals/${id}`, { deny_banner: true }, "PATCH");
     loadData();
   };
 
@@ -162,6 +174,12 @@ export default function AdminPage() {
 
   const pandalsWithBanner = pandals.filter((p) => (p.banner_image_urls?.length ?? 0) > 0);
   const pendingBannerCount = pandalsWithBanner.filter((p) => !p.banner_paid).length;
+  const bannerSearchLower = bannerSearch.trim().toLowerCase();
+  const filteredBanners = pandalsWithBanner.filter(
+    (p) =>
+      (bannerFilter === "all" || (bannerFilter === "paid") === p.banner_paid) &&
+      (bannerSearchLower === "" || p.name.toLowerCase().includes(bannerSearchLower))
+  );
   const pendingCardAdsCount = sponsors.filter((s) => s.placement === "card" && s.status === "pending").length;
   const pendingMapAdsCount = sponsors.filter((s) => s.placement === "map" && s.status === "pending").length;
   const pendingAdsTotal = pendingBannerCount + pendingCardAdsCount + pendingMapAdsCount;
@@ -190,6 +208,15 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
+
+      {analytics && (
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <StatTile label="Registered users" value={analytics.users} />
+          <StatTile label="Visits (24h)" value={analytics.views24h} />
+          <StatTile label="Visits (7d)" value={analytics.views7d} />
+          <StatTile label="Visits (all time)" value={analytics.totalViews} />
+        </div>
+      )}
 
       <div className="mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <TabButton active={tab === "pandals"} onClick={() => setTab("pandals")}>
@@ -258,11 +285,41 @@ export default function AdminPage() {
           </div>
 
           {adsSubTab === "banners" ? (
-            <div className="space-y-2">
-              {pandalsWithBanner.length === 0 && <Empty>No association banners submitted yet.</Empty>}
-              {pandalsWithBanner.map((pandal) => (
-                <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} />
-              ))}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {(["all", "unpaid", "paid"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setBannerFilter(f)}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                        bannerFilter === f
+                          ? "bg-[color:var(--accent)] text-white"
+                          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
+                      }`}
+                    >
+                      {f === "all" ? "All" : f === "unpaid" ? "Unpaid" : "Paid"} (
+                      {f === "all"
+                        ? pandalsWithBanner.length
+                        : pandalsWithBanner.filter((p) => (f === "paid") === p.banner_paid).length}
+                      )
+                    </button>
+                  ))}
+                </div>
+                <input
+                  value={bannerSearch}
+                  onChange={(e) => setBannerSearch(e.target.value)}
+                  placeholder="Search by mandapam name…"
+                  className="field-input text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                {filteredBanners.length === 0 && <Empty>No banners match this filter.</Empty>}
+                {filteredBanners.map((pandal) => (
+                  <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onDeny={denyBanner} />
+                ))}
+              </div>
             </div>
           ) : (
             <>
@@ -455,6 +512,15 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="rounded-lg bg-[rgba(43,22,8,0.05)] p-3 text-sm text-[color:var(--muted-soft)]">{children}</p>;
 }
 
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="card-elevated p-3">
+      <p className="text-xl font-bold text-[color:var(--foreground)]">{value.toLocaleString("en-IN")}</p>
+      <p className="mt-0.5 text-xs text-[color:var(--muted)]">{label}</p>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   return <span className={`status-badge status-${status}`}>{status}</span>;
 }
@@ -633,7 +699,15 @@ function SponsorRow({
  * dedicated Ads > Banners row instead of being buried in the Mandapams
  * tab, and using the same polished ActionButton treatment as every other
  * approve/reject action instead of a plain text pill. */
-function BannerRow({ pandal, onSetBannerPaid }: { pandal: Pandal; onSetBannerPaid: (id: string, paid: boolean) => void }) {
+function BannerRow({
+  pandal,
+  onSetBannerPaid,
+  onDeny,
+}: {
+  pandal: Pandal;
+  onSetBannerPaid: (id: string, paid: boolean) => void;
+  onDeny: (id: string) => void;
+}) {
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
       <div className="flex flex-shrink-0 gap-1.5">
@@ -661,15 +735,20 @@ function BannerRow({ pandal, onSetBannerPaid }: { pandal: Pandal; onSetBannerPai
           )}
         </div>
       </div>
-      <div className="flex flex-shrink-0 items-center gap-2">
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
         {pandal.banner_paid ? (
           <ActionButton color="gray" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, false)}>
             Revoke
           </ActionButton>
         ) : (
-          <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, true)}>
-            Confirm Payment
-          </ActionButton>
+          <>
+            <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, true)}>
+              Confirm Payment
+            </ActionButton>
+            <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onDeny(pandal.id)}>
+              Deny
+            </ActionButton>
+          </>
         )}
       </div>
     </div>

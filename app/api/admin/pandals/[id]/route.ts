@@ -15,11 +15,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const status = body?.status;
   const bannerPaid = body?.banner_paid;
   const adminNote = body?.admin_note;
+  const denyBanner = body?.deny_banner;
 
   const update: {
     status?: "pending" | "approved" | "rejected";
     banner_paid?: boolean;
     admin_note?: string | null;
+    banner_image_urls?: null;
+    banner_payment_proof_url?: null;
   } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -32,6 +35,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (adminNote !== undefined) {
     update.admin_note = adminNote ? String(adminNote).slice(0, 500) : null;
+  }
+  if (denyBanner) {
+    // Clears the submitted banner outright (rather than just leaving it
+    // marked unpaid) so a rejected one doesn't linger looking pending —
+    // the owner can submit a fresh one from their profile if they want to.
+    update.banner_image_urls = null;
+    update.banner_payment_proof_url = null;
+    update.banner_paid = false;
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

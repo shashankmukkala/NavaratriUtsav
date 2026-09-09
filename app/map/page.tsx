@@ -275,7 +275,7 @@ export default function MapPage() {
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
         </div>
 
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
@@ -351,7 +351,7 @@ export default function MapPage() {
               // floating as a separate absolutely-positioned overlay) means
               // it's exactly as tall as the ad panel by construction, not
               // by guessing at a matching max-height.
-              <div className="pointer-events-auto flex min-h-0 flex-1 justify-end">
+              <div className="flex min-h-0 flex-1 justify-end">
                 <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} />
               </div>
             ) : (
@@ -385,7 +385,7 @@ export default function MapPage() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
               the map stays visible above it for context. */}

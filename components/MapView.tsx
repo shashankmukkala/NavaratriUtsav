@@ -12,16 +12,22 @@ interface MapViewProps {
   pandals: Pandal[];
   selectedId: string | null;
   onSelect: (pandal: Pandal) => void;
+  /** Clicking empty map background (not a pin) closes whatever's selected —
+   * selecting a pin re-centers the map on it, which can land it right
+   * under the now-open detail card where it's no longer clickable to
+   * toggle back off, so this is the reliable way out. */
+  onDeselect?: () => void;
   /** Camera target independent of any pin — the user's own location once
    * fetched, or a searched area once geocoded. */
   flyTo?: { lat: number; lng: number } | null;
 }
 
-export default function MapView({ pandals, selectedId, onSelect, flyTo }: MapViewProps) {
+export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; el: HTMLButtonElement }>>(new globalThis.Map());
   const onSelectRef = useRef(onSelect);
+  const onDeselectRef = useRef(onDeselect);
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   const [showAttribution, setShowAttribution] = useState(false);
@@ -29,6 +35,10 @@ export default function MapView({ pandals, selectedId, onSelect, flyTo }: MapVie
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
+
+  useEffect(() => {
+    onDeselectRef.current = onDeselect;
+  }, [onDeselect]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -50,6 +60,10 @@ export default function MapView({ pandals, selectedId, onSelect, flyTo }: MapVie
     map.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
     map.on("load", () => setLoaded(true));
     map.on("error", () => setErrored(true));
+    // Marker elements are real DOM nodes overlaid on the canvas, not part
+    // of the GL scene, so clicking one never reaches this — only genuine
+    // clicks on empty map background do.
+    map.on("click", () => onDeselectRef.current?.());
     setMirrorSource(map.getCanvas());
 
     return () => {
