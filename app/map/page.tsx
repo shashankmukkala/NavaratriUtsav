@@ -424,9 +424,12 @@ export default function MapPage() {
           )}
         </div>
 
-        {/* Full-screen detail view, mobile only */}
+        {/* Bottom sheet detail view, mobile only — matches the List sheet
+            below rather than covering the whole screen, so the map stays
+            visible for context and it reads as "on top of the map", not a
+            separate page. */}
         {selected && (
-          <div className="absolute inset-0 z-30 bg-[color:var(--cream-50)]">
+          <div className="absolute inset-x-0 bottom-0 z-30 flex max-h-[80%] flex-col overflow-hidden rounded-t-3xl shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)]">
             <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
           </div>
         )}
@@ -801,8 +804,8 @@ function LocationPrompt({
       <p className="flex items-center gap-2 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         {status === "denied"
-          ? "Location is off — enable it to sort these by distance."
-          : "Enable location to sort these by distance from you."}
+          ? "Location is off — enable it to see what's near you, or search an area above."
+          : "Turn on location to see what's near you, or just search an area above."}
       </p>
       <button type="button" onClick={onEnable} className="btn-primary w-full justify-center py-1.5 text-sm">
         Enable Location

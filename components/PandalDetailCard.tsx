@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import {
-  ArrowLeftIcon,
   CalendarIcon,
   CloseIcon,
   CopyIcon,
@@ -20,7 +19,7 @@ import type { Pandal, Sponsor } from "@/lib/types";
 interface PandalDetailCardProps {
   pandal: Pandal;
   onClose: () => void;
-  /** Full-viewport presentation used on mobile, vs. a floating card on desktop. */
+  /** Bottom-sheet presentation used on mobile, vs. a floating card on desktop. */
   fullScreen?: boolean;
 }
 
@@ -102,8 +101,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   return (
     <div className={shellClassName}>
+      {fullScreen && <div className="mx-auto mt-2 h-1 w-10 flex-shrink-0 rounded-full bg-[rgba(43,22,8,0.15)]" />}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-72" : "h-48"}`}>
+        <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-56" : "h-48"}`}>
           {/* object-contain so the whole photo shows — object-cover was
               cropping into it to fill the box instead of just fitting it. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -111,12 +111,10 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
           <button
             onClick={onClose}
-            aria-label={fullScreen ? "Back" : "Close"}
-            className={`absolute top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white ${
-              fullScreen ? "left-3" : "right-3"
-            }`}
+            aria-label="Close"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
           >
-            {fullScreen ? <ArrowLeftIcon className="h-4 w-4" /> : <CloseIcon className="h-4 w-4" />}
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
 
