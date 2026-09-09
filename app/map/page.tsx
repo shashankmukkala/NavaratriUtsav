@@ -65,9 +65,11 @@ export default function MapPage() {
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
   }, []);
 
-  // Asked for as soon as the map loads — the "near you" list is genuinely
-  // meaningless without a location, so we ask right away and show why if
-  // it's denied/unavailable, rather than silently listing everything.
+  // Only ever asked for on an explicit tap (the "Enable Location"/"Near Me"
+  // control) — never automatically on load. Two reasons: the full list is
+  // shown regardless of location now, so there's nothing to unblock, and
+  // some mobile browsers (iOS Safari included) silently ignore a permission
+  // request that isn't triggered by a direct user gesture.
   const requestLocation = () => {
     if (coords) {
       setLocationStatus("granted");
@@ -95,12 +97,6 @@ export default function MapPage() {
       { enableHighAccuracy: false, timeout: 8000 }
     );
   };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Searching an area name (not just filtering the pandal list by text)
   // geocodes it, flies the map there, and re-centers the "near you" list on
@@ -217,10 +213,7 @@ export default function MapPage() {
             </label>
             <button
               type="button"
-              onClick={() => {
-                setSidebarOpen((v) => !v);
-                requestLocation();
-              }}
+              onClick={() => setSidebarOpen((v) => !v)}
               className="btn-secondary flex-shrink-0"
             >
               <ListIcon className="h-4 w-4" />
@@ -253,19 +246,16 @@ export default function MapPage() {
                   />
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-                  {!effectiveCenter ? (
-                    <LocationGate status={locationStatus} onRetry={requestLocation} query={query} onQueryChange={setQuery} />
-                  ) : (
-                    <PandalList
-                      pandals={nearby}
-                      loading={loading}
-                      selectedId={selected?.id ?? null}
-                      distanceFor={withDistance}
-                      onSelect={setSelected}
-                      nearbyScoped={!!effectiveCenter}
-                      areaSearch={!!areaCenter}
-                    />
-                  )}
+                  {!effectiveCenter && <LocationPrompt status={locationStatus} onEnable={requestLocation} />}
+                  <PandalList
+                    pandals={nearby}
+                    loading={loading}
+                    selectedId={selected?.id ?? null}
+                    distanceFor={withDistance}
+                    onSelect={setSelected}
+                    nearbyScoped={!!effectiveCenter}
+                    areaSearch={!!areaCenter}
+                  />
                 </div>
               </aside>
             )}
@@ -326,19 +316,16 @@ export default function MapPage() {
                 />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
-                {!effectiveCenter ? (
-                  <LocationGate status={locationStatus} onRetry={requestLocation} query={query} onQueryChange={setQuery} />
-                ) : (
-                  <PandalList
-                    pandals={nearby}
-                    loading={loading}
-                    selectedId={selected?.id ?? null}
-                    distanceFor={withDistance}
-                    onSelect={setSelected}
-                    nearbyScoped={!!effectiveCenter}
-                    areaSearch={!!areaCenter}
-                  />
-                )}
+                {!effectiveCenter && <LocationPrompt status={locationStatus} onEnable={requestLocation} />}
+                <PandalList
+                  pandals={nearby}
+                  loading={loading}
+                  selectedId={selected?.id ?? null}
+                  distanceFor={withDistance}
+                  onSelect={setSelected}
+                  nearbyScoped={!!effectiveCenter}
+                  areaSearch={!!areaCenter}
+                />
               </div>
             </div>
           )}
@@ -362,10 +349,7 @@ export default function MapPage() {
                 active={showList}
                 icon={<ListIcon className="h-5 w-5" />}
                 label="List"
-                onClick={() => {
-                  setShowList(true);
-                  requestLocation();
-                }}
+                onClick={() => setShowList(true)}
               />
               <Link href="/submit" className="flex flex-col items-center gap-0.5 rounded-xl px-5 py-2 text-[color:var(--muted)]">
                 <PlusIcon className="h-5 w-5" />
@@ -615,11 +599,11 @@ function NearbyListHeader({
         </button>
       </div>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
-        {effectiveCenter
-          ? areaCenter
-            ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} found`
-            : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-          : "Your location is needed to show annadhanams near you."}
+        {areaCenter
+          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} found`
+          : effectiveCenter
+            ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+            : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"}`}
       </p>
       {areaCenter && (
         <button
@@ -646,58 +630,48 @@ function NearbyListHeader({
   );
 }
 
-function LocationGate({
+/** A slim, non-blocking nudge shown above the (already-visible) list —
+ * location is now purely an enhancement for sorting by distance, never a
+ * requirement to see anything, and it's only ever requested from here, on
+ * an explicit tap. Auto-requesting on load used to also silently fail on
+ * some mobile browsers (iOS Safari included), which won't show the
+ * permission prompt unless it's triggered by a direct user gesture. */
+function LocationPrompt({
   status,
-  onRetry,
-  query,
-  onQueryChange,
+  onEnable,
 }: {
   status: "idle" | "pending" | "granted" | "denied" | "unsupported";
-  onRetry: () => void;
-  query: string;
-  onQueryChange: (q: string) => void;
+  onEnable: () => void;
 }) {
   if (status === "pending") {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Finding annadhanams near you…</p>;
+    return (
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3 text-sm text-[color:var(--foreground)]">
+        <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
+        Finding your location…
+      </div>
+    );
+  }
+
+  if (status === "unsupported") {
+    return (
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3 text-sm text-[color:var(--foreground)]">
+        <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
+        Location isn&apos;t supported here — search an area above to sort by distance.
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl bg-[rgba(43,22,8,0.04)] p-6 text-center">
-      <span className="icon-tile icon-tile-circle h-11 w-11">
-        <PinIcon className="h-5 w-5" />
-      </span>
-      <div>
-        <p className="text-sm font-semibold text-[color:var(--foreground)]">Location required</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {status === "unsupported"
-            ? "Your browser doesn't support location — search an area below instead."
-            : status === "denied"
-              ? "We need your location to show annadhanams near you — enable it for this site, or search an area below."
-              : "We need your location to show annadhanams near you."}
-        </p>
-      </div>
-
-      {status !== "unsupported" && (
-        <button type="button" onClick={onRetry} className="btn-primary w-full justify-center py-2 text-sm">
-          Enable Location
-        </button>
-      )}
-
-      <div className="flex w-full items-center gap-2 text-xs text-[color:var(--muted-soft)]">
-        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
-        or
-        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
-      </div>
-
-      <label className="flex w-full items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-sm text-[color:var(--muted)]">
-        <SearchIcon className="h-4 w-4 flex-shrink-0" />
-        <input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search manually — e.g. Jubilee Hills"
-          className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
-        />
-      </label>
+    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.1)] p-3">
+      <p className="flex items-center gap-2 text-sm text-[color:var(--foreground)]">
+        <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
+        {status === "denied"
+          ? "Location is off — enable it to sort these by distance."
+          : "Enable location to sort these by distance from you."}
+      </p>
+      <button type="button" onClick={onEnable} className="btn-primary w-full justify-center py-1.5 text-sm">
+        Enable Location
+      </button>
     </div>
   );
 }
