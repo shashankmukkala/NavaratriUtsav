@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import BackButton from "@/components/BackButton";
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [editing, setEditing] = useState<Pandal | null>(null);
+  const [highlightAnnadhanam, setHighlightAnnadhanam] = useState(false);
   const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export default function ProfilePage() {
     >
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-4 sm:px-6">
         <nav className="nav-shell flex items-center gap-4 px-4 py-2.5 sm:px-5">
-          <BackButton />
+          <BackButton fallbackHref="/map" />
           <Brand />
         </nav>
 
@@ -169,8 +170,25 @@ export default function ProfilePage() {
 
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">
-                          <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditing(pandal);
+                              setHighlightAnnadhanam(false);
+                            }}
+                            className="btn-secondary px-3 py-1.5 text-xs"
+                          >
                             Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditing(pandal);
+                              setHighlightAnnadhanam(true);
+                            }}
+                            className="btn-secondary px-3 py-1.5 text-xs"
+                          >
+                            {pandal.event_date ? "Edit Annadhanam Date" : "Add Annadhanam Date"}
                           </button>
                           <button
                             type="button"
@@ -311,6 +329,7 @@ export default function ProfilePage() {
       {editing && (
         <EditPandalModal
           pandal={editing}
+          highlightAnnadhanam={highlightAnnadhanam}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -348,7 +367,20 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="rounded-lg bg-[rgba(43,22,8,0.05)] p-4 text-sm text-[color:var(--muted-soft)]">{children}</p>;
 }
 
-function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
+function EditPandalModal({
+  pandal,
+  highlightAnnadhanam = false,
+  onClose,
+  onSaved,
+}: {
+  pandal: Pandal;
+  /** Scrolls to and visually highlights the date/time fields — used when
+   * this modal was opened from the dedicated "Add/Edit Annadhanam Date"
+   * button rather than the plain "Edit" one. */
+  highlightAnnadhanam?: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [name, setName] = useState(pandal.name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
   const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
@@ -357,6 +389,13 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
   const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const annadhanamFieldsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (highlightAnnadhanam) {
+      annadhanamFieldsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightAnnadhanam]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -418,7 +457,12 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div
+            ref={annadhanamFieldsRef}
+            className={`grid grid-cols-2 gap-3 rounded-xl transition-shadow ${
+              highlightAnnadhanam ? "-m-2 p-2 ring-2 ring-[color:var(--accent)] ring-offset-2" : ""
+            }`}
+          >
             <div>
               <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date</label>
               <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />

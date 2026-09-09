@@ -96,12 +96,12 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/annadhanams" className="btn-primary px-5! py-2.5! text-sm!">
                   <PinIcon className="h-4 w-4" />
-                  Explore Mandapams
+                  Explore Mandapams/Annadhanams
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
                 <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
                   <PlusIcon className="h-4 w-4" />
-                  Add Mandapam
+                  Add Mandapam/Annadhanam
                 </Link>
               </div>
 

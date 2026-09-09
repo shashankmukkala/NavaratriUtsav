@@ -11,7 +11,7 @@ type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "card" | "map";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
-type PandalCategoryFilter = "all" | "annadhanams" | "mandapams";
+type PandalCategoryFilter = "all" | "annadhanams";
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -254,8 +254,11 @@ export default function AdminPage() {
 
       {tab === "pandals" && (
         <div className="space-y-4">
+          {/* "All" already includes annadhanam-serving mandapams — this is a
+              narrowing filter to just that subset, not a separate category
+              (an annadhanam-serving listing is still a mandapam). */}
           <div className="flex flex-wrap gap-1.5">
-            {(["all", "annadhanams", "mandapams"] as const).map((f) => (
+            {(["all", "annadhanams"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -266,9 +269,7 @@ export default function AdminPage() {
                     : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
                 }`}
               >
-                {f === "all" ? "All" : f === "annadhanams" ? "Annadhanams" : "Mandapams"} (
-                {f === "all" ? pandals.length : f === "annadhanams" ? annadhanamPandalsCount : pandals.length - annadhanamPandalsCount}
-                )
+                {f === "all" ? "All" : "Annadhanams"} ({f === "all" ? pandals.length : annadhanamPandalsCount})
               </button>
             ))}
           </div>

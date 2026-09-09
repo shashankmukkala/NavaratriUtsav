@@ -16,9 +16,9 @@ import type { GeocodeResult, Pandal, Sponsor } from "@/lib/types";
 
 type Filter = "all" | "today" | "open";
 type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" | "outside-area";
-// "annadhanams" = has an annadhanam (food service) date set; "mandapams" =
-// doesn't — the date is optional on submit, so this is how listings split
-// into the two sections instead of lumping every mandapam together.
+// "mandapams" = every listing (a mandapam serving annadhanam is still a
+// mandapam); "annadhanams" narrows that down to just the ones with a food
+// service date set. A subset, not a separate partition.
 type Category = "annadhanams" | "mandapams";
 
 const NEARBY_RADIUS_KM = 5;
@@ -93,7 +93,10 @@ export default function MapPage() {
     typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
   );
   const [filter, setFilter] = useState<Filter>("all");
-  const [category, setCategory] = useState<Category>("annadhanams");
+  // "Mandapams" is the full directory — every listing is a mandapam, an
+  // annadhanam-serving one included — so it's the safer default (never
+  // empty just because nothing nearby happens to serve food today).
+  const [category, setCategory] = useState<Category>("mandapams");
   // "Today"/"Open Now" are meaningless once a listing has no annadhanam
   // date at all, so switching to Mandapams also resets back to "All".
   const changeCategory = (c: Category) => {
@@ -296,7 +299,10 @@ export default function MapPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pandals
-      .filter((p) => (category === "annadhanams" ? !!p.event_date : !p.event_date))
+      // "Annadhanams" narrows to the subset that serves food on a specific
+      // date; "Mandapams" is everyone — an annadhanam-serving mandapam is
+      // still a mandapam, so it shouldn't disappear from that view.
+      .filter((p) => (category === "annadhanams" ? !!p.event_date : true))
       .filter((p) => (filter === "today" ? isToday(p.event_date) : true))
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
@@ -830,15 +836,16 @@ function NearbyListHeader({
         </button>
       )}
 
-      {/* Mandapams (no annadhanam date set) vs. Annadhanams (one is) —
-          split since the date is optional on submit now, so a mandapam
-          that doesn't serve food shouldn't be lumped in with ones that do. */}
+      {/* Mandapams is every listing — an annadhanam-serving one is still a
+          mandapam. Annadhanams narrows down to just the ones that also
+          serve food on a specific date. Not a partition: it's all vs. a
+          subset of it. */}
       <div className="mt-3 flex gap-2">
-        <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
-          Annadhanams
-        </FilterChip>
         <FilterChip active={category === "mandapams"} onClick={() => onCategoryChange("mandapams")}>
           Mandapams
+        </FilterChip>
+        <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
+          Annadhanams
         </FilterChip>
       </div>
 
