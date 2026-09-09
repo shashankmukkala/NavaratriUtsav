@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckIcon, CloseIcon, TrashIcon } from "@/components/icons";
+import { CheckIcon, CloseIcon, RefreshIcon, TrashIcon } from "@/components/icons";
 import ImageUploadField from "@/components/ImageUploadField";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
+type AdsSubTab = "banners" | "card" | "map";
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [tab, setTab] = useState<"pandals" | "sponsors" | "settings">("pandals");
+  const [adsSubTab, setAdsSubTab] = useState<AdsSubTab>("banners");
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
@@ -21,36 +23,33 @@ export default function AdminPage() {
   const [pandalSearch, setPandalSearch] = useState("");
   const [sponsorFilter, setSponsorFilter] = useState<StatusFilter>("pending");
   const [sponsorSearch, setSponsorSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchJson<{ loggedIn: boolean }>("/api/admin/session").then((data) => setLoggedIn(data?.loggedIn ?? false));
   }, []);
 
   const loadData = async () => {
-    const [pandalsRes, sponsorsRes] = await Promise.all([
+    const [pandalsRes, sponsorsRes, settingsRes] = await Promise.all([
       fetchJson<{ pandals: Pandal[] }>("/api/admin/pandals"),
       fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/admin/sponsors"),
+      fetchJson<{ settings: PaymentSettings }>("/api/admin/settings"),
     ]);
     setPandals(pandalsRes?.pandals ?? []);
     setSponsors(sponsorsRes?.sponsors ?? []);
+    setSettings(settingsRes?.settings ?? null);
+  };
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
 
   useEffect(() => {
     if (!loggedIn) return;
-    let cancelled = false;
-    Promise.all([
-      fetchJson<{ pandals: Pandal[] }>("/api/admin/pandals"),
-      fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/admin/sponsors"),
-      fetchJson<{ settings: PaymentSettings }>("/api/admin/settings"),
-    ]).then(([pandalsRes, sponsorsRes, settingsRes]) => {
-      if (cancelled) return;
-      setPandals(pandalsRes?.pandals ?? []);
-      setSponsors(sponsorsRes?.sponsors ?? []);
-      setSettings(settingsRes?.settings ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
   }, [loggedIn]);
 
   const saveSettings = async (patch: Partial<PaymentSettings>) => {
@@ -84,11 +83,6 @@ export default function AdminPage() {
     loadData();
   };
 
-  const setEditUnlocked = async (id: string, edit_unlocked: boolean) => {
-    await sendJson(`/api/admin/pandals/${id}`, { edit_unlocked }, "PATCH");
-    loadData();
-  };
-
   const sendAdminNote = async (id: string, note: string) => {
     await sendJson(`/api/admin/pandals/${id}`, { admin_note: note }, "PATCH");
     loadData();
@@ -102,6 +96,11 @@ export default function AdminPage() {
 
   const updateSponsorStatus = async (id: string, status: "approved" | "rejected") => {
     await sendJson(`/api/admin/sponsors/${id}`, { status }, "PATCH");
+    loadData();
+  };
+
+  const setSponsorEditUnlocked = async (id: string, edit_unlocked: boolean) => {
+    await sendJson(`/api/admin/sponsors/${id}`, { edit_unlocked }, "PATCH");
     loadData();
   };
 
@@ -138,7 +137,6 @@ export default function AdminPage() {
   }
 
   const pendingPandalsCount = pandals.filter((p) => p.status === "pending").length;
-  const pendingSponsorsCount = sponsors.filter((s) => s.status === "pending").length;
 
   const pandalSearchLower = pandalSearch.trim().toLowerCase();
   const filteredPandals = pandals.filter(
@@ -154,12 +152,19 @@ export default function AdminPage() {
   const sponsorSearchLower = sponsorSearch.trim().toLowerCase();
   const filteredSponsors = sponsors.filter(
     (s) =>
+      s.placement === adsSubTab &&
       (sponsorFilter === "all" || s.status === sponsorFilter) &&
       (sponsorSearchLower === "" ||
         s.sponsor_name.toLowerCase().includes(sponsorSearchLower) ||
         s.contact_phone.includes(sponsorSearchLower) ||
         (s.pandals?.name.toLowerCase().includes(sponsorSearchLower) ?? false))
   );
+
+  const pandalsWithBanner = pandals.filter((p) => (p.banner_image_urls?.length ?? 0) > 0);
+  const pendingBannerCount = pandalsWithBanner.filter((p) => !p.banner_paid).length;
+  const pendingCardAdsCount = sponsors.filter((s) => s.placement === "card" && s.status === "pending").length;
+  const pendingMapAdsCount = sponsors.filter((s) => s.placement === "map" && s.status === "pending").length;
+  const pendingAdsTotal = pendingBannerCount + pendingCardAdsCount + pendingMapAdsCount;
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden p-4 pb-16">
@@ -171,9 +176,19 @@ export default function AdminPage() {
           </span>
           <h1 className="truncate text-xl font-bold text-[color:var(--foreground)]">Admin</h1>
         </div>
-        <button onClick={handleLogout} className="btn-ghost flex-shrink-0 text-sm">
-          Log out
-        </button>
+        <div className="flex flex-shrink-0 items-center gap-1">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            aria-label="Refresh"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)] disabled:opacity-50"
+          >
+            <RefreshIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          </button>
+          <button onClick={handleLogout} className="btn-ghost text-sm">
+            Log out
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
@@ -181,7 +196,7 @@ export default function AdminPage() {
           Mandapams ({pendingPandalsCount} pending)
         </TabButton>
         <TabButton active={tab === "sponsors"} onClick={() => setTab("sponsors")}>
-          Ads ({pendingSponsorsCount} pending)
+          Ads ({pendingAdsTotal} pending)
         </TabButton>
         <TabButton active={tab === "settings"} onClick={() => setTab("settings")}>
           Payment settings
@@ -207,7 +222,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
-              <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onSetEditUnlocked={setEditUnlocked} onSendNote={sendAdminNote}>
+              <PandalRow key={pandal.id} pandal={pandal} onSendNote={sendAdminNote}>
                 <StatusBadge status={pandal.status} />
                 {pandal.status !== "approved" && (
                   <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
@@ -230,38 +245,61 @@ export default function AdminPage() {
 
       {tab === "sponsors" && (
         <div className="space-y-4">
-          <FilterBar
-            filter={sponsorFilter}
-            onFilterChange={setSponsorFilter}
-            counts={{
-              all: sponsors.length,
-              pending: sponsors.filter((s) => s.status === "pending").length,
-              approved: sponsors.filter((s) => s.status === "approved").length,
-              rejected: sponsors.filter((s) => s.status === "rejected").length,
-            }}
-            search={sponsorSearch}
-            onSearchChange={setSponsorSearch}
-            searchPlaceholder="Search by sponsor, phone, mandapam…"
-          />
-
-          <div className="space-y-2">
-            {filteredSponsors.length === 0 && <Empty>No ads match this filter.</Empty>}
-            {filteredSponsors.map((sponsor) => (
-              <SponsorRow key={sponsor.id} sponsor={sponsor}>
-                <StatusBadge status={sponsor.status} />
-                {sponsor.status !== "approved" && (
-                  <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "approved")}>
-                    Approve
-                  </ActionButton>
-                )}
-                {sponsor.status !== "rejected" && (
-                  <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "rejected")}>
-                    {sponsor.status === "pending" ? "Reject" : "Unpublish"}
-                  </ActionButton>
-                )}
-              </SponsorRow>
-            ))}
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+            <SubTabButton active={adsSubTab === "banners"} onClick={() => setAdsSubTab("banners")}>
+              Banners ({pendingBannerCount})
+            </SubTabButton>
+            <SubTabButton active={adsSubTab === "card"} onClick={() => setAdsSubTab("card")}>
+              Normal Ads ({pendingCardAdsCount})
+            </SubTabButton>
+            <SubTabButton active={adsSubTab === "map"} onClick={() => setAdsSubTab("map")}>
+              Map Ads ({pendingMapAdsCount})
+            </SubTabButton>
           </div>
+
+          {adsSubTab === "banners" ? (
+            <div className="space-y-2">
+              {pandalsWithBanner.length === 0 && <Empty>No association banners submitted yet.</Empty>}
+              {pandalsWithBanner.map((pandal) => (
+                <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} />
+              ))}
+            </div>
+          ) : (
+            <>
+              <FilterBar
+                filter={sponsorFilter}
+                onFilterChange={setSponsorFilter}
+                counts={{
+                  all: sponsors.filter((s) => s.placement === adsSubTab).length,
+                  pending: sponsors.filter((s) => s.placement === adsSubTab && s.status === "pending").length,
+                  approved: sponsors.filter((s) => s.placement === adsSubTab && s.status === "approved").length,
+                  rejected: sponsors.filter((s) => s.placement === adsSubTab && s.status === "rejected").length,
+                }}
+                search={sponsorSearch}
+                onSearchChange={setSponsorSearch}
+                searchPlaceholder="Search by sponsor, phone, mandapam…"
+              />
+
+              <div className="space-y-2">
+                {filteredSponsors.length === 0 && <Empty>No ads match this filter.</Empty>}
+                {filteredSponsors.map((sponsor) => (
+                  <SponsorRow key={sponsor.id} sponsor={sponsor} onSetEditUnlocked={setSponsorEditUnlocked}>
+                    <StatusBadge status={sponsor.status} />
+                    {sponsor.status !== "approved" && (
+                      <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "approved")}>
+                        Approve
+                      </ActionButton>
+                    )}
+                    {sponsor.status !== "rejected" && (
+                      <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "rejected")}>
+                        {sponsor.status === "pending" ? "Reject" : "Unpublish"}
+                      </ActionButton>
+                    )}
+                  </SponsorRow>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -340,6 +378,25 @@ function SettingsPanel({
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} className={active ? "btn-primary px-3 py-1.5 text-sm" : "btn-secondary px-3 py-1.5 text-sm"}>
+      {children}
+    </button>
+  );
+}
+
+/** Sub-tabs within the Ads tab (Banners / Normal Ads / Map Ads) — kept
+ * visually smaller/flatter than the main tabs above so the hierarchy reads
+ * correctly at a glance. */
+function SubTabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+        active
+          ? "bg-[color:var(--accent-deep)] text-white"
+          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
+      }`}
+    >
       {children}
     </button>
   );
@@ -432,18 +489,13 @@ function ActionButton({
 function PandalRow({
   pandal,
   children,
-  onSetBannerPaid,
-  onSetEditUnlocked,
   onSendNote,
 }: {
   pandal: Pandal;
   children: React.ReactNode;
-  onSetBannerPaid: (id: string, paid: boolean) => void;
-  onSetEditUnlocked: (id: string, unlocked: boolean) => void;
   onSendNote: (id: string, note: string) => void;
 }) {
   const [noteDraft, setNoteDraft] = useState(pandal.admin_note ?? "");
-  const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
       <div className="flex gap-3">
@@ -465,69 +517,12 @@ function PandalRow({
           Submitted {new Date(pandal.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
         </p>
 
-        {pandal.edit_requested && !pandal.edit_unlocked && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[rgba(234,108,29,0.1)] px-2.5 py-1.5">
-            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Wants to edit this listing</span>
-            <button
-              type="button"
-              onClick={() => onSetEditUnlocked(pandal.id, true)}
-              className="rounded-full bg-[rgba(34,139,34,0.16)] px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800"
-            >
-              Allow edit
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetEditUnlocked(pandal.id, false)}
-              className="rounded-full bg-[rgba(43,22,8,0.08)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[color:var(--muted)]"
-            >
-              Deny
-            </button>
-          </div>
-        )}
-        {pandal.edit_unlocked && (
-          <p className="text-[0.6875rem] font-semibold text-green-700">Edit approved — owner can now save one change.</p>
-        )}
-
-        {hasBanner && (
-          <div className="space-y-1.5 pt-1">
-            <div className="flex flex-wrap gap-1.5">
-              {pandal.banner_image_urls!.map((url) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={url} src={url} alt="" className="h-10 w-10 rounded-lg border border-[rgba(43,22,8,0.1)] object-cover" />
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onSetBannerPaid(pandal.id, !pandal.banner_paid)}
-                className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                  pandal.banner_paid
-                    ? "bg-[rgba(34,139,34,0.14)] text-green-800"
-                    : "bg-[rgba(234,108,29,0.14)] text-[color:var(--accent-deep)]"
-                }`}
-              >
-                {pandal.banner_paid ? "Banner: paid ✓ (click to revoke)" : "Banner — ₹200 unpaid (click to confirm)"}
-              </button>
-              {pandal.banner_payment_proof_url && (
-                <a
-                  href={pandal.banner_payment_proof_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-[color:var(--accent-deep)] underline"
-                >
-                  View payment screenshot
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="flex items-center gap-1.5 pt-1">
           <input
             type="text"
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
-            placeholder="Message to owner (e.g. why an edit was denied)…"
+            placeholder="Message to owner (e.g. why this was rejected)…"
             className="field-input flex-1 py-1 text-xs"
           />
           <button
@@ -546,7 +541,15 @@ function PandalRow({
   );
 }
 
-function SponsorRow({ sponsor, children }: { sponsor: SponsorWithPandal; children: React.ReactNode }) {
+function SponsorRow({
+  sponsor,
+  children,
+  onSetEditUnlocked,
+}: {
+  sponsor: SponsorWithPandal;
+  children: React.ReactNode;
+  onSetEditUnlocked: (id: string, unlocked: boolean) => void;
+}) {
   const images = sponsor.banner_image_urls?.length ? sponsor.banner_image_urls : sponsor.banner_image_url ? [sponsor.banner_image_url] : [];
   const price = sponsor.placement === "card" ? 200 : 500;
 
@@ -597,8 +600,78 @@ function SponsorRow({ sponsor, children }: { sponsor: SponsorWithPandal; childre
             </a>
           )}
         </div>
+
+        {sponsor.edit_requested && !sponsor.edit_unlocked && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[rgba(234,108,29,0.1)] px-2.5 py-1.5">
+            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Wants to edit this ad</span>
+            <button
+              type="button"
+              onClick={() => onSetEditUnlocked(sponsor.id, true)}
+              className="rounded-full bg-[rgba(34,139,34,0.16)] px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800"
+            >
+              Allow edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onSetEditUnlocked(sponsor.id, false)}
+              className="rounded-full bg-[rgba(43,22,8,0.08)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[color:var(--muted)]"
+            >
+              Deny
+            </button>
+          </div>
+        )}
+        {sponsor.edit_unlocked && (
+          <p className="text-[0.6875rem] font-semibold text-green-700">Edit approved — owner can now save one change.</p>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
+    </div>
+  );
+}
+
+/** Confirms/revokes payment for a mandapam's own association banner — a
+ * dedicated Ads > Banners row instead of being buried in the Mandapams
+ * tab, and using the same polished ActionButton treatment as every other
+ * approve/reject action instead of a plain text pill. */
+function BannerRow({ pandal, onSetBannerPaid }: { pandal: Pandal; onSetBannerPaid: (id: string, paid: boolean) => void }) {
+  return (
+    <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
+      <div className="flex flex-shrink-0 gap-1.5">
+        {pandal.banner_image_urls!.map((url) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={url} src={url} alt="" className="h-14 w-14 rounded-xl border border-[rgba(43,22,8,0.1)] object-cover" />
+        ))}
+      </div>
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+        <p className="text-xs text-[color:var(--muted)]">Association banner · ₹200 one-time</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={pandal.banner_paid ? "status-badge status-approved" : "status-badge status-pending"}>
+            {pandal.banner_paid ? "Paid" : "Unpaid"}
+          </span>
+          {pandal.banner_payment_proof_url && (
+            <a
+              href={pandal.banner_payment_proof_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-[color:var(--accent-deep)] underline"
+            >
+              View payment screenshot
+            </a>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-shrink-0 items-center gap-2">
+        {pandal.banner_paid ? (
+          <ActionButton color="gray" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, false)}>
+            Revoke
+          </ActionButton>
+        ) : (
+          <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, true)}>
+            Confirm Payment
+          </ActionButton>
+        )}
+      </div>
     </div>
   );
 }

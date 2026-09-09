@@ -17,15 +17,8 @@ export interface Pandal {
   banner_paid: boolean;
   user_id: string | null;
   status: PandalStatus;
-  /** Owner has asked to edit an already-approved listing's core details. */
-  edit_requested: boolean;
-  /** Admin has approved that request — the owner can now save one core-detail
-   * edit before this resets and a new request is needed. Adding/replacing
-   * the banner is unaffected by either flag. */
-  edit_unlocked: boolean;
-  /** A short note from admin to the owner — why an edit was denied, why a
-   * listing was rejected, etc. Shown on the owner's profile until they
-   * dismiss it. */
+  /** A short note from admin to the owner — why a listing was rejected,
+   * etc. Shown on the owner's profile until they dismiss it. */
   admin_note: string | null;
   created_at: string;
 }
@@ -45,6 +38,11 @@ export interface Sponsor {
   /** "map" = map-wide sponsored slots. "card" = shown generically inside
    * mandapam detail cards, not targeted at any one specific mandapam. */
   placement: "map" | "card";
+  /** Owner has asked to edit this already-submitted ad's details. */
+  edit_requested: boolean;
+  /** Admin has approved that request — the owner can now save one edit
+   * before this resets and a new request is needed. */
+  edit_unlocked: boolean;
   created_at: string;
 }
 

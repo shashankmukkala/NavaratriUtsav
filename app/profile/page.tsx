@@ -11,6 +11,7 @@ import { CalendarIcon, ClockIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/co
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
+
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type SessionUser = { name?: string; email?: string; image?: string };
 
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [editing, setEditing] = useState<Pandal | null>(null);
   const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
+  const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
 
   const loadData = () => {
@@ -53,9 +55,9 @@ export default function ProfilePage() {
     loadData();
   };
 
-  const requestEdit = async (id: string) => {
+  const requestSponsorEdit = async (id: string) => {
     setRequestingEdit(id);
-    await sendJson(`/api/me/pandals/${id}/request-edit`, undefined, "POST");
+    await sendJson(`/api/me/sponsors/${id}/request-edit`, undefined, "POST");
     setRequestingEdit(null);
     loadData();
   };
@@ -178,24 +180,9 @@ export default function ProfilePage() {
                           )}
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">
-                          {pandal.edit_unlocked ? (
-                            <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
-                              Edit
-                            </button>
-                          ) : pandal.edit_requested ? (
-                            <span className="rounded-full bg-[rgba(43,22,8,0.06)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
-                              Edit requested
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => requestEdit(pandal.id)}
-                              disabled={requestingEdit === pandal.id}
-                              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-60"
-                            >
-                              {requestingEdit === pandal.id ? "Requesting…" : "Request edit"}
-                            </button>
-                          )}
+                          <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
+                            Edit
+                          </button>
                           <button
                             type="button"
                             onClick={() => deletePandal(pandal.id)}
@@ -239,14 +226,34 @@ export default function ProfilePage() {
                           </p>
                           <span className={`status-badge status-${sponsor.status} mt-1.5 inline-block`}>{sponsor.status}</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => deleteSponsor(sponsor.id)}
-                          aria-label="Delete"
-                          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--coral-deep)] transition-colors hover:bg-[rgba(234,108,29,0.1)]"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          {sponsor.edit_unlocked ? (
+                            <button type="button" onClick={() => setEditingSponsor(sponsor)} className="btn-secondary px-3 py-1.5 text-xs">
+                              Edit
+                            </button>
+                          ) : sponsor.edit_requested ? (
+                            <span className="rounded-full bg-[rgba(43,22,8,0.06)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                              Edit requested
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => requestSponsorEdit(sponsor.id)}
+                              disabled={requestingEdit === sponsor.id}
+                              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-60"
+                            >
+                              {requestingEdit === sponsor.id ? "Requesting…" : "Request edit"}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => deleteSponsor(sponsor.id)}
+                            aria-label="Delete"
+                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--coral-deep)] transition-colors hover:bg-[rgba(234,108,29,0.1)]"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -274,6 +281,17 @@ export default function ProfilePage() {
           onClose={() => setAddingBannerTo(null)}
           onSaved={() => {
             setAddingBannerTo(null);
+            loadData();
+          }}
+        />
+      )}
+
+      {editingSponsor && (
+        <EditSponsorModal
+          sponsor={editingSponsor}
+          onClose={() => setEditingSponsor(null)}
+          onSaved={() => {
+            setEditingSponsor(null);
             loadData();
           }}
         />
@@ -480,6 +498,86 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
           {saving ? "Submitting…" : "Submit banner"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Editing an ad needs admin approval first (unlike a mandapam listing) —
+ * this modal only ever opens once that approval is in, via edit_unlocked. */
+function EditSponsorModal({
+  sponsor,
+  onClose,
+  onSaved,
+}: {
+  sponsor: SponsorWithPandal;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [sponsorName, setSponsorName] = useState(sponsor.sponsor_name);
+  const [contactPhone, setContactPhone] = useState(sponsor.contact_phone);
+  const [linkUrl, setLinkUrl] = useState(sponsor.link_url ?? "");
+  const [bannerUrl, setBannerUrl] = useState<string | null>(sponsor.banner_image_urls?.[0] ?? sponsor.banner_image_url ?? null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    const result = await sendJson(
+      `/api/me/sponsors/${sponsor.id}`,
+      {
+        sponsor_name: sponsorName,
+        contact_phone: contactPhone,
+        link_url: linkUrl || null,
+        banner_image_urls: bannerUrl ? [bannerUrl] : [],
+      },
+      "PATCH"
+    );
+    setSaving(false);
+    if (result.ok) {
+      onSaved();
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <form onSubmit={handleSave} className="card-elevated max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
+        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit ad</p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Saving sends it back for a quick review before it&apos;s live again.</p>
+
+        <div className="mt-4 space-y-4">
+          <ImageUploadField label="Banner image" folder="sponsors" value={bannerUrl} onChange={setBannerUrl} />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Sponsor name</label>
+            <input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Contact phone</label>
+            <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Link (optional)</label>
+            <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="field-input" />
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
+
+        <div className="mt-5 flex gap-2">
+          <button type="button" onClick={onClose} className="btn-ghost flex-1 justify-center py-2.5">
+            Cancel
+          </button>
+          <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center py-2.5">
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

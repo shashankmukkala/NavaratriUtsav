@@ -21,8 +21,6 @@ export interface Database {
           banner_paid: boolean;
           user_id: string | null;
           status: "pending" | "approved" | "rejected";
-          edit_requested: boolean;
-          edit_unlocked: boolean;
           admin_note: string | null;
           created_at: string;
         };
@@ -43,8 +41,6 @@ export interface Database {
           banner_paid?: boolean;
           user_id?: string | null;
           status?: "pending" | "approved" | "rejected";
-          edit_requested?: boolean;
-          edit_unlocked?: boolean;
           admin_note?: string | null;
           created_at?: string;
         };
@@ -65,6 +61,8 @@ export interface Database {
           expires_at: string | null;
           user_id: string | null;
           placement: "map" | "card";
+          edit_requested: boolean;
+          edit_unlocked: boolean;
           created_at: string;
         };
         Insert: {
@@ -80,6 +78,8 @@ export interface Database {
           expires_at?: string | null;
           user_id?: string | null;
           placement?: "map" | "card";
+          edit_requested?: boolean;
+          edit_unlocked?: boolean;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;
