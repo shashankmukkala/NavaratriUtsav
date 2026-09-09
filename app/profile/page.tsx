@@ -123,7 +123,6 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-2">
                   {pandals.map((pandal) => {
-                    const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
                     return (
                       <div key={pandal.id} className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,24 +159,6 @@ export default function ProfilePage() {
                             </div>
                           )}
 
-                          {hasBanner ? (
-                            <p className="flex items-center gap-1.5 text-xs font-medium">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={pandal.banner_image_urls![0]} alt="" className="h-6 w-10 rounded object-cover" />
-                              <span className={pandal.banner_paid ? "text-green-700" : "text-[color:var(--accent-deep)]"}>
-                                {pandal.banner_paid ? "Banner live" : "Banner pending payment review"}
-                              </span>
-                            </p>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setAddingBannerTo(pandal)}
-                              className="flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
-                            >
-                              <MegaphoneIcon className="h-3.5 w-3.5" />
-                              Add your association banner
-                            </button>
-                          )}
                         </div>
                         <div className="flex flex-shrink-0 items-center gap-2">
                           <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
@@ -192,6 +173,54 @@ export default function ProfilePage() {
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
+                My banners ({pandals.length})
+              </h2>
+              <p className="mb-3 text-xs text-[color:var(--muted-soft)]">
+                A one-time ₹200 per mandapam, live for as long as the listing is — unlike the ads below, which run for
+                a limited time.
+              </p>
+              {pandals.length === 0 ? (
+                <Empty>Add a mandapam first, then you can give it a banner.</Empty>
+              ) : (
+                <div className="space-y-2">
+                  {pandals.map((pandal) => {
+                    const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
+                    return (
+                      <div key={pandal.id} className="card-elevated flex items-center gap-3 p-3">
+                        {hasBanner ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={pandal.banner_image_urls![0]} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+                        ) : (
+                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(43,22,8,0.06)] text-[color:var(--muted-soft)]">
+                            <MegaphoneIcon className="h-5 w-5" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+                          {hasBanner ? (
+                            <span className={hasBanner && pandal.banner_paid ? "text-xs font-medium text-green-700" : "text-xs font-medium text-[color:var(--accent-deep)]"}>
+                              {pandal.banner_paid ? "Live" : "Pending payment review"}
+                            </span>
+                          ) : (
+                            <p className="truncate text-xs text-[color:var(--muted)]">No banner yet</p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAddingBannerTo(pandal)}
+                          className="btn-secondary flex-shrink-0 px-3 py-1.5 text-xs"
+                        >
+                          {hasBanner ? "Update" : "Add banner"}
+                        </button>
                       </div>
                     );
                   })}
@@ -411,25 +440,28 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
  * the original /submit flow, so it doesn't here either; admin still has to
  * confirm the payment (banner_paid) before it actually shows anywhere. */
 function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
+  const alreadyPaid = pandal.banner_paid;
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(pandal.banner_image_urls?.[0] ?? null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
-  }, []);
+    if (!alreadyPaid) fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, [alreadyPaid]);
+
+  // Once it's already paid, swapping the image is free — no need to pay or
+  // prove payment again for a banner that's already live.
+  const canSave = alreadyPaid ? Boolean(bannerUrl) : Boolean(bannerUrl && proofUrl);
 
   const handleSave = async () => {
-    if (!bannerUrl || !proofUrl) return;
+    if (!canSave) return;
     setError(null);
     setSaving(true);
-    const result = await sendJson(
-      `/api/me/pandals/${pandal.id}`,
-      { banner_image_urls: [bannerUrl], banner_payment_proof_url: proofUrl },
-      "PATCH"
-    );
+    const patch: Record<string, unknown> = { banner_image_urls: bannerUrl ? [bannerUrl] : [] };
+    if (!alreadyPaid) patch.banner_payment_proof_url = proofUrl;
+    const result = await sendJson(`/api/me/pandals/${pandal.id}`, patch, "PATCH");
     setSaving(false);
     if (result.ok) {
       onSaved();
@@ -449,16 +481,20 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
         >
           ×
         </button>
-        <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Add your association banner</p>
+        <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">
+          {alreadyPaid ? "Update your banner" : "Add your association banner"}
+        </p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          One-time ₹200 — shows on {pandal.name}&apos;s card, for good.
+          {alreadyPaid
+            ? `Already paid — swap the image on ${pandal.name}'s card any time, for free.`
+            : `One-time ₹200 — shows on ${pandal.name}'s card, for good.`}
         </p>
 
         <div className="mt-4">
           <ImageUploadField label="Banner image" folder="pandals" value={bannerUrl} onChange={setBannerUrl} />
         </div>
 
-        {bannerUrl && (
+        {!alreadyPaid && bannerUrl && (
           <>
             <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
               {settings?.qr_image_url ? (
@@ -491,11 +527,11 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
 
         <button
           type="button"
-          disabled={!bannerUrl || !proofUrl || saving}
+          disabled={!canSave || saving}
           onClick={handleSave}
           className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {saving ? "Submitting…" : "Submit banner"}
+          {saving ? "Saving…" : alreadyPaid ? "Save banner" : "Submit banner"}
         </button>
       </div>
     </div>
