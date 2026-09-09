@@ -96,7 +96,7 @@ export default function HomePage() {
                 Where <span className="text-[color:var(--accent-deep)]">Bappa</span> brings us together.
               </h1>
               <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
-                Find Annadhanam being served around you this Ganesh Chaturthi.
+                Find the best mandapams and annadhanams being served around you.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">

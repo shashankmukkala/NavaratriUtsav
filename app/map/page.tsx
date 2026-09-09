@@ -42,6 +42,11 @@ export default function MapPage() {
   // user's own coords) is what "near you" is centered on, so searching
   // Mumbai shows mandapams near Mumbai even if the user is really in Pune.
   const [areaCenter, setAreaCenter] = useState<{ lat: number; lng: number } | null>(null);
+  // Mirrors areaCenter for the async geolocation callback below, which
+  // closes over stale state otherwise — without this, a slow GPS fix that
+  // resolves after the user has already searched an area silently snaps
+  // the camera back to their real location, clobbering the search.
+  const areaCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -72,8 +77,10 @@ export default function MapPage() {
       (position) => {
         const here = { lat: position.coords.latitude, lng: position.coords.longitude };
         setCoords(here);
-        setFlyTarget(here);
         setLocationStatus("granted");
+        // Don't fly the camera away from an area the user already searched
+        // for — this GPS fix may have just been slow to resolve.
+        if (!areaCenterRef.current) setFlyTarget(here);
         // Once we actually know where they are, go straight to showing the
         // nearby list instead of leaving them looking at a bare map.
         setSidebarOpen(true);
@@ -100,6 +107,7 @@ export default function MapPage() {
     if (q.length < 3) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAreaCenter(null);
+      areaCenterRef.current = null;
       return;
     }
 
@@ -112,6 +120,7 @@ export default function MapPage() {
           const at = { lat: Number(first.lat), lng: Number(first.lon) };
           setFlyTarget(at);
           setAreaCenter(at);
+          areaCenterRef.current = at;
         }
       } catch {
         // No connectivity to the geocoder — the text filter above still works.
@@ -165,6 +174,7 @@ export default function MapPage() {
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
           <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-4 py-2.5 sm:px-5">
             <Brand />
+            <LocationBadge status={locationStatus} onRetry={requestLocation} />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -230,7 +240,7 @@ export default function MapPage() {
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
                   {!effectiveCenter ? (
-                    <LocationGate status={locationStatus} onRetry={requestLocation} />
+                    <LocationGate status={locationStatus} onRetry={requestLocation} query={query} onQueryChange={setQuery} />
                   ) : (
                     <PandalList
                       pandals={nearby}
@@ -263,7 +273,10 @@ export default function MapPage() {
       <div className="relative flex h-full flex-col lg:hidden">
         <header className="pointer-events-none absolute inset-x-3 top-3 z-20">
           <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3">
-            <Brand />
+            <div className="flex items-center justify-between gap-2">
+              <Brand />
+              <LocationBadge status={locationStatus} onRetry={requestLocation} />
+            </div>
             <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -315,7 +328,7 @@ export default function MapPage() {
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
                 {!effectiveCenter ? (
-                  <LocationGate status={locationStatus} onRetry={requestLocation} />
+                  <LocationGate status={locationStatus} onRetry={requestLocation} query={query} onQueryChange={setQuery} />
                 ) : (
                   <PandalList
                     pandals={nearby}
@@ -531,12 +544,43 @@ function FilterChip({
  * everything unfiltered when we don't know where the user is would defeat
  * the point of a "near you" list, so this is a hard requirement, not a
  * silent fallback. */
-function LocationGate({
+/** Small "is location on?" status chip in the nav — click to retry when
+ * it's off, so it also doubles as the enable-location control up top. */
+function LocationBadge({
   status,
   onRetry,
 }: {
   status: "idle" | "pending" | "granted" | "denied" | "unsupported";
   onRetry: () => void;
+}) {
+  const on = status === "granted";
+  return (
+    <button
+      type="button"
+      onClick={on ? undefined : onRetry}
+      disabled={status === "pending" || status === "unsupported"}
+      className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+        on
+          ? "bg-[rgba(34,139,34,0.12)] text-green-800"
+          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(234,108,29,0.1)]"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${on ? "bg-green-600" : "bg-[color:var(--muted-soft)]"}`} />
+      {status === "pending" ? "Locating…" : on ? "Location: On" : "Location: Off"}
+    </button>
+  );
+}
+
+function LocationGate({
+  status,
+  onRetry,
+  query,
+  onQueryChange,
+}: {
+  status: "idle" | "pending" | "granted" | "denied" | "unsupported";
+  onRetry: () => void;
+  query: string;
+  onQueryChange: (q: string) => void;
 }) {
   if (status === "pending") {
     return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Finding mandapams near you…</p>;
@@ -551,17 +595,34 @@ function LocationGate({
         <p className="text-sm font-semibold text-[color:var(--foreground)]">Location required</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           {status === "unsupported"
-            ? "Your browser doesn't support location — try a different browser to see mandapams near you."
+            ? "Your browser doesn't support location — search an area below instead."
             : status === "denied"
-              ? "We need your location to show mandapams near you. Enable location for this site in your browser/phone settings, then try again."
+              ? "We need your location to show mandapams near you — enable it for this site, or search an area below."
               : "We need your location to show mandapams near you."}
         </p>
       </div>
+
       {status !== "unsupported" && (
-        <button type="button" onClick={onRetry} className="btn-primary py-2 text-sm">
+        <button type="button" onClick={onRetry} className="btn-primary w-full justify-center py-2 text-sm">
           Enable Location
         </button>
       )}
+
+      <div className="flex w-full items-center gap-2 text-xs text-[color:var(--muted-soft)]">
+        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
+        or
+        <span className="h-px flex-1 bg-[rgba(43,22,8,0.12)]" />
+      </div>
+
+      <label className="flex w-full items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-sm text-[color:var(--muted)]">
+        <SearchIcon className="h-4 w-4 flex-shrink-0" />
+        <input
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search manually — e.g. Jubilee Hills"
+          className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
+        />
+      </label>
     </div>
   );
 }

@@ -24,6 +24,7 @@ export default function MapView({ pandals, selectedId, onSelect, flyTo }: MapVie
   const onSelectRef = useRef(onSelect);
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+  const [showAttribution, setShowAttribution] = useState(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
@@ -151,6 +152,29 @@ export default function MapView({ pandals, selectedId, onSelect, flyTo }: MapVie
         </div>
       )}
       <div ref={containerRef} className="h-full w-full" />
+
+      {/* Map data credit — collapsed by default, expands to name the source
+       * when tapped, instead of permanently occupying corner space. */}
+      <div className="absolute bottom-2 left-2 z-10">
+        {showAttribution ? (
+          <button
+            type="button"
+            onClick={() => setShowAttribution(false)}
+            className="rounded-full bg-white/85 px-2.5 py-1 text-[0.6875rem] text-[color:var(--muted)] shadow-sm backdrop-blur-sm"
+          >
+            © OpenStreetMap contributors · Tiles by OpenFreeMap
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowAttribution(true)}
+            aria-label="Map data source"
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-white/85 text-[0.6875rem] font-bold text-[color:var(--muted)] shadow-sm backdrop-blur-sm"
+          >
+            i
+          </button>
+        )}
+      </div>
     </div>
   );
 }
