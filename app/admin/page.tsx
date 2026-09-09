@@ -152,21 +152,21 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl p-4 pb-16">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="icon-tile icon-tile-circle h-9 w-9" style={{ background: "#ffffff" }}>
+    <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden p-4 pb-16">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="icon-tile icon-tile-circle h-9 w-9 flex-shrink-0" style={{ background: "#ffffff" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/bappa-logo.png" alt="" className="h-6 w-6 object-contain" />
           </span>
-          <h1 className="text-xl font-bold text-[color:var(--foreground)]">Admin</h1>
+          <h1 className="truncate text-xl font-bold text-[color:var(--foreground)]">Admin</h1>
         </div>
-        <button onClick={handleLogout} className="btn-ghost text-sm">
+        <button onClick={handleLogout} className="btn-ghost flex-shrink-0 text-sm">
           Log out
         </button>
       </div>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <TabButton active={tab === "pandals"} onClick={() => setTab("pandals")}>
           Mandapams ({pendingPandalsCount} pending)
         </TabButton>
@@ -477,7 +477,7 @@ function PandalRow({
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">{children}</div>
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
     </div>
   );
 }
@@ -534,7 +534,7 @@ function SponsorRow({ sponsor, children }: { sponsor: SponsorWithPandal; childre
           )}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">{children}</div>
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
     </div>
   );
 }
