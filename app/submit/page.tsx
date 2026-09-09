@@ -270,7 +270,29 @@ export default function SubmitPage() {
         />
 
         {!done && (
-          <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12 lg:pt-16">
+          <div className="pt-8 lg:pt-16">
+            <div className="mb-8 max-w-2xl">
+              <p className="eyebrow">Add your Mandapam Seva</p>
+              <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
+                Let the people know. Let the seva grow.
+              </h1>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[color:var(--muted)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <ClockIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+                  Takes two minutes
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <VerifiedIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+                  Quick review
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <PinIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+                  Reaches people nearby
+                </span>
+              </div>
+            </div>
+
+          <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12">
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
               <ImageUploadField label="Photo of the mandapam" folder="pandals" required value={imageUrl} onChange={setImageUrl} />
 
@@ -359,45 +381,23 @@ export default function SubmitPage() {
               </p>
             </form>
 
-            <div className="min-w-0 space-y-6 lg:sticky lg:top-8 lg:order-2">
-              <div>
-                <p className="eyebrow">Add your Mandapam Seva</p>
-                <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
-                  Let the people know. Let the seva grow.
-                </h1>
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[color:var(--muted)]">
-                  <span className="inline-flex items-center gap-1.5">
-                    <ClockIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-                    Takes two minutes
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <VerifiedIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-                    Quick review
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <PinIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-                    Reaches people nearby
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-                  This is how it&apos;ll look
-                </p>
-                <LivePreviewCard
-                  imageUrl={imageUrl}
-                  name={organizerName}
-                  address={address}
-                  dateLabel={previewDateLabel}
-                  timingText={timingText}
-                  bannerUrls={bannerUrls}
-                  onBannerChange={handleBannerChange}
-                  proofUrl={bannerProofUrl}
-                  onOpenPayment={() => setShowPaymentModal(true)}
-                />
-              </div>
+            <div className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
+                This is how it&apos;ll look
+              </p>
+              <LivePreviewCard
+                imageUrl={imageUrl}
+                name={organizerName}
+                address={address}
+                dateLabel={previewDateLabel}
+                timingText={timingText}
+                bannerUrls={bannerUrls}
+                onBannerChange={handleBannerChange}
+                proofUrl={bannerProofUrl}
+                onOpenPayment={() => setShowPaymentModal(true)}
+              />
             </div>
+          </div>
           </div>
         )}
       </div>
