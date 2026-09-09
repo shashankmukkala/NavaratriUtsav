@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import MapView from "@/components/MapView";
-import ProfileNavLink from "@/components/ProfileNavLink";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -86,7 +85,6 @@ export default function HomePage() {
                 <PinIcon className="h-3.5 w-3.5" />
                 View Map
               </Link>
-              <ProfileNavLink />
             </div>
           </nav>
 
@@ -102,7 +100,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/map" className="btn-primary px-5! py-2.5! text-sm!">
                   <PinIcon className="h-4 w-4" />
-                  Explore Annadhanam
+                  Explore Mandapams
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
                 <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
@@ -112,10 +110,10 @@ export default function HomePage() {
               </div>
 
               <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4">
-                <Stat icon={<UsersIcon className="h-5 w-5" />} label="Meals shared with love" />
+                <Stat icon={<UsersIcon className="h-5 w-5" />} label="Let's celebrate together" />
                 <Stat
                   icon={<PinIcon className="h-5 w-5" />}
-                  label={pandals ? `${pandals.length}+ Annadhanams` : "Annadhanams near you"}
+                  label={pandals ? `${pandals.length}+ Mandapams` : "Mandapams near you"}
                 />
               </div>
             </div>
