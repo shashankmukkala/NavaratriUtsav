@@ -124,15 +124,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== Annadhanam near you ===== */}
+      {/* ===== Mandapams near you ===== */}
       <section className="mx-auto max-w-6xl px-4 pb-12 pt-2 sm:px-6">
         <div className="card-elevated overflow-hidden p-5 sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_1.3fr] lg:items-start">
             <div>
               <p className="eyebrow">Find near you</p>
-              <h2 className="mt-2 text-2xl font-bold text-[color:var(--foreground)] sm:text-3xl">Annadhanam near you.</h2>
+              <h2 className="mt-2 text-2xl font-bold text-[color:var(--foreground)] sm:text-3xl">Mandapams near you.</h2>
               <p className="mt-3 text-sm text-[color:var(--muted)] sm:text-base">
-                Search and discover community annadhanams happening today.
+                Search and discover community mandapams and annadhanams near you.
               </p>
               <form
                 action="/map"
@@ -150,10 +150,10 @@ export default function HomePage() {
               <p className="mt-4 flex items-center gap-2 text-xs font-medium text-[color:var(--muted)]">
                 <span className="badge-live" />
                 {pandals === null
-                  ? "Loading annadhanams…"
+                  ? "Loading mandapams…"
                   : pandals.length > 0
-                    ? "Showing annadhanams serving today"
-                    : "No annadhanams published yet — be the first to add one"}
+                    ? "Showing mandapams near you"
+                    : "No mandapams published yet — be the first to add one"}
               </p>
             </div>
 
@@ -275,7 +275,7 @@ export default function HomePage() {
           <div className="flex justify-center sm:justify-start">
             <Brand tagline />
           </div>
-          <p className="text-sm text-[color:var(--muted)]">Food unites. Bappa guides.</p>
+          <p className="text-sm text-[color:var(--muted)]">He brings us closer.</p>
           <p className="text-sm font-semibold text-[color:var(--accent-deep)]">
             Made with a little extra love for PGs &amp; Hostelers. ❤️
           </p>
