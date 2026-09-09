@@ -228,14 +228,6 @@ export default function MapPage() {
     }
   };
 
-  // Picking a mandapam from the list closes the list panel — otherwise the
-  // detail card and the list sat side by side, squeezing both (and the ad
-  // panel) into cramped slivers of the map.
-  const selectFromList = (pandal: Pandal) => {
-    setSelected(pandal);
-    setSidebarOpen(false);
-  };
-
   // A searched area takes priority over the user's own location for "near
   // you" purposes, whenever one is active. Location only counts when the
   // toggle is actually on — a permission grant alone doesn't mean it's in use.
@@ -296,7 +288,10 @@ export default function MapPage() {
             </label>
             <button
               type="button"
-              onClick={() => setSidebarOpen((v) => !v)}
+              onClick={() => {
+                setSidebarOpen((v) => !v);
+                setSelected(null);
+              }}
               className="btn-secondary flex-shrink-0"
             >
               <ListIcon className="h-4 w-4" />
@@ -336,7 +331,7 @@ export default function MapPage() {
                     loading={loading}
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
-                    onSelect={selectFromList}
+                    onSelect={setSelected}
                     nearbyScoped={!!effectiveCenter}
                     areaSearch={!!areaCenter}
                     query={query}
@@ -351,7 +346,7 @@ export default function MapPage() {
               // floating as a separate absolutely-positioned overlay) means
               // it's exactly as tall as the ad panel by construction, not
               // by guessing at a matching max-height.
-              <div className="pointer-events-auto flex min-h-0 flex-1 justify-center">
+              <div className="pointer-events-auto flex min-h-0 flex-1 justify-end">
                 <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} />
               </div>
             ) : (
