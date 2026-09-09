@@ -17,17 +17,7 @@ export async function GET() {
   return NextResponse.json({ pandals: data });
 }
 
-const REQUIRED_FIELDS = [
-  "name",
-  "organizer_name",
-  "contact_phone",
-  "address",
-  "lat",
-  "lng",
-  "event_date",
-  "timing_text",
-  "image_url",
-] as const;
+const REQUIRED_FIELDS = ["name", "organizer_name", "contact_phone", "address", "lat", "lng", "image_url"] as const;
 
 // Requires a signed-in Google account, so a submission can be tagged with
 // who made it (for later editing) — see lib/authOptions.ts. It always starts
@@ -68,8 +58,8 @@ export async function POST(request: NextRequest) {
       address: String(body.address).slice(0, 500),
       lat,
       lng,
-      event_date: body.event_date,
-      timing_text: String(body.timing_text).slice(0, 200),
+      event_date: body.event_date ? String(body.event_date) : null,
+      timing_text: body.timing_text ? String(body.timing_text).slice(0, 200) : null,
       description: body.description ? String(body.description).slice(0, 2000) : null,
       image_url: String(body.image_url),
       banner_image_urls: Array.isArray(body.banner_image_urls)

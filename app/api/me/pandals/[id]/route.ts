@@ -46,10 +46,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     update.admin_note = null;
   }
 
-  const stringFields = ["name", "organizer_name", "contact_phone", "address", "event_date", "timing_text", "image_url"] as const;
+  const stringFields = ["name", "organizer_name", "contact_phone", "address", "image_url"] as const;
   const wantsCoreEdit =
     stringFields.some((field) => body[field] !== undefined) ||
     body.description !== undefined ||
+    body.event_date !== undefined ||
+    body.timing_text !== undefined ||
     (body.lat !== undefined && body.lng !== undefined);
 
   if (wantsCoreEdit) {
@@ -58,6 +60,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     if (body.description !== undefined) {
       update.description = body.description ? String(body.description).slice(0, 2000) : null;
+    }
+    if (body.event_date !== undefined) {
+      update.event_date = body.event_date ? String(body.event_date) : null;
+    }
+    if (body.timing_text !== undefined) {
+      update.timing_text = body.timing_text ? String(body.timing_text).slice(0, 200) : null;
     }
     if (body.lat !== undefined && body.lng !== undefined) {
       const lat = Number(body.lat);

@@ -53,10 +53,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     };
   }, [pandal.id]);
 
-  const eventDate = new Date(pandal.event_date + "T00:00:00");
-  const dateLabel = Number.isNaN(eventDate.getTime())
-    ? pandal.event_date
-    : eventDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const dateLabel = pandal.event_date
+    ? (() => {
+        const d = new Date(pandal.event_date + "T00:00:00");
+        return Number.isNaN(d.getTime())
+          ? pandal.event_date
+          : d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+      })()
+    : null;
   const eventStatus = getEventStatus(pandal.event_date);
 
   // A pandal's own paid banner takes priority; otherwise rotate through the
@@ -92,7 +96,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
         <div className="flex min-h-0 flex-1 flex-col space-y-2.5 p-4">
           <div className="flex items-center gap-2">
-            <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
+            {eventStatus && (
+              <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
+            )}
             <span className="badge-verified">
               <VerifiedIcon className="h-3.5 w-3.5" />
               Verified
@@ -116,9 +122,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
                 {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
               </span>
             </MetaRow>
-            <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
-              {dateLabel} · {pandal.timing_text}
-            </MetaRow>
+            {dateLabel ? (
+              <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
+                {dateLabel}
+                {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
+              </MetaRow>
+            ) : (
+              <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>Mandapam only — no annadhanam date shared</MetaRow>
+            )}
             <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
           </div>
 

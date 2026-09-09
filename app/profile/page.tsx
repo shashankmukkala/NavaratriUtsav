@@ -131,14 +131,22 @@ export default function ProfilePage() {
                           <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
                           <p className="truncate text-xs text-[color:var(--muted)]">{pandal.address}</p>
                           <div className="flex items-center gap-3 text-xs text-[color:var(--muted-soft)]">
-                            <span className="inline-flex items-center gap-1">
-                              <CalendarIcon className="h-3 w-3" />
-                              {pandal.event_date}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <ClockIcon className="h-3 w-3" />
-                              {pandal.timing_text}
-                            </span>
+                            {pandal.event_date ? (
+                              <>
+                                <span className="inline-flex items-center gap-1">
+                                  <CalendarIcon className="h-3 w-3" />
+                                  {pandal.event_date}
+                                </span>
+                                {pandal.timing_text && (
+                                  <span className="inline-flex items-center gap-1">
+                                    <ClockIcon className="h-3 w-3" />
+                                    {pandal.timing_text}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span>Mandapam only — no annadhanam date</span>
+                            )}
                           </div>
                           <span className={`status-badge status-${pandal.status} inline-block`}>{pandal.status}</span>
 
@@ -343,8 +351,8 @@ function Empty({ children }: { children: React.ReactNode }) {
 function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(pandal.name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
-  const [eventDate, setEventDate] = useState(pandal.event_date);
-  const [timingText, setTimingText] = useState(pandal.timing_text);
+  const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
+  const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
   const [description, setDescription] = useState(pandal.description ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
   const [saving, setSaving] = useState(false);
@@ -360,8 +368,8 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
         name,
         organizer_name: name,
         contact_phone: contactPhone,
-        event_date: eventDate,
-        timing_text: timingText,
+        event_date: eventDate || null,
+        timing_text: timingText || null,
         description: description || null,
         image_url: imageUrl,
       },
@@ -412,11 +420,11 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Date</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date (optional)</label>
               <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time (optional)</label>
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>

@@ -170,8 +170,8 @@ export default function SubmitPage() {
       address,
       lat: location.lat,
       lng: location.lng,
-      event_date: eventDate,
-      timing_text: timingText,
+      event_date: eventDate || null,
+      timing_text: timingText || null,
       description: description || null,
       image_url: imageUrl,
       banner_image_urls: bannerUrls,
@@ -383,18 +383,11 @@ export default function SubmitPage() {
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Annadhanam date" required>
-                  <input
-                    required
-                    type="date"
-                    value={eventDate}
-                    onChange={(e) => setEventDate(e.target.value)}
-                    className="field-input"
-                  />
+                <Field label="Annadhanam date (optional)">
+                  <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
                 </Field>
-                <Field label="Serving time" required>
+                <Field label="Serving time (optional)">
                   <input
-                    required
                     value={timingText}
                     onChange={(e) => setTimingText(e.target.value)}
                     placeholder="12 PM – 3 PM"
@@ -402,6 +395,10 @@ export default function SubmitPage() {
                   />
                 </Field>
               </div>
+              <p className="-mt-2 text-xs text-[color:var(--muted-soft)]">
+                Only serving free meals (annadhanam)? Fill this in and it&apos;ll be listed under Annadhanams.
+                Otherwise leave it blank and it&apos;ll show under Mandapams.
+              </p>
 
               <Field label="Additional details (optional)">
                 <textarea
@@ -527,7 +524,9 @@ function LivePreviewCard({
               {timingText}
             </span>
           )}
-          {!dateLabel && !timingText && <div className="h-3 w-1/3 animate-pulse rounded bg-[rgba(43,22,8,0.07)]" />}
+          {!dateLabel && !timingText && (
+            <span className="text-sm font-normal text-[color:var(--muted)]">Mandapam only — no annadhanam date</span>
+          )}
         </div>
       </div>
 
