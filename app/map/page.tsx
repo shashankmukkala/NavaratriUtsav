@@ -424,13 +424,14 @@ export default function MapPage() {
           )}
         </div>
 
-        {/* Bottom sheet detail view, mobile only — matches the List sheet
-            below rather than covering the whole screen, so the map stays
-            visible for context and it reads as "on top of the map", not a
-            separate page. */}
+        {/* Centered popup card, mobile only — floats over the map (which
+            stays visible behind the dimmed backdrop) instead of covering
+            the whole screen or anchoring to an edge. */}
         {selected && (
-          <div className="absolute inset-x-0 bottom-0 z-30 flex max-h-[80%] flex-col overflow-hidden rounded-t-3xl shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)]">
-            <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
+          <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
+            <div className="max-h-[85dvh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
+              <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
+            </div>
           </div>
         )}
 

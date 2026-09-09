@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import {
-  CalendarIcon,
-  CloseIcon,
-  CopyIcon,
-  DirectionsIcon,
-  PhoneIcon,
-  PinIcon,
-  UserIcon,
-  VerifiedIcon,
-} from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, PinIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -25,7 +16,6 @@ interface PandalDetailCardProps {
 
 export default function PandalDetailCard({ pandal, onClose, fullScreen = false }: PandalDetailCardProps) {
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
-  const [route, setRoute] = useState<{ distanceKm: number; durationMin: number } | null>(null);
   const [addressCopied, setAddressCopied] = useState(false);
 
   const copyAddress = async () => {
@@ -63,23 +53,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     };
   }, [pandal.id]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    let cancelled = false;
-    navigator.geolocation.getCurrentPosition((position) => {
-      const { latitude, longitude } = position.coords;
-      fetchJson<{ distanceKm: number; durationMin: number }>(
-        `/api/directions?from_lat=${latitude}&from_lng=${longitude}&to_lat=${pandal.lat}&to_lng=${pandal.lng}`
-      ).then((data) => {
-        if (!cancelled && data) setRoute(data);
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [pandal.id, pandal.lat, pandal.lng]);
-
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
   const eventDate = new Date(pandal.event_date + "T00:00:00");
   const dateLabel = Number.isNaN(eventDate.getTime())
     ? pandal.event_date
@@ -101,7 +74,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   return (
     <div className={shellClassName}>
-      {fullScreen && <div className="mx-auto mt-2 h-1 w-10 flex-shrink-0 rounded-full bg-[rgba(43,22,8,0.15)]" />}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-56" : "h-48"}`}>
           {/* object-contain so the whole photo shows — object-cover was
@@ -152,39 +124,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
 
-          {/* Get Directions / Call are mobile-only here — the desktop card
-              trades them for more room for the ad banner below, sharing its
-              exact height with the ad panel beside it. */}
-          {fullScreen && (
-            <>
-              {route && (
-                <p className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent-deep)]">
-                  <DirectionsIcon className="h-4 w-4" />
-                  {route.distanceKm < 10 ? route.distanceKm.toFixed(1) : Math.round(route.distanceKm)} km ·{" "}
-                  {Math.round(route.durationMin)} min drive
-                </p>
-              )}
-              <div className="flex gap-2 pt-1">
-                <a
-                  href={directionsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary min-w-0 flex-1 px-2! py-2! text-sm!"
-                >
-                  <DirectionsIcon className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Get Directions</span>
-                </a>
-                <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! py-2! text-sm!">
-                  <PhoneIcon className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Call {pandal.contact_phone}</span>
-                </a>
-              </div>
-            </>
-          )}
-
           {bannerImages.length > 0 && (
             <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
-              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-24" : "min-h-24 flex-1"}`}>
+              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-36" : "min-h-24 flex-1"}`}>
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
             </div>
