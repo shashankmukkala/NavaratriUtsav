@@ -577,7 +577,8 @@ function PandalRow({
         <p className="hidden text-sm font-semibold text-[color:var(--foreground)] sm:block">{pandal.name}</p>
         <p className="text-xs text-[color:var(--muted)]">{pandal.address}</p>
         <p className="text-xs text-[color:var(--muted-soft)]">
-          {pandal.organizer_name} · {pandal.contact_phone} · {pandal.event_date} · {pandal.timing_text}
+          {pandal.organizer_name} · {pandal.contact_phone}
+          {pandal.event_date ? ` · ${pandal.event_date} · ${pandal.timing_text}` : " · Mandapam only — no annadhanam date"}
         </p>
         {pandal.description && <p className="text-xs text-[color:var(--muted-soft)]">{pandal.description}</p>}
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">

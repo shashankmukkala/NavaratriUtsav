@@ -12,8 +12,8 @@ export interface Database {
           address: string;
           lat: number;
           lng: number;
-          event_date: string;
-          timing_text: string;
+          event_date: string | null;
+          timing_text: string | null;
           description: string | null;
           image_url: string;
           banner_image_urls: string[] | null;
@@ -32,8 +32,8 @@ export interface Database {
           address: string;
           lat: number;
           lng: number;
-          event_date: string;
-          timing_text: string;
+          event_date?: string | null;
+          timing_text?: string | null;
           description?: string | null;
           image_url: string;
           banner_image_urls?: string[] | null;

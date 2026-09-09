@@ -8,8 +8,11 @@ export interface Pandal {
   address: string;
   lat: number;
   lng: number;
-  event_date: string; // ISO date, e.g. "2026-09-14"
-  timing_text: string; // free-form, e.g. "12:00 PM – 3:00 PM (till food lasts)"
+  /** ISO date, e.g. "2026-09-14" — when this mandapam serves annadhanam, if
+   * it does. Optional: null means it's a mandapam listing with no food
+   * service date, so it shows under "Mandapams" instead of "Annadhanams". */
+  event_date: string | null;
+  timing_text: string | null; // free-form, e.g. "12:00 PM – 3:00 PM (till food lasts)"
   description: string | null;
   image_url: string;
   banner_image_urls: string[] | null;

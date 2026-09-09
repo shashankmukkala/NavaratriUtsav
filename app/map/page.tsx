@@ -16,14 +16,19 @@ import type { GeocodeResult, Pandal, Sponsor } from "@/lib/types";
 
 type Filter = "all" | "today" | "open";
 type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" | "outside-area";
+// "annadhanams" = has an annadhanam (food service) date set; "mandapams" =
+// doesn't — the date is optional on submit, so this is how listings split
+// into the two sections instead of lumping every mandapam together.
+type Category = "annadhanams" | "mandapams";
 
 const NEARBY_RADIUS_KM = 5;
 
-function isToday(dateStr: string) {
-  return dateStr === new Date().toISOString().slice(0, 10);
+function isToday(dateStr: string | null) {
+  return !!dateStr && dateStr === new Date().toISOString().slice(0, 10);
 }
 
-function formatEventDate(dateStr: string) {
+function formatEventDate(dateStr: string | null) {
+  if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
   return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
@@ -88,6 +93,13 @@ export default function MapPage() {
     typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
   );
   const [filter, setFilter] = useState<Filter>("all");
+  const [category, setCategory] = useState<Category>("annadhanams");
+  // "Today"/"Open Now" are meaningless once a listing has no annadhanam
+  // date at all, so switching to Mandapams also resets back to "All".
+  const changeCategory = (c: Category) => {
+    setCategory(c);
+    setFilter("all");
+  };
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
   // The state name Nominatim resolved a rejected GPS fix or search to, so
@@ -284,6 +296,7 @@ export default function MapPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pandals
+      .filter((p) => (category === "annadhanams" ? !!p.event_date : !p.event_date))
       .filter((p) => (filter === "today" ? isToday(p.event_date) : true))
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
@@ -294,7 +307,7 @@ export default function MapPage() {
       // name/address here too would wrongly hide every pandal that doesn't
       // literally mention "sainikpuri" in its address, even ones right there.
       .filter((p) => (q && !areaCenter ? p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) : true));
-  }, [pandals, filter, query, areaCenter]);
+  }, [pandals, category, filter, query, areaCenter]);
 
   const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
@@ -368,6 +381,8 @@ export default function MapPage() {
                     nearbyCount={nearby.length}
                     onClose={() => setSidebarOpen(false)}
                     onUseMyLocation={useMyLocation}
+                    category={category}
+                    onCategoryChange={changeCategory}
                     filter={filter}
                     onFilterChange={setFilter}
                     searchOutOfArea={searchOutOfArea}
@@ -381,6 +396,7 @@ export default function MapPage() {
                     selectedId={selected?.id ?? null}
                     distanceFor={withDistance}
                     onSelect={toggleSelected}
+                    category={category}
                     nearbyScoped={!!effectiveCenter}
                     query={query}
                     onQueryChange={setQuery}
@@ -459,6 +475,8 @@ export default function MapPage() {
                   nearbyCount={nearby.length}
                   onClose={() => setShowList(false)}
                   onUseMyLocation={useMyLocation}
+                  category={category}
+                  onCategoryChange={changeCategory}
                   filter={filter}
                   onFilterChange={setFilter}
                   scrollableFilters
@@ -473,6 +491,7 @@ export default function MapPage() {
                   selectedId={selected?.id ?? null}
                   distanceFor={withDistance}
                   onSelect={toggleSelected}
+                  category={category}
                   nearbyScoped={!!effectiveCenter}
                   query={query}
                   onQueryChange={setQuery}
@@ -744,6 +763,8 @@ function NearbyListHeader({
   nearbyCount,
   onClose,
   onUseMyLocation,
+  category,
+  onCategoryChange,
   filter,
   onFilterChange,
   scrollableFilters = false,
@@ -755,21 +776,24 @@ function NearbyListHeader({
   nearbyCount: number;
   onClose: () => void;
   onUseMyLocation: () => void;
+  category: Category;
+  onCategoryChange: (c: Category) => void;
   filter: Filter;
   onFilterChange: (f: Filter) => void;
   scrollableFilters?: boolean;
   searchOutOfArea?: string | null;
 }) {
   const searchedPlace = query.trim();
+  const noun = category === "annadhanams" ? "Annadhanam" : "Mandapam";
   // "Near You" is only honest once we're actually centered on the user's
   // real location — otherwise (no location, or a searched area) it's a
   // claim about proximity we can't back up.
   const title =
     areaCenter && searchedPlace
-      ? `Annadhanams near "${searchedPlace}"`
+      ? `${noun}s near "${searchedPlace}"`
       : effectiveCenter
-        ? "Annadhanam Near You"
-        : "All Annadhanams";
+        ? `${noun} Near You`
+        : `All ${noun}s`;
 
   return (
     <>
@@ -792,8 +816,8 @@ function NearbyListHeader({
       )}
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {effectiveCenter
-          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-          : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"}`}
+          ? `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          : `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"}`}
       </p>
       {areaCenter && (
         <button
@@ -805,17 +829,32 @@ function NearbyListHeader({
           Near me instead
         </button>
       )}
-      <div className={`mt-3 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
-        <FilterChip active={filter === "all"} onClick={() => onFilterChange("all")}>
-          All
+
+      {/* Mandapams (no annadhanam date set) vs. Annadhanams (one is) —
+          split since the date is optional on submit now, so a mandapam
+          that doesn't serve food shouldn't be lumped in with ones that do. */}
+      <div className="mt-3 flex gap-2">
+        <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
+          Annadhanams
         </FilterChip>
-        <FilterChip active={filter === "today"} onClick={() => onFilterChange("today")}>
-          Today
-        </FilterChip>
-        <FilterChip active={filter === "open"} onClick={() => onFilterChange("open")}>
-          Open Now
+        <FilterChip active={category === "mandapams"} onClick={() => onCategoryChange("mandapams")}>
+          Mandapams
         </FilterChip>
       </div>
+
+      {category === "annadhanams" && (
+        <div className={`mt-2 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
+          <FilterChip active={filter === "all"} onClick={() => onFilterChange("all")}>
+            All
+          </FilterChip>
+          <FilterChip active={filter === "today"} onClick={() => onFilterChange("today")}>
+            Today
+          </FilterChip>
+          <FilterChip active={filter === "open"} onClick={() => onFilterChange("open")}>
+            Open Now
+          </FilterChip>
+        </div>
+      )}
     </>
   );
 }
@@ -884,6 +923,7 @@ function PandalList({
   selectedId,
   distanceFor,
   onSelect,
+  category,
   nearbyScoped = false,
   query,
   onQueryChange,
@@ -893,6 +933,7 @@ function PandalList({
   selectedId: string | null;
   distanceFor: (p: Pandal) => number | null;
   onSelect: (p: Pandal) => void;
+  category: Category;
   /** True once the list has been narrowed to a location (GPS or a searched
    * area), so the empty state can say "none nearby" instead of implying
    * nothing has been published anywhere. */
@@ -902,16 +943,17 @@ function PandalList({
   query?: string;
   onQueryChange?: (q: string) => void;
 }) {
+  const noun = category === "annadhanams" ? "annadhanam" : "mandapam";
   if (loading) {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading annadhanams…</p>;
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading {noun}s…</p>;
   }
   if (pandals.length === 0) {
     return (
       <div className="space-y-3 p-6 text-center">
         <p className="text-sm text-[color:var(--muted)]">
           {nearbyScoped
-            ? `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
-            : "No annadhanams published yet. Be the first to add one!"}
+            ? `No ${noun}s within ${NEARBY_RADIUS_KM} km yet.`
+            : `No ${noun}s published yet. Be the first to add one!`}
         </p>
         {nearbyScoped && onQueryChange && (
           <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-left text-sm text-[color:var(--muted)]">
@@ -943,14 +985,19 @@ function PandalList({
                   {km !== null ? `${km.toFixed(1)} km · ` : ""}
                   {pandal.address}
                 </p>
-                <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-[color:var(--accent-deep)]">
-                  <CalendarIcon className="h-3 w-3 flex-shrink-0" />
-                  {formatEventDate(pandal.event_date)} · {pandal.timing_text}
-                </p>
+                {pandal.event_date && (
+                  <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-[color:var(--accent-deep)]">
+                    <CalendarIcon className="h-3 w-3 flex-shrink-0" />
+                    {formatEventDate(pandal.event_date)}
+                    {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
+                  </p>
+                )}
                 <div className="mt-1 flex items-center gap-2">
-                  <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>
-                    {eventStatusLabel(eventStatus)}
-                  </span>
+                  {eventStatus && (
+                    <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>
+                      {eventStatusLabel(eventStatus)}
+                    </span>
+                  )}
                   <span className="badge-verified">
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified
