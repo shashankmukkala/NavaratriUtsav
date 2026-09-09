@@ -13,11 +13,15 @@ export async function GET(request: NextRequest) {
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [users, totalViews, views24h, views7d] = await Promise.all([
+  const [users, totalViews, views24h, views7d, uniqueVisitors] = await Promise.all([
     supabaseAdmin().from("users").select("id", { count: "exact", head: true }),
     supabaseAdmin().from("page_views").select("id", { count: "exact", head: true }),
     supabaseAdmin().from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since24h),
     supabaseAdmin().from("page_views").select("id", { count: "exact", head: true }).gte("created_at", since7d),
+    // Row counts above are raw hits (a page.count() on "id" can't dedupe),
+    // so unique visitors goes through a count(distinct visitor_id) SQL
+    // function instead — see migration 0013.
+    supabaseAdmin().rpc("count_unique_visitors"),
   ]);
 
   return NextResponse.json({
@@ -25,5 +29,6 @@ export async function GET(request: NextRequest) {
     totalViews: totalViews.count ?? 0,
     views24h: views24h.count ?? 0,
     views7d: views7d.count ?? 0,
+    uniqueVisitors: uniqueVisitors.data ?? 0,
   });
 }

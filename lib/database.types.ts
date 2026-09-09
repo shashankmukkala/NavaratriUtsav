@@ -131,11 +131,13 @@ export interface Database {
         Row: {
           id: string;
           path: string;
+          visitor_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           path: string;
+          visitor_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["page_views"]["Insert"]>;
@@ -143,7 +145,12 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      count_unique_visitors: {
+        Args: { since?: string | null };
+        Returns: number;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
