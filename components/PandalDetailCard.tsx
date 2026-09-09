@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -22,18 +23,26 @@ interface PandalDetailCardProps {
 }
 
 export default function PandalDetailCard({ pandal, onClose, fullScreen = false }: PandalDetailCardProps) {
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [route, setRoute] = useState<{ distanceKm: number; durationMin: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     // "card"-placement ads aren't targeted at any one mandapam — they're a
-    // shared pool shown generically inside detail cards, so pick one at
-    // random each time a card opens rather than showing the same one always.
+    // shared pool shown generically inside detail cards. Not fixed to any
+    // one sponsor or slot: every sponsor with an available banner rotates
+    // through this same spot, in a fresh shuffled order each time a card
+    // opens, rather than one sponsor always being shown (or always first).
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors?placement=card").then((data) => {
       if (cancelled || !data) return;
-      const pool = data.sponsors;
-      setSponsors(pool.length > 0 ? [pool[Math.floor(Math.random() * pool.length)]] : []);
+      const images = data.sponsors
+        .map((s) => s.banner_image_urls?.[0] ?? s.banner_image_url)
+        .filter((url): url is string => Boolean(url));
+      for (let i = images.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [images[i], images[j]] = [images[j], images[i]];
+      }
+      setCardAdImages(images);
     });
     return () => {
       cancelled = true;
@@ -63,15 +72,11 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     : eventDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const isToday = pandal.event_date === new Date().toISOString().slice(0, 10);
 
-  // A pandal's own paid banner takes priority; otherwise fall back to the
-  // random generic sponsor pool — either way it's shown as a plain
-  // rectangle, no name/label, to keep this compact and consistent.
-  const bannerImages =
-    pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0
-      ? pandal.banner_image_urls
-      : sponsors[0]?.banner_image_url
-        ? [sponsors[0].banner_image_url]
-        : [];
+  // A pandal's own paid banner takes priority; otherwise rotate through the
+  // generic sponsor pool. Either way it's shown as a plain rectangle, no
+  // name/label, to keep this compact and consistent.
+  const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
+  const bannerImages = ownBanner ?? cardAdImages;
 
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
@@ -143,11 +148,10 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           </div>
 
           {bannerImages.length > 0 && (
-            <div className="flex gap-2 border-t border-[rgba(43,22,8,0.1)] pt-2">
-              {bannerImages.map((url) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={url} src={url} alt="" className="h-12 flex-1 rounded-lg object-cover" />
-              ))}
+            <div className="border-t border-[rgba(43,22,8,0.1)] pt-2">
+              <div className="h-12 overflow-hidden rounded-lg">
+                <AdBannerSlideshow images={bannerImages} alt="" />
+              </div>
             </div>
           )}
         </div>

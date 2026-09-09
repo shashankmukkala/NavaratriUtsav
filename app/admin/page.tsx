@@ -84,6 +84,11 @@ export default function AdminPage() {
     loadData();
   };
 
+  const setEditUnlocked = async (id: string, edit_unlocked: boolean) => {
+    await sendJson(`/api/admin/pandals/${id}`, { edit_unlocked }, "PATCH");
+    loadData();
+  };
+
   const deletePandal = async (id: string) => {
     if (!confirm("Permanently delete this mandapam listing?")) return;
     await sendJson(`/api/admin/pandals/${id}`, undefined, "DELETE");
@@ -197,7 +202,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
-              <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid}>
+              <PandalRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onSetEditUnlocked={setEditUnlocked}>
                 <StatusBadge status={pandal.status} />
                 {pandal.status !== "approved" && (
                   <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
@@ -423,10 +428,12 @@ function PandalRow({
   pandal,
   children,
   onSetBannerPaid,
+  onSetEditUnlocked,
 }: {
   pandal: Pandal;
   children: React.ReactNode;
   onSetBannerPaid: (id: string, paid: boolean) => void;
+  onSetEditUnlocked: (id: string, unlocked: boolean) => void;
 }) {
   const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
   return (
@@ -449,6 +456,29 @@ function PandalRow({
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">
           Submitted {new Date(pandal.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
         </p>
+
+        {pandal.edit_requested && !pandal.edit_unlocked && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[rgba(234,108,29,0.1)] px-2.5 py-1.5">
+            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Wants to edit this listing</span>
+            <button
+              type="button"
+              onClick={() => onSetEditUnlocked(pandal.id, true)}
+              className="rounded-full bg-[rgba(34,139,34,0.16)] px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800"
+            >
+              Allow edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onSetEditUnlocked(pandal.id, false)}
+              className="rounded-full bg-[rgba(43,22,8,0.08)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[color:var(--muted)]"
+            >
+              Deny
+            </button>
+          </div>
+        )}
+        {pandal.edit_unlocked && (
+          <p className="text-[0.6875rem] font-semibold text-green-700">Edit approved — owner can now save one change.</p>
+        )}
 
         {hasBanner && (
           <div className="space-y-1.5 pt-1">

@@ -7,9 +7,9 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import SignInPrompt from "@/components/SignInPrompt";
-import { CalendarIcon, ClockIcon, PinIcon, TrashIcon } from "@/components/icons";
+import { CalendarIcon, ClockIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
-import type { Pandal, Sponsor } from "@/lib/types";
+import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type SessionUser = { name?: string; email?: string; image?: string };
@@ -20,6 +20,8 @@ export default function ProfilePage() {
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [editing, setEditing] = useState<Pandal | null>(null);
+  const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
+  const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
 
   const loadData = () => {
     fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => setPandals(data?.pandals ?? []));
@@ -43,6 +45,13 @@ export default function ProfilePage() {
   const deleteSponsor = async (id: string) => {
     if (!confirm("Delete this ad? This can't be undone.")) return;
     await sendJson(`/api/me/sponsors/${id}`, undefined, "DELETE");
+    loadData();
+  };
+
+  const requestEdit = async (id: string) => {
+    setRequestingEdit(id);
+    await sendJson(`/api/me/pandals/${id}/request-edit`, undefined, "POST");
+    setRequestingEdit(null);
     loadData();
   };
 
@@ -106,40 +115,77 @@ export default function ProfilePage() {
                 <Empty>You haven&apos;t added any mandapams yet.</Empty>
               ) : (
                 <div className="space-y-2">
-                  {pandals.map((pandal) => (
-                    <div key={pandal.id} className="card-elevated flex items-center gap-3 p-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
-                        <p className="truncate text-xs text-[color:var(--muted)]">{pandal.address}</p>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-[color:var(--muted-soft)]">
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {pandal.event_date}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3" />
-                            {pandal.timing_text}
-                          </span>
+                  {pandals.map((pandal) => {
+                    const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
+                    return (
+                      <div key={pandal.id} className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+                          <p className="truncate text-xs text-[color:var(--muted)]">{pandal.address}</p>
+                          <div className="flex items-center gap-3 text-xs text-[color:var(--muted-soft)]">
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3" />
+                              {pandal.event_date}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <ClockIcon className="h-3 w-3" />
+                              {pandal.timing_text}
+                            </span>
+                          </div>
+                          <span className={`status-badge status-${pandal.status} inline-block`}>{pandal.status}</span>
+
+                          {hasBanner ? (
+                            <p className="flex items-center gap-1.5 text-xs font-medium">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={pandal.banner_image_urls![0]} alt="" className="h-6 w-10 rounded object-cover" />
+                              <span className={pandal.banner_paid ? "text-green-700" : "text-[color:var(--accent-deep)]"}>
+                                {pandal.banner_paid ? "Banner live" : "Banner pending payment review"}
+                              </span>
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setAddingBannerTo(pandal)}
+                              className="flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
+                            >
+                              <MegaphoneIcon className="h-3.5 w-3.5" />
+                              Add your association banner
+                            </button>
+                          )}
                         </div>
-                        <span className={`status-badge status-${pandal.status} mt-1.5 inline-block`}>{pandal.status}</span>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          {pandal.edit_unlocked ? (
+                            <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
+                              Edit
+                            </button>
+                          ) : pandal.edit_requested ? (
+                            <span className="rounded-full bg-[rgba(43,22,8,0.06)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                              Edit requested
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => requestEdit(pandal.id)}
+                              disabled={requestingEdit === pandal.id}
+                              className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-60"
+                            >
+                              {requestingEdit === pandal.id ? "Requesting…" : "Request edit"}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => deletePandal(pandal.id)}
+                            aria-label="Delete"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--coral-deep)] transition-colors hover:bg-[rgba(234,108,29,0.1)]"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex flex-shrink-0 items-center gap-2">
-                        <button type="button" onClick={() => setEditing(pandal)} className="btn-secondary px-3 py-1.5 text-xs">
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deletePandal(pandal.id)}
-                          aria-label="Delete"
-                          className="flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--coral-deep)] transition-colors hover:bg-[rgba(234,108,29,0.1)]"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -199,6 +245,17 @@ export default function ProfilePage() {
           }}
         />
       )}
+
+      {addingBannerTo && (
+        <AddBannerModal
+          pandal={addingBannerTo}
+          onClose={() => setAddingBannerTo(null)}
+          onSaved={() => {
+            setAddingBannerTo(null);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -210,7 +267,6 @@ function Empty({ children }: { children: React.ReactNode }) {
 function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(pandal.name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
-  const [address, setAddress] = useState(pandal.address);
   const [eventDate, setEventDate] = useState(pandal.event_date);
   const [timingText, setTimingText] = useState(pandal.timing_text);
   const [description, setDescription] = useState(pandal.description ?? "");
@@ -228,7 +284,6 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
         name,
         organizer_name: name,
         contact_phone: contactPhone,
-        address,
         event_date: eventDate,
         timing_text: timingText,
         description: description || null,
@@ -267,10 +322,15 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Address</label>
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className="field-input" />
+            <textarea
+              readOnly
+              value={pandal.address}
+              rows={2}
+              className="field-input cursor-not-allowed bg-[rgba(43,22,8,0.04)] text-[color:var(--muted)]"
+            />
             <p className="mt-1 flex items-center gap-1 text-xs text-[color:var(--muted-soft)]">
               <PinIcon className="h-3 w-3" />
-              Location pin stays the same — message us to move it.
+              This is fixed to the map pin — message us if the location itself needs to move.
             </p>
           </div>
 
@@ -302,6 +362,102 @@ function EditPandalModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/** Lets an owner add (or replace) their ₹200 association banner after the
+ * mandapam is already live — this never needed edit approval even during
+ * the original /submit flow, so it doesn't here either; admin still has to
+ * confirm the payment (banner_paid) before it actually shows anywhere. */
+function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
+  const [settings, setSettings] = useState<PaymentSettings | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, []);
+
+  const handleSave = async () => {
+    if (!bannerUrl || !proofUrl) return;
+    setError(null);
+    setSaving(true);
+    const result = await sendJson(
+      `/api/me/pandals/${pandal.id}`,
+      { banner_image_urls: [bannerUrl], banner_payment_proof_url: proofUrl },
+      "PATCH"
+    );
+    setSaving(false);
+    if (result.ok) {
+      onSaved();
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="card-elevated relative w-full max-w-sm p-6">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(43,22,8,0.06)] text-sm text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.12)]"
+        >
+          ×
+        </button>
+        <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Add your association banner</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          One-time ₹200 — shows on {pandal.name}&apos;s card, for good.
+        </p>
+
+        <div className="mt-4">
+          <ImageUploadField label="Banner image" folder="pandals" value={bannerUrl} onChange={setBannerUrl} />
+        </div>
+
+        {bannerUrl && (
+          <>
+            <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
+              {settings?.qr_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={settings.qr_image_url}
+                  alt="Payment QR code"
+                  className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover"
+                />
+              ) : (
+                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
+                  QR code
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
+                  {settings?.upi_id ?? "annadhanam@upi"}
+                </p>
+                <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹200 to this UPI ID.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <ImageUploadField label="Payment screenshot" folder="payment-proofs" required value={proofUrl} onChange={setProofUrl} />
+            </div>
+          </>
+        )}
+
+        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
+
+        <button
+          type="button"
+          disabled={!bannerUrl || !proofUrl || saving}
+          onClick={handleSave}
+          className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {saving ? "Submitting…" : "Submit banner"}
+        </button>
+      </div>
     </div>
   );
 }

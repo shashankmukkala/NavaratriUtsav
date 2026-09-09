@@ -14,8 +14,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = await request.json().catch(() => null);
   const status = body?.status;
   const bannerPaid = body?.banner_paid;
+  const editUnlocked = body?.edit_unlocked;
 
-  const update: { status?: "pending" | "approved" | "rejected"; banner_paid?: boolean } = {};
+  const update: { status?: "pending" | "approved" | "rejected"; banner_paid?: boolean; edit_unlocked?: boolean; edit_requested?: boolean } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -24,6 +25,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (bannerPaid !== undefined) {
     update.banner_paid = Boolean(bannerPaid);
+  }
+  if (editUnlocked !== undefined) {
+    // Approving or denying resolves the request either way — an admin who
+    // just said no shouldn't leave it sitting there looking unanswered.
+    update.edit_unlocked = Boolean(editUnlocked);
+    update.edit_requested = false;
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
