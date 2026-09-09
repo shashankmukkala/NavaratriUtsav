@@ -39,6 +39,30 @@ export default function MapPage() {
     setSelected((prev) => (prev?.id === pandal.id ? null : pandal));
   };
   const [showList, setShowList] = useState(false);
+  const [listExpanded, setListExpanded] = useState(false);
+  const listDragStartY = useRef<number | null>(null);
+
+  // Drag (or tap) the sheet's handle to snap it between its default and
+  // expanded heights, so the listings underneath get more room to scroll.
+  const handleListDragStart = (e: React.PointerEvent) => {
+    listDragStartY.current = e.clientY;
+    // Without pointer capture, dragging the finger off this small handle
+    // (which is the whole point of a drag) hands pointermove/pointerup to
+    // whatever's underneath instead, so the gesture silently never ends.
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handleListDragEnd = (e: React.PointerEvent) => {
+    if (listDragStartY.current === null) return;
+    const delta = listDragStartY.current - e.clientY;
+    listDragStartY.current = null;
+    if (Math.abs(delta) < 10) {
+      setListExpanded((v) => !v);
+    } else if (delta > 30) {
+      setListExpanded(true);
+    } else if (delta < -30) {
+      setListExpanded(false);
+    }
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Picks up ?q= from the homepage's "Annadhanam near you" search box.
   const [query, setQuery] = useState(() =>
@@ -390,9 +414,22 @@ export default function MapPage() {
           {/* Half-screen bottom sheet, over the map (not a separate page) —
               the map stays visible above it for context. */}
           {showList && (
-            <div className="absolute inset-x-0 bottom-0 z-10 flex max-h-[72%] flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)]">
+            <div
+              className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)] transition-[max-height] duration-300 ${
+                listExpanded ? "max-h-[92%]" : "max-h-[72%]"
+              }`}
+            >
               <div className="flex-shrink-0 px-4 pb-3 pt-3">
-                <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[rgba(43,22,8,0.15)]" />
+                <div
+                  onPointerDown={handleListDragStart}
+                  onPointerUp={handleListDragEnd}
+                  onPointerCancel={handleListDragEnd}
+                  role="button"
+                  aria-label={listExpanded ? "Collapse list" : "Expand list"}
+                  className="-mx-4 -mt-1 flex touch-none cursor-grab justify-center px-4 pb-2 pt-1 active:cursor-grabbing"
+                >
+                  <div className="h-1.5 w-10 rounded-full bg-[rgba(43,22,8,0.15)]" />
+                </div>
                 <NearbyListHeader
                   areaCenter={areaCenter}
                   query={query}
@@ -441,7 +478,15 @@ export default function MapPage() {
             {!showList && <MobileAdStrip sponsors={sponsors} />}
             <nav className="map-panel pointer-events-auto flex items-center gap-1 rounded-2xl p-1.5">
               <GlassBlurLayer />
-              <TabButton active={!showList} icon={<MapIcon className="h-5 w-5" />} label="Map" onClick={() => setShowList(false)} />
+              <TabButton
+                active={!showList}
+                icon={<MapIcon className="h-5 w-5" />}
+                label="Map"
+                onClick={() => {
+                  setShowList(false);
+                  setListExpanded(false);
+                }}
+              />
               <TabButton
                 active={showList}
                 icon={<ListIcon className="h-5 w-5" />}
