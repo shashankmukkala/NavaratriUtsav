@@ -34,6 +34,11 @@ export default function MapPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "pending" | "granted" | "denied" | "unsupported">("idle");
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  // Where the map should fly to next — set when the user's own location
+  // resolves, or when they search an area name. Pins/list filtering stay
+  // driven by `query`/`coords` directly; this is purely camera movement.
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals")
@@ -62,13 +67,37 @@ export default function MapPage() {
     setLocationStatus("pending");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+        const here = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setCoords(here);
+        setFlyTarget(here);
         setLocationStatus("granted");
       },
       () => setLocationStatus("denied"),
       { enableHighAccuracy: false, timeout: 8000 }
     );
   };
+
+  // Searching an area name (not just filtering the pandal list by text)
+  // geocodes it and flies the map there, same proxy LocationPicker uses.
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    const q = query.trim();
+    if (q.length < 3) return;
+
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        const first = Array.isArray(data) ? data[0] : null;
+        if (first) setFlyTarget({ lat: Number(first.lat), lng: Number(first.lon) });
+      } catch {
+        // No connectivity to the geocoder — the text filter above still works.
+      }
+    }, 500);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -103,7 +132,7 @@ export default function MapPage() {
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} flyTo={flyTarget} />
         </div>
 
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
@@ -212,7 +241,7 @@ export default function MapPage() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={setSelected} flyTo={flyTarget} />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
               the map stays visible above it for context. */}

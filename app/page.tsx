@@ -78,7 +78,7 @@ export default function HomePage() {
           <nav className="nav-shell mt-2 flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5">
             <Brand tagline />
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link href="/ads" className="btn-secondary hidden sm:inline-flex">
+              <Link href="/ads" className="btn-secondary hidden! sm:inline-flex!">
                 <MegaphoneIcon className="h-4 w-4" />
                 Publish Ads
               </Link>
@@ -270,11 +270,13 @@ export default function HomePage() {
 
       {/* ===== Footer ===== */}
       <footer className="border-t border-[rgba(43,22,8,0.08)] px-4 py-8 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
-          <Brand tagline />
+        <div className="mx-auto flex max-w-6xl flex-col items-stretch gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <div className="flex justify-center sm:justify-start">
+            <Brand tagline />
+          </div>
           <p className="text-sm text-[color:var(--muted)]">Food unites. Bappa guides.</p>
           <p className="text-sm font-semibold text-[color:var(--accent-deep)]">
-            Made with a little extra love for PGs & Hostelers. ❤️
+            Made with a little extra love for PGs &amp; Hostelers. ❤️
           </p>
         </div>
       </footer>

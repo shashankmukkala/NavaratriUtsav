@@ -24,7 +24,7 @@ export default function Brand({ tagline = false, size = "sm" }: BrandProps) {
       <div className="leading-tight">
         <p className={`${nameSize} font-extrabold tracking-tight text-[color:var(--foreground)]`}>BappaSeva</p>
         {tagline && (
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+          <p className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)] sm:block">
             Food brings us closer
           </p>
         )}
