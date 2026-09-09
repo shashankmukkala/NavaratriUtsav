@@ -10,18 +10,23 @@ type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "card" | "map";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
+type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
+type PandalCategoryFilter = "all" | "annadhanams" | "mandapams";
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"pandals" | "sponsors" | "settings">("pandals");
+  const [tab, setTab] = useState<"pandals" | "sponsors" | "users" | "settings">("pandals");
   const [adsSubTab, setAdsSubTab] = useState<AdsSubTab>("banners");
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [pandalFilter, setPandalFilter] = useState<StatusFilter>("pending");
+  const [pandalCategoryFilter, setPandalCategoryFilter] = useState<PandalCategoryFilter>("all");
   const [pandalSearch, setPandalSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const [sponsorFilter, setSponsorFilter] = useState<StatusFilter>("pending");
   const [sponsorSearch, setSponsorSearch] = useState("");
   const [bannerFilter, setBannerFilter] = useState<"all" | "unpaid" | "paid">("unpaid");
@@ -34,14 +39,16 @@ export default function AdminPage() {
   }, []);
 
   const loadData = async () => {
-    const [pandalsRes, sponsorsRes, settingsRes, analyticsRes] = await Promise.all([
+    const [pandalsRes, sponsorsRes, usersRes, settingsRes, analyticsRes] = await Promise.all([
       fetchJson<{ pandals: Pandal[] }>("/api/admin/pandals"),
       fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/admin/sponsors"),
+      fetchJson<{ users: AdminUser[] }>("/api/admin/users"),
       fetchJson<{ settings: PaymentSettings }>("/api/admin/settings"),
       fetchJson<Analytics>("/api/admin/analytics"),
     ]);
     setPandals(pandalsRes?.pandals ?? []);
     setSponsors(sponsorsRes?.sponsors ?? []);
+    setUsers(usersRes?.users ?? []);
     setSettings(settingsRes?.settings ?? null);
     setAnalytics(analyticsRes ?? null);
   };
@@ -154,11 +161,22 @@ export default function AdminPage() {
   const filteredPandals = pandals.filter(
     (p) =>
       (pandalFilter === "all" || p.status === pandalFilter) &&
+      (pandalCategoryFilter === "all" ||
+        (pandalCategoryFilter === "annadhanams") === !!p.event_date) &&
       (pandalSearchLower === "" ||
         p.name.toLowerCase().includes(pandalSearchLower) ||
         p.organizer_name.toLowerCase().includes(pandalSearchLower) ||
         p.contact_phone.includes(pandalSearchLower) ||
         p.address.toLowerCase().includes(pandalSearchLower))
+  );
+  const annadhanamPandalsCount = pandals.filter((p) => !!p.event_date).length;
+
+  const userSearchLower = userSearch.trim().toLowerCase();
+  const filteredUsers = users.filter(
+    (u) =>
+      userSearchLower === "" ||
+      (u.name?.toLowerCase().includes(userSearchLower) ?? false) ||
+      (u.email?.toLowerCase().includes(userSearchLower) ?? false)
   );
 
   const sponsorSearchLower = sponsorSearch.trim().toLowerCase();
@@ -226,6 +244,9 @@ export default function AdminPage() {
         <TabButton active={tab === "sponsors"} onClick={() => setTab("sponsors")}>
           Ads ({pendingAdsTotal} pending)
         </TabButton>
+        <TabButton active={tab === "users"} onClick={() => setTab("users")}>
+          Users ({users.length})
+        </TabButton>
         <TabButton active={tab === "settings"} onClick={() => setTab("settings")}>
           Payment settings
         </TabButton>
@@ -233,6 +254,24 @@ export default function AdminPage() {
 
       {tab === "pandals" && (
         <div className="space-y-4">
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "annadhanams", "mandapams"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setPandalCategoryFilter(f)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  pandalCategoryFilter === f
+                    ? "bg-[color:var(--accent)] text-white"
+                    : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
+                }`}
+              >
+                {f === "all" ? "All" : f === "annadhanams" ? "Annadhanams" : "Mandapams"} (
+                {f === "all" ? pandals.length : f === "annadhanams" ? annadhanamPandalsCount : pandals.length - annadhanamPandalsCount}
+                )
+              </button>
+            ))}
+          </div>
           <FilterBar
             filter={pandalFilter}
             onFilterChange={setPandalFilter}
@@ -358,6 +397,23 @@ export default function AdminPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {tab === "users" && (
+        <div className="space-y-4">
+          <input
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            className="field-input text-sm"
+          />
+          <div className="space-y-2">
+            {filteredUsers.length === 0 && <Empty>No users match this search.</Empty>}
+            {filteredUsers.map((u) => (
+              <UserRow key={u.id} user={u} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -568,13 +624,33 @@ function PandalRow({
       <div className="flex gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
-        <div className="min-w-0 flex-1 sm:hidden">
+        <div className="min-w-0 flex-1 space-y-1 sm:hidden">
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+          <span
+            className={`inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
+              pandal.event_date
+                ? "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
+                : "bg-[rgba(43,22,8,0.08)] text-[color:var(--muted)]"
+            }`}
+          >
+            {pandal.event_date ? "Annadhanam" : "Mandapam only"}
+          </span>
         </div>
       </div>
 
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="hidden text-sm font-semibold text-[color:var(--foreground)] sm:block">{pandal.name}</p>
+        <div className="hidden items-center gap-1.5 sm:flex">
+          <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+          <span
+            className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
+              pandal.event_date
+                ? "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
+                : "bg-[rgba(43,22,8,0.08)] text-[color:var(--muted)]"
+            }`}
+          >
+            {pandal.event_date ? "Annadhanam" : "Mandapam only"}
+          </span>
+        </div>
         <p className="text-xs text-[color:var(--muted)]">{pandal.address}</p>
         <p className="text-xs text-[color:var(--muted-soft)]">
           {pandal.organizer_name} · {pandal.contact_phone}
@@ -605,6 +681,29 @@ function PandalRow({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function UserRow({ user }: { user: AdminUser }) {
+  return (
+    <div className="card-elevated flex items-center gap-3 p-3">
+      {user.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={user.image} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+      ) : (
+        <span className="icon-tile icon-tile-circle h-10 w-10 flex-shrink-0 text-sm font-bold">
+          {(user.name ?? user.email ?? "?")[0].toUpperCase()}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{user.name ?? "Unnamed"}</p>
+        <p className="truncate text-xs text-[color:var(--muted)]">{user.email ?? "No email"}</p>
+      </div>
+      <div className="flex-shrink-0 text-right text-[0.6875rem] text-[color:var(--muted-soft)]">
+        <p>Joined {new Date(user.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+        <p>Last seen {new Date(user.last_seen_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+      </div>
     </div>
   );
 }
