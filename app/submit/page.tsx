@@ -36,10 +36,11 @@ interface SubmitDraft {
 
 // Reads (and clears) the form draft saved right before being sent off to
 // Google to sign in, so a first-time submitter doesn't lose their form.
-// Read once via a lazy useState initializer rather than an effect, since
-// it only matters for the very first render.
+// Must be read in an effect, not a lazy useState initializer — a lazy
+// initializer still runs during the client's first (hydration) render, so
+// reading sessionStorage there produces different output than the server's
+// render (which always sees an empty form) and trips a hydration mismatch.
 function readSubmitDraft(): SubmitDraft | null {
-  if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
@@ -51,24 +52,43 @@ function readSubmitDraft(): SubmitDraft | null {
 }
 
 export default function SubmitPage() {
-  const [draft] = useState(readSubmitDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [organizerName, setOrganizerName] = useState(draft?.organizerName ?? "");
-  const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
-  const [eventDate, setEventDate] = useState(draft?.eventDate ?? "");
-  const [timingText, setTimingText] = useState(draft?.timingText ?? "");
-  const [description, setDescription] = useState(draft?.description ?? "");
-  const [imageUrl, setImageUrl] = useState<string | null>(draft?.imageUrl ?? null);
-  const [bannerUrls, setBannerUrls] = useState<string[]>(draft?.bannerUrls ?? []);
-  const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(draft?.bannerProofUrl ?? null);
+  const [organizerName, setOrganizerName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [timingText, setTimingText] = useState("");
+  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
+  const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(draft?.location ?? null);
-  const [address, setAddress] = useState(draft?.address ?? "");
+  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
+
+  useEffect(() => {
+    const draft = readSubmitDraft();
+    if (!draft) return;
+    // Restoring a draft from sessionStorage (an external system) after the
+    // sign-in redirect — exactly the case this lint rule allows an effect
+    // to opt out of.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setOrganizerName(draft.organizerName);
+    setContactPhone(draft.contactPhone);
+    setEventDate(draft.eventDate);
+    setTimingText(draft.timingText);
+    setDescription(draft.description);
+    setImageUrl(draft.imageUrl);
+    setBannerUrls(draft.bannerUrls);
+    setBannerProofUrl(draft.bannerProofUrl);
+    setLocation(draft.location);
+    setAddress(draft.address);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
 
   const previewDateLabel = (() => {
     if (!eventDate) return "";
