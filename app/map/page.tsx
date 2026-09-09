@@ -187,9 +187,10 @@ export default function MapPage() {
 
       {/* ===== Mobile layout (single view + bottom tab bar) ===== */}
       <div className="relative flex h-full flex-col lg:hidden">
-        <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-between gap-3 p-3">
-          <div className="nav-shell pointer-events-auto rounded-2xl px-3 py-2">
+        <header className="pointer-events-none absolute inset-x-3 top-3 z-20">
+          <div className="nav-shell pointer-events-auto flex items-center justify-between gap-3 px-4 py-2.5">
             <Brand />
+            <ProfileNavLink />
           </div>
         </header>
 
@@ -247,10 +248,11 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Bottom tab bar */}
+        {/* Bottom tab bar + ad strip */}
         {!selected && (
-          <nav className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-3">
-            <div className="map-panel pointer-events-auto flex items-center gap-1 rounded-2xl p-1.5">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-3">
+            {!showList && <MobileAdStrip sponsors={sponsors} />}
+            <nav className="map-panel pointer-events-auto flex items-center gap-1 rounded-2xl p-1.5">
               <GlassBlurLayer />
               <TabButton active={!showList} icon={<MapIcon className="h-5 w-5" />} label="Map" onClick={() => setShowList(false)} />
               <TabButton
@@ -270,8 +272,8 @@ export default function MapPage() {
                 <UserIcon className="h-5 w-5" />
                 <span className="text-[0.6875rem] font-semibold">You</span>
               </Link>
-            </div>
-          </nav>
+            </nav>
+          </div>
         )}
       </div>
     </div>
@@ -347,6 +349,42 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         </Link>
       ))}
     </aside>
+  );
+}
+
+/** Mobile equivalent of AdSlotPanel — a horizontally scrollable row of the
+ * same square ad slots, sitting just above the bottom tab bar instead of
+ * down the side of the screen. */
+function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
+  const filled = sponsors.filter((s) => sponsorImages(s).length > 0).slice(0, AD_SLOT_COUNT);
+  const emptySlots = AD_SLOT_COUNT - filled.length;
+
+  return (
+    <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto px-1 pb-0.5">
+      {filled.map((sponsor) => {
+        const images = sponsorImages(sponsor);
+        const className = "h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(43,22,8,0.12)] shadow-sm";
+        return sponsor.link_url ? (
+          <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
+            <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
+          </a>
+        ) : (
+          <div key={sponsor.id} className={className}>
+            <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
+          </div>
+        );
+      })}
+      {Array.from({ length: emptySlots }).map((_, i) => (
+        <Link
+          key={i}
+          href="/sponsor"
+          className="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/70 text-center"
+        >
+          <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
+          <span className="text-[0.55rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
