@@ -201,7 +201,7 @@ export default function MapPage() {
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
           <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-5 py-3 sm:px-6">
             <Brand />
-            <LocationBadge status={locationStatus} onRetry={requestLocation} />
+            <LocationBadge status={locationStatus} onNearMe={useMyLocation} />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -285,7 +285,7 @@ export default function MapPage() {
           <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3.5">
             <div className="flex items-center justify-between gap-2">
               <Brand />
-              <LocationBadge status={locationStatus} onRetry={requestLocation} />
+              <LocationBadge status={locationStatus} onNearMe={useMyLocation} />
             </div>
             <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -538,29 +538,31 @@ function FilterChip({
  * everything unfiltered when we don't know where the user is would defeat
  * the point of a "near you" list, so this is a hard requirement, not a
  * silent fallback. */
-/** Small "is location on?" status chip in the nav — click to retry when
- * it's off, so it also doubles as the enable-location control up top. */
+/** Doubles as both the "is location on?" status chip and a persistent
+ * "Near Me" action — click it any time to jump the map + list to the
+ * user's real location, even while a manually searched area is active,
+ * instead of only being able to enable location once and never revisit it. */
 function LocationBadge({
   status,
-  onRetry,
+  onNearMe,
 }: {
   status: "idle" | "pending" | "granted" | "denied" | "unsupported";
-  onRetry: () => void;
+  onNearMe: () => void;
 }) {
   const on = status === "granted";
   return (
     <button
       type="button"
-      onClick={on ? undefined : onRetry}
+      onClick={onNearMe}
       disabled={status === "pending" || status === "unsupported"}
       className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
         on
-          ? "bg-[rgba(34,139,34,0.12)] text-green-800"
+          ? "bg-[rgba(34,139,34,0.12)] text-green-800 hover:bg-[rgba(34,139,34,0.18)]"
           : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(234,108,29,0.1)]"
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${on ? "bg-green-600" : "bg-[color:var(--muted-soft)]"}`} />
-      {status === "pending" ? "Locating…" : on ? "Location: On" : "Location: Off"}
+      <PinIcon className="h-3 w-3" />
+      {status === "pending" ? "Locating…" : on ? "Near Me" : "Location: Off"}
     </button>
   );
 }
@@ -591,7 +593,7 @@ function NearbyListHeader({
   scrollableFilters?: boolean;
 }) {
   const searchedPlace = query.trim();
-  const title = areaCenter && searchedPlace ? `Mandapams near "${searchedPlace}"` : "Annadhanam Near You";
+  const title = areaCenter && searchedPlace ? `Annadhanams near "${searchedPlace}"` : "Annadhanam Near You";
 
   return (
     <>
@@ -608,8 +610,8 @@ function NearbyListHeader({
       </div>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {effectiveCenter
-          ? `${nearbyCount} mandapam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-          : "Your location is needed to show mandapams near you."}
+          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          : "Your location is needed to show annadhanams near you."}
       </p>
       {areaCenter && (
         <button
@@ -648,7 +650,7 @@ function LocationGate({
   onQueryChange: (q: string) => void;
 }) {
   if (status === "pending") {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Finding mandapams near you…</p>;
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Finding annadhanams near you…</p>;
   }
 
   return (
@@ -662,8 +664,8 @@ function LocationGate({
           {status === "unsupported"
             ? "Your browser doesn't support location — search an area below instead."
             : status === "denied"
-              ? "We need your location to show mandapams near you — enable it for this site, or search an area below."
-              : "We need your location to show mandapams near you."}
+              ? "We need your location to show annadhanams near you — enable it for this site, or search an area below."
+              : "We need your location to show annadhanams near you."}
         </p>
       </div>
 
@@ -711,14 +713,14 @@ function PandalList({
   nearbyScoped?: boolean;
 }) {
   if (loading) {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading mandapams…</p>;
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading annadhanams…</p>;
   }
   if (pandals.length === 0) {
     return (
       <p className="p-6 text-center text-sm text-[color:var(--muted)]">
         {nearbyScoped
-          ? `No mandapams within ${NEARBY_RADIUS_KM} km yet.`
-          : "No mandapams published yet. Be the first to add one!"}
+          ? `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
+          : "No annadhanams published yet. Be the first to add one!"}
       </p>
     );
   }
