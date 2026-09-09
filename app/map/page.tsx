@@ -169,22 +169,26 @@ export default function MapPage() {
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
       // need structured start/end times on the pandal record.
-      .filter((p) => (q ? p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) : true));
-  }, [pandals, filter, query]);
+      //
+      // Once the query has resolved to a geocoded area, it drives distance
+      // filtering instead (see `nearby` below) — text-matching it against
+      // name/address here too would wrongly hide every pandal that doesn't
+      // literally mention "sainikpuri" in its address, even ones right there.
+      .filter((p) => (q && !areaCenter ? p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) : true));
+  }, [pandals, filter, query, areaCenter]);
 
   const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
-  // The sidebar/mobile list is scoped to nearby mandapams (sorted closest
-  // first) so it reads like a real "near you" list, not just every listing
-  // in publish order — the map pins themselves stay unfiltered by distance.
+  // Near your own GPS location, the list is capped to a tight radius so it
+  // reads like a real "near you" list. A searched area has no such cap —
+  // someone searching "Hyderabad" expects every annadhanam in Hyderabad,
+  // not just the ones within 5 km of the city's geocoded center point.
   const nearby = useMemo(() => {
     if (!effectiveCenter) return filtered;
-    return filtered
-      .map((p) => ({ p, km: distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) }))
-      .filter(({ km }) => km <= NEARBY_RADIUS_KM)
-      .sort((a, b) => a.km - b.km)
-      .map(({ p }) => p);
-  }, [filtered, effectiveCenter]);
+    const withKm = filtered.map((p) => ({ p, km: distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) }));
+    const scoped = areaCenter ? withKm : withKm.filter(({ km }) => km <= NEARBY_RADIUS_KM);
+    return scoped.sort((a, b) => a.km - b.km).map(({ p }) => p);
+  }, [filtered, effectiveCenter, areaCenter]);
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
@@ -259,6 +263,7 @@ export default function MapPage() {
                       distanceFor={withDistance}
                       onSelect={setSelected}
                       nearbyScoped={!!effectiveCenter}
+                      areaSearch={!!areaCenter}
                     />
                   )}
                 </div>
@@ -331,6 +336,7 @@ export default function MapPage() {
                     distanceFor={withDistance}
                     onSelect={setSelected}
                     nearbyScoped={!!effectiveCenter}
+                    areaSearch={!!areaCenter}
                   />
                 )}
               </div>
@@ -610,7 +616,9 @@ function NearbyListHeader({
       </div>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {effectiveCenter
-          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          ? areaCenter
+            ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} found`
+            : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
           : "Your location is needed to show annadhanams near you."}
       </p>
       {areaCenter && (
@@ -701,16 +709,21 @@ function PandalList({
   distanceFor,
   onSelect,
   nearbyScoped = false,
+  areaSearch = false,
 }: {
   pandals: Pandal[];
   loading: boolean;
   selectedId: string | null;
   distanceFor: (p: Pandal) => number | null;
   onSelect: (p: Pandal) => void;
-  /** True once the list has been narrowed to a radius around the user's
-   * location, so the empty state can say "none nearby" instead of implying
+  /** True once the list has been narrowed to a location (GPS or a searched
+   * area), so the empty state can say "none nearby" instead of implying
    * nothing has been published anywhere. */
   nearbyScoped?: boolean;
+  /** True when that location came from a manual area search rather than
+   * GPS — the empty state shouldn't claim a "5 km" radius that was never
+   * actually applied to a searched area. */
+  areaSearch?: boolean;
 }) {
   if (loading) {
     return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading annadhanams…</p>;
@@ -719,7 +732,9 @@ function PandalList({
     return (
       <p className="p-6 text-center text-sm text-[color:var(--muted)]">
         {nearbyScoped
-          ? `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
+          ? areaSearch
+            ? "No annadhanams found in this area yet."
+            : `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
           : "No annadhanams published yet. Be the first to add one!"}
       </p>
     );
