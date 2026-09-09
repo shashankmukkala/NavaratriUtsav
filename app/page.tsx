@@ -285,7 +285,7 @@ export default function HomePage() {
               </p>
               <Link href="/submit" className="btn-primary mt-5">
                 <PlusIcon className="h-4 w-4" />
-                Add Mandapam
+                Add Annadhanam
               </Link>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
