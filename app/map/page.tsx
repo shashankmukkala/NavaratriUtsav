@@ -7,7 +7,7 @@ import GlassBlurLayer from "@/components/GlassBlurLayer";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
-import { CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -18,6 +18,11 @@ const NEARBY_RADIUS_KM = 5;
 
 function isToday(dateStr: string) {
   return dateStr === new Date().toISOString().slice(0, 10);
+}
+
+function formatEventDate(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00");
+  return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 export default function MapPage() {
@@ -62,7 +67,19 @@ export default function MapPage() {
 
   useEffect(() => {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals")
-      .then((data) => setPandals(data?.pandals ?? []))
+      .then((data) => {
+        const list = data?.pandals ?? [];
+        setPandals(list);
+        // Picks up ?pandal= from the homepage's "View Details" link, so
+        // clicking it actually opens that mandapam's card here instead of
+        // just landing on a bare map.
+        const pandalId = new URLSearchParams(window.location.search).get("pandal");
+        const match = pandalId ? list.find((p) => p.id === pandalId) : null;
+        if (match) {
+          setSelected(match);
+          setFlyTarget({ lat: match.lat, lng: match.lng });
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -76,15 +93,12 @@ export default function MapPage() {
   // shown regardless of location now, so there's nothing to unblock, and
   // some mobile browsers (iOS Safari included) silently ignore a permission
   // request that isn't triggered by a direct user gesture.
+  //
+  // Always re-queries the device rather than reusing cached coords — a
+  // stale fix could silently hide that the user has since turned off
+  // Location Services at the OS level, which needs to actually surface as
+  // "denied" here so they know to switch it back on, not be papered over.
   const requestLocation = () => {
-    if (coords) {
-      setLocationStatus("granted");
-      setLocationOn(true);
-      if (!areaCenterRef.current) setFlyTarget(coords);
-      setSidebarOpen(true);
-      setShowList(true);
-      return;
-    }
     if (!navigator.geolocation) {
       setLocationStatus("unsupported");
       return;
@@ -294,7 +308,7 @@ export default function MapPage() {
 
         {selected && (
           <div className="pointer-events-none absolute inset-4 flex items-start justify-end pt-24">
-            <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} glass />
+            <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} />
           </div>
         )}
       </div>
@@ -768,7 +782,10 @@ function PandalList({
                   {km !== null ? `${km.toFixed(1)} km · ` : ""}
                   {pandal.address}
                 </p>
-                <p className="mt-0.5 truncate text-xs font-medium text-[color:var(--accent-deep)]">{pandal.timing_text}</p>
+                <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-[color:var(--accent-deep)]">
+                  <CalendarIcon className="h-3 w-3 flex-shrink-0" />
+                  {formatEventDate(pandal.event_date)} · {pandal.timing_text}
+                </p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className={live ? "badge-live" : "badge-live opacity-70"}>{live ? "Serving Now" : "Open"}</span>
                   <span className="badge-verified">

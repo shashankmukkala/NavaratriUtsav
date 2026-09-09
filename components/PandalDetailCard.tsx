@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeftIcon,
   CalendarIcon,
-  ClockIcon,
   CloseIcon,
   DirectionsIcon,
   PhoneIcon,
@@ -12,7 +11,6 @@ import {
   UserIcon,
   VerifiedIcon,
 } from "@/components/icons";
-import GlassBlurLayer from "@/components/GlassBlurLayer";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
 
@@ -21,12 +19,9 @@ interface PandalDetailCardProps {
   onClose: () => void;
   /** Full-viewport presentation used on mobile, vs. a floating card on desktop. */
   fullScreen?: boolean;
-  /** Frosted-glass card that mirrors the live map behind it, used for the
-   * floating desktop popup (which sits directly over the map canvas). */
-  glass?: boolean;
 }
 
-export default function PandalDetailCard({ pandal, onClose, fullScreen = false, glass = false }: PandalDetailCardProps) {
+export default function PandalDetailCard({ pandal, onClose, fullScreen = false }: PandalDetailCardProps) {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [route, setRoute] = useState<{ distanceKm: number; durationMin: number } | null>(null);
 
@@ -68,19 +63,26 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
     : eventDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const isToday = pandal.event_date === new Date().toISOString().slice(0, 10);
 
+  // A pandal's own paid banner takes priority; otherwise fall back to the
+  // random generic sponsor pool — either way it's shown as a plain
+  // rectangle, no name/label, to keep this compact and consistent.
+  const bannerImages =
+    pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0
+      ? pandal.banner_image_urls
+      : sponsors[0]?.banner_image_url
+        ? [sponsors[0].banner_image_url]
+        : [];
+
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : glass
-      ? "map-card relative pointer-events-auto flex max-h-[80vh] w-full max-w-sm flex-col"
-      : "card-elevated pointer-events-auto flex max-h-[80vh] w-full max-w-sm flex-col overflow-hidden";
+    : "card-elevated pointer-events-auto flex max-h-[80vh] w-full max-w-sm flex-col overflow-hidden";
 
   return (
     <div className={shellClassName}>
-      {glass && <GlassBlurLayer />}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="relative flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-44 w-full object-cover"} />
+          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-32 w-full object-cover"} />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
           <button
             onClick={onClose}
@@ -93,7 +95,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
           </button>
         </div>
 
-        <div className="space-y-3 p-5">
+        <div className="space-y-2 p-4">
           <div className="flex items-center gap-2">
             <span className={isToday ? "badge-live" : "badge-live opacity-70"}>{isToday ? "Serving Now" : "Open"}</span>
             <span className="badge-verified">
@@ -104,14 +106,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
 
           <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
 
-          <div className="space-y-2 text-sm text-[color:var(--muted)]">
-            <MetaRow icon={<PinIcon className="h-4 w-4" />}>{pandal.address}</MetaRow>
-            <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>{dateLabel}</MetaRow>
-            <MetaRow icon={<ClockIcon className="h-4 w-4" />}>{pandal.timing_text}</MetaRow>
+          <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
+            <MetaRow icon={<PinIcon className="h-4 w-4" />}>
+              <span className="line-clamp-2">{pandal.address}</span>
+            </MetaRow>
+            <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
+              {dateLabel} · {pandal.timing_text}
+            </MetaRow>
             <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
           </div>
 
-          {pandal.description && <p className="text-sm text-[color:var(--muted)]">{pandal.description}</p>}
+          {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
 
           {route && (
             <p className="flex items-center gap-1.5 text-sm font-medium text-[color:var(--accent-deep)]">
@@ -126,45 +131,24 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false, 
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary min-w-0 flex-1 px-2! text-sm!"
+              className="btn-primary min-w-0 flex-1 px-2! py-2! text-sm!"
             >
               <DirectionsIcon className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">Get Directions</span>
             </a>
-            <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! text-sm!">
+            <a href={`tel:${pandal.contact_phone}`} className="btn-secondary min-w-0 flex-1 px-2! py-2! text-sm!">
               <PhoneIcon className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">Call {pandal.contact_phone}</span>
             </a>
           </div>
 
-          {pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? (
-            <div className="flex gap-2 border-t border-[rgba(43,22,8,0.1)] pt-3">
-              {pandal.banner_image_urls.map((url) => (
+          {bannerImages.length > 0 && (
+            <div className="flex gap-2 border-t border-[rgba(43,22,8,0.1)] pt-2">
+              {bannerImages.map((url) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={url} src={url} alt="" className="h-16 flex-1 rounded-xl object-cover" />
+                <img key={url} src={url} alt="" className="h-12 flex-1 rounded-lg object-cover" />
               ))}
             </div>
-          ) : (
-            sponsors.length > 0 && (
-              <div className="space-y-2 border-t border-[rgba(43,22,8,0.1)] pt-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Sponsored by</p>
-                <div className="flex flex-wrap gap-3">
-                  {sponsors.map((sponsor) => (
-                    <div key={sponsor.id} className="map-chip">
-                      {sponsor.banner_image_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={sponsor.banner_image_url}
-                          alt={sponsor.sponsor_name}
-                          className="h-8 w-8 rounded-lg object-cover"
-                        />
-                      )}
-                      <strong>{sponsor.sponsor_name}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
           )}
         </div>
       </div>
