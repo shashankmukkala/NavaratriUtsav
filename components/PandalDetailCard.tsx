@@ -79,9 +79,15 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
+  // A flat "85vh" cap could still exceed the room actually left after the
+  // floating popup's own offset from the top of the screen (the wrapper in
+  // app/map/page.tsx uses inset-4 + pt-24 above it and inset-4 below — 8rem
+  // total) — on a shorter browser window that clipped the bottom of the
+  // card (the ad banner, being last, took the hit) instead of scrolling.
+  // Sizing directly off the actual remaining viewport height fixes that.
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden";
+    : "card-elevated pointer-events-auto flex max-h-[calc(100vh-8rem)] w-full max-w-md flex-col overflow-hidden";
 
   return (
     <div className={shellClassName}>
@@ -150,7 +156,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           {bannerImages.length > 0 && (
             <div className="border-t border-[rgba(43,22,8,0.1)] pt-2">
-              <div className="h-20 overflow-hidden rounded-lg">
+              <div className="h-24 overflow-hidden rounded-lg">
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
             </div>

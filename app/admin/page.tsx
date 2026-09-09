@@ -250,7 +250,7 @@ export default function AdminPage() {
               Banners ({pendingBannerCount})
             </SubTabButton>
             <SubTabButton active={adsSubTab === "card"} onClick={() => setAdsSubTab("card")}>
-              Normal Ads ({pendingCardAdsCount})
+              Mandapam Card Ads ({pendingCardAdsCount})
             </SubTabButton>
             <SubTabButton active={adsSubTab === "map"} onClick={() => setAdsSubTab("map")}>
               Map Ads ({pendingMapAdsCount})
