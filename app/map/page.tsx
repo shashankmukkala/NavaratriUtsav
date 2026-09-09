@@ -39,28 +39,48 @@ export default function MapPage() {
     setSelected((prev) => (prev?.id === pandal.id ? null : pandal));
   };
   const [showList, setShowList] = useState(false);
-  const [listExpanded, setListExpanded] = useState(false);
-  const listDragStartY = useRef<number | null>(null);
+  // null = default height (the "max-h-[72%]" class below); once the user
+  // drags, this holds an explicit px height so the sheet actually follows
+  // the finger instead of only snapping once at the end of the gesture.
+  const [sheetHeightPx, setSheetHeightPx] = useState<number | null>(null);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const listSheetRef = useRef<HTMLDivElement | null>(null);
+  const listDrag = useRef<{ startY: number; startHeight: number } | null>(null);
 
-  // Drag (or tap) the sheet's handle to snap it between its default and
-  // expanded heights, so the listings underneath get more room to scroll.
+  const clampSheetHeight = (h: number) => {
+    const min = Math.min(220, window.innerHeight * 0.3);
+    const max = window.innerHeight * 0.92;
+    return Math.min(Math.max(h, min), max);
+  };
+
+  // Drag the sheet's handle to resize it, or tap it to snap between a
+  // default and expanded height — the listings underneath scroll on their
+  // own once they no longer fit.
   const handleListDragStart = (e: React.PointerEvent) => {
-    listDragStartY.current = e.clientY;
+    const startHeight = listSheetRef.current?.getBoundingClientRect().height ?? window.innerHeight * 0.72;
+    listDrag.current = { startY: e.clientY, startHeight };
+    setSheetDragging(true);
     // Without pointer capture, dragging the finger off this small handle
     // (which is the whole point of a drag) hands pointermove/pointerup to
     // whatever's underneath instead, so the gesture silently never ends.
     e.currentTarget.setPointerCapture(e.pointerId);
   };
+  const handleListDragMove = (e: React.PointerEvent) => {
+    if (!listDrag.current) return;
+    const delta = listDrag.current.startY - e.clientY;
+    setSheetHeightPx(clampSheetHeight(listDrag.current.startHeight + delta));
+  };
   const handleListDragEnd = (e: React.PointerEvent) => {
-    if (listDragStartY.current === null) return;
-    const delta = listDragStartY.current - e.clientY;
-    listDragStartY.current = null;
+    setSheetDragging(false);
+    if (!listDrag.current) return;
+    const delta = listDrag.current.startY - e.clientY;
+    listDrag.current = null;
+    // Barely moved — treat it as a tap: snap between the default and
+    // expanded heights instead of leaving it wherever that tiny jitter put it.
     if (Math.abs(delta) < 10) {
-      setListExpanded((v) => !v);
-    } else if (delta > 30) {
-      setListExpanded(true);
-    } else if (delta < -30) {
-      setListExpanded(false);
+      const collapsedHeight = window.innerHeight * 0.72;
+      const isNearDefault = sheetHeightPx === null || Math.abs(sheetHeightPx - collapsedHeight) < 20;
+      setSheetHeightPx(isNearDefault ? window.innerHeight * 0.92 : null);
     }
   };
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -415,18 +435,21 @@ export default function MapPage() {
               the map stays visible above it for context. */}
           {showList && (
             <div
-              className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)] transition-[max-height] duration-300 ${
-                listExpanded ? "max-h-[92%]" : "max-h-[72%]"
-              }`}
+              ref={listSheetRef}
+              style={{ height: sheetHeightPx != null ? `${sheetHeightPx}px` : undefined }}
+              className={`absolute inset-x-0 bottom-0 z-10 flex max-h-[92%] flex-col overflow-hidden rounded-t-3xl bg-[color:var(--cream-50)] shadow-[0_-24px_50px_-24px_rgba(43,22,8,0.4)] ${
+                sheetHeightPx == null ? "h-[72%]" : ""
+              } ${sheetDragging ? "" : "transition-[height] duration-200"}`}
             >
               <div className="flex-shrink-0 px-4 pb-3 pt-3">
                 <div
                   onPointerDown={handleListDragStart}
+                  onPointerMove={handleListDragMove}
                   onPointerUp={handleListDragEnd}
                   onPointerCancel={handleListDragEnd}
                   role="button"
-                  aria-label={listExpanded ? "Collapse list" : "Expand list"}
-                  className="-mx-4 -mt-1 flex touch-none cursor-grab justify-center px-4 pb-2 pt-1 active:cursor-grabbing"
+                  aria-label="Drag to resize, or tap to expand or collapse the list"
+                  className="-mx-4 -mt-1 flex touch-none cursor-grab justify-center px-4 pb-3 pt-2 active:cursor-grabbing"
                 >
                   <div className="h-1.5 w-10 rounded-full bg-[rgba(43,22,8,0.15)]" />
                 </div>
@@ -484,7 +507,7 @@ export default function MapPage() {
                 label="Map"
                 onClick={() => {
                   setShowList(false);
-                  setListExpanded(false);
+                  setSheetHeightPx(null);
                 }}
               />
               <TabButton
