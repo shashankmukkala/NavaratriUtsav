@@ -310,7 +310,7 @@ export default function SubmitPage() {
         {!done && (
           <div className="pt-8 lg:pt-16">
             <div className="mb-8 max-w-2xl">
-              <p className="eyebrow">Add Mandapam Seva</p>
+              <p className="eyebrow">Add Mandapam</p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
                 Let the people know. Let the seva grow.
               </h1>
@@ -383,10 +383,10 @@ export default function SubmitPage() {
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Annadhanam date (optional)">
+                <Field label="Annadhanam date">
                   <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
                 </Field>
-                <Field label="Serving time (optional)">
+                <Field label="Serving time">
                   <input
                     value={timingText}
                     onChange={(e) => setTimingText(e.target.value)}
