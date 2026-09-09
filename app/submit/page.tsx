@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
@@ -8,6 +9,7 @@ import LocationPicker from "@/components/LocationPicker";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import SignInPrompt from "@/components/SignInPrompt";
 import {
+  ArrowLeftIcon,
   CalendarIcon,
   CameraIcon,
   CheckCircleIcon,
@@ -69,6 +71,15 @@ export default function SubmitPage() {
   const [done, setDone] = useState(false);
   const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Closes the success modal and brings the still-visible banner uploader
+  // in the live preview into view, instead of leaving the person to hunt
+  // for it after the submission is already done.
+  const goToBannerSection = () => {
+    setDone(false);
+    setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
 
   useEffect(() => {
     const draft = readSubmitDraft();
@@ -214,7 +225,11 @@ export default function SubmitPage() {
                 feel the blessings of Bappa.
               </p>
 
-              <div className="mt-2 w-full rounded-2xl border-2 border-dashed border-[rgba(234,108,29,0.3)] bg-white/50 p-4 text-left">
+              <button
+                type="button"
+                onClick={goToBannerSection}
+                className="mt-2 w-full rounded-2xl border-2 border-dashed border-[rgba(234,108,29,0.3)] bg-white/50 p-4 text-left transition-colors hover:border-[rgba(234,108,29,0.5)] hover:bg-[rgba(234,108,29,0.06)]"
+              >
                 <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
                   <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
                   Want to showcase your banner?
@@ -222,9 +237,12 @@ export default function SubmitPage() {
                 <p className="mt-1 text-xs text-[color:var(--muted)]">
                   Pay a one-time fee of ₹200 to unlock a banner on your card, for good.
                 </p>
-              </div>
+              </button>
 
-              <BackButton className="btn-secondary mt-2 self-start" />
+              <Link href="/map" className="btn-secondary mt-2 self-start">
+                <ArrowLeftIcon className="h-4 w-4" />
+                Back to map
+              </Link>
             </div>
           </div>
         )}
@@ -401,7 +419,7 @@ export default function SubmitPage() {
               </p>
             </form>
 
-            <div className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+            <div ref={previewRef} className="min-w-0 lg:sticky lg:top-8 lg:order-2">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
                 This is how it&apos;ll look
               </p>
