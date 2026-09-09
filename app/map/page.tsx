@@ -299,16 +299,17 @@ export default function MapPage() {
 
   const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
-  // Near your own GPS location, the list is capped to a tight radius so it
-  // reads like a real "near you" list. A searched area has no such cap —
-  // someone searching "Hyderabad" expects every annadhanam in Hyderabad,
-  // not just the ones within 5 km of the city's geocoded center point.
+  // Both your own GPS location and a searched area are capped to the same
+  // radius — an area search used to skip this cap entirely (matching every
+  // listing anywhere, just sorted by distance), which meant a search for a
+  // specific neighborhood could surface a listing from an unrelated part of
+  // the state instead of correctly showing nothing nearby.
   const nearby = useMemo(() => {
     if (!effectiveCenter) return filtered;
     const withKm = filtered.map((p) => ({ p, km: distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) }));
-    const scoped = areaCenter ? withKm : withKm.filter(({ km }) => km <= NEARBY_RADIUS_KM);
+    const scoped = withKm.filter(({ km }) => km <= NEARBY_RADIUS_KM);
     return scoped.sort((a, b) => a.km - b.km).map(({ p }) => p);
-  }, [filtered, effectiveCenter, areaCenter]);
+  }, [filtered, effectiveCenter]);
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
@@ -382,7 +383,6 @@ export default function MapPage() {
                     distanceFor={withDistance}
                     onSelect={toggleSelected}
                     nearbyScoped={!!effectiveCenter}
-                    areaSearch={!!areaCenter}
                     query={query}
                     onQueryChange={setQuery}
                   />
@@ -475,7 +475,6 @@ export default function MapPage() {
                   distanceFor={withDistance}
                   onSelect={toggleSelected}
                   nearbyScoped={!!effectiveCenter}
-                  areaSearch={!!areaCenter}
                   query={query}
                   onQueryChange={setQuery}
                 />
@@ -794,11 +793,9 @@ function NearbyListHeader({
         </div>
       )}
       <p className="mt-1 text-sm text-[color:var(--muted)]">
-        {areaCenter
-          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} found`
-          : effectiveCenter
-            ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
-            : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"}`}
+        {effectiveCenter
+          ? `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          : `${nearbyCount} annadhanam${nearbyCount === 1 ? "" : "s"}`}
       </p>
       {areaCenter && (
         <button
@@ -890,7 +887,6 @@ function PandalList({
   distanceFor,
   onSelect,
   nearbyScoped = false,
-  areaSearch = false,
   query,
   onQueryChange,
 }: {
@@ -903,13 +899,8 @@ function PandalList({
    * area), so the empty state can say "none nearby" instead of implying
    * nothing has been published anywhere. */
   nearbyScoped?: boolean;
-  /** True when that location came from a manual area search rather than
-   * GPS — the empty state shouldn't claim a "5 km" radius that was never
-   * actually applied to a searched area. */
-  areaSearch?: boolean;
-  /** When given (GPS-based "near you" came back empty), an inline manual
-   * search offers a way out that doesn't depend on noticing the nav's
-   * search box on its own. */
+  /** When given, an inline manual search offers a way out that doesn't
+   * depend on noticing the nav's search box on its own. */
   query?: string;
   onQueryChange?: (q: string) => void;
 }) {
@@ -921,12 +912,10 @@ function PandalList({
       <div className="space-y-3 p-6 text-center">
         <p className="text-sm text-[color:var(--muted)]">
           {nearbyScoped
-            ? areaSearch
-              ? "No annadhanams found in this area yet."
-              : `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
+            ? `No annadhanams within ${NEARBY_RADIUS_KM} km yet.`
             : "No annadhanams published yet. Be the first to add one!"}
         </p>
-        {nearbyScoped && !areaSearch && onQueryChange && (
+        {nearbyScoped && onQueryChange && (
           <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-left text-sm text-[color:var(--muted)]">
             <SearchIcon className="h-4 w-4 flex-shrink-0" />
             <input
