@@ -192,7 +192,7 @@ export default function HomePage() {
                       Use my location to see distance
                     </button>
                   )}
-                  <Link href="/map" className="btn-primary mt-3 w-full py-2 text-sm">
+                  <Link href={`/map?pandal=${selectedPandal.id}`} className="btn-primary mt-3 w-full py-2 text-sm">
                     View Details
                     <ArrowRightIcon className="h-3.5 w-3.5" />
                   </Link>
