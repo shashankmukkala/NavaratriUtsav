@@ -271,6 +271,7 @@ function SettingsPanel({
 }) {
   const [upiId, setUpiId] = useState(settings?.upi_id ?? "");
   const [saved, setSaved] = useState(false);
+  const [qrSaved, setQrSaved] = useState<"saved" | "removed" | null>(null);
 
   if (!settings) {
     return <p className="text-sm text-[color:var(--muted)]">Loading…</p>;
@@ -309,12 +310,19 @@ function SettingsPanel({
         {saved && <p className="mt-1 text-xs text-green-700">Saved.</p>}
       </div>
 
-      <ImageUploadField
-        label="QR code image"
-        folder="settings"
-        value={settings.qr_image_url}
-        onChange={(url) => onSave({ qr_image_url: url })}
-      />
+      <div>
+        <ImageUploadField
+          label="QR code image"
+          folder="settings"
+          value={settings.qr_image_url}
+          onChange={(url) => {
+            onSave({ qr_image_url: url });
+            setQrSaved(url ? "saved" : "removed");
+            setTimeout(() => setQrSaved(null), 2000);
+          }}
+        />
+        {qrSaved && <p className="mt-1 text-xs text-green-700">{qrSaved === "saved" ? "Saved." : "Removed."}</p>}
+      </div>
     </div>
   );
 }
