@@ -11,28 +11,17 @@ async function requireOwner(request: NextRequest, id: string) {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) return { error: NextResponse.json({ error: "Not signed in" }, { status: 401 }) };
 
-  const { data: pandal, error } = await supabaseAdmin()
-    .from("pandals")
-    .select("user_id, edit_unlocked")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: pandal, error } = await supabaseAdmin().from("pandals").select("user_id").eq("id", id).maybeSingle();
   if (error) return { error: NextResponse.json({ error: error.message }, { status: 500 }) };
   if (!pandal) return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) };
   if (pandal.user_id !== userId) return { error: NextResponse.json({ error: "Not your listing" }, { status: 403 }) };
 
-  return { userId, editUnlocked: pandal.edit_unlocked };
+  return { userId };
 }
 
-// Owner-only. Two independent things can be updated here:
-//
-// - The banner add-on (banner_image_urls / banner_payment_proof_url) is
-//   always updatable — it's a self-contained paid extra, gated by an admin
-//   confirming payment (banner_paid), not by edit approval.
-// - Core listing details (name, address, timing, etc.) require edit_unlocked
-//   to already be true — set only by an admin approving a request made via
-//   POST .../request-edit. A successful core edit consumes that approval
-//   (resets edit_unlocked/edit_requested) and sends the listing back to
-//   "pending", since the new details haven't been checked yet.
+// Owner-only: edit their own mandapam's details, any time — unlike ads,
+// this doesn't need admin approval first. Re-submitted for review (back to
+// "pending") since the change hasn't been checked yet.
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const owner = await requireOwner(request, id);
@@ -64,12 +53,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     (body.lat !== undefined && body.lng !== undefined);
 
   if (wantsCoreEdit) {
-    if (!owner.editUnlocked) {
-      return NextResponse.json(
-        { error: "Editing these details needs admin approval first — request edit access from your profile." },
-        { status: 403 }
-      );
-    }
     for (const field of stringFields) {
       if (body[field] !== undefined) update[field] = String(body[field]).slice(0, field === "address" ? 500 : 200);
     }
@@ -89,8 +72,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       update.lng = lng;
     }
     update.status = "pending";
-    update.edit_unlocked = false;
-    update.edit_requested = false;
   }
 
   if (Object.keys(update).length === 0) {

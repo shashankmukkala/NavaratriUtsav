@@ -14,14 +14,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = await request.json().catch(() => null);
   const status = body?.status;
   const bannerPaid = body?.banner_paid;
-  const editUnlocked = body?.edit_unlocked;
   const adminNote = body?.admin_note;
 
   const update: {
     status?: "pending" | "approved" | "rejected";
     banner_paid?: boolean;
-    edit_unlocked?: boolean;
-    edit_requested?: boolean;
     admin_note?: string | null;
   } = {};
   if (status !== undefined) {
@@ -32,12 +29,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (bannerPaid !== undefined) {
     update.banner_paid = Boolean(bannerPaid);
-  }
-  if (editUnlocked !== undefined) {
-    // Approving or denying resolves the request either way — an admin who
-    // just said no shouldn't leave it sitting there looking unanswered.
-    update.edit_unlocked = Boolean(editUnlocked);
-    update.edit_requested = false;
   }
   if (adminNote !== undefined) {
     update.admin_note = adminNote ? String(adminNote).slice(0, 500) : null;

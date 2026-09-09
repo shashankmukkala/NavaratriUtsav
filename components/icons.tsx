@@ -155,6 +155,15 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function RefreshIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" />
+      <path d="M18 3v4h-4M6 21v-4h4" />
+    </Icon>
+  );
+}
+
 export function BowlIcon(props: SVGProps<SVGSVGElement>) {
   // Brand mark: a steaming bowl of food, standing in for the annadhanam
   // (food-offering) theme without leaning on a religious glyph/emoji.
