@@ -107,6 +107,40 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["payment_settings"]["Insert"]>;
         Relationships: [];
       };
+      users: {
+        Row: {
+          id: string;
+          email: string | null;
+          name: string | null;
+          image: string | null;
+          created_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+          image?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["users"]["Insert"]>;
+        Relationships: [];
+      };
+      page_views: {
+        Row: {
+          id: string;
+          path: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          path: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["page_views"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

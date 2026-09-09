@@ -47,6 +47,21 @@ body {
   overflow-x: hidden;
 }
 
+/* iOS Safari auto-zooms the whole page in on focus whenever the focused
+   input/textarea/select has a computed font-size under 16px — several
+   fields here (search boxes, admin filters, the note input, etc.) are
+   smaller than that for visual density. Forcing 16px specifically on
+   mobile-width screens stops the zoom without changing how any of them
+   look on desktop. An unlayered rule like this already beats Tailwind's
+   layered text-* utilities on specificity, so no !important needed. */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Scroll still works everywhere (page and every internal scroll container —
    the sidebar list, mobile sheets, etc.) — this only hides the visible
    track/thumb chrome so it doesn't compete with the festive imagery. */
