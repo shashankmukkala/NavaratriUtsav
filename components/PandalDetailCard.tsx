@@ -6,6 +6,7 @@ import {
   ArrowLeftIcon,
   CalendarIcon,
   CloseIcon,
+  CopyIcon,
   DirectionsIcon,
   PhoneIcon,
   PinIcon,
@@ -26,6 +27,19 @@ interface PandalDetailCardProps {
 export default function PandalDetailCard({ pandal, onClose, fullScreen = false }: PandalDetailCardProps) {
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [route, setRoute] = useState<{ distanceKm: number; durationMin: number } | null>(null);
+  const [addressCopied, setAddressCopied] = useState(false);
+
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(pandal.address);
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 1500);
+    } catch {
+      // Clipboard access can be blocked (permissions, non-secure context) —
+      // failing silently is fine, the address text is still right there to
+      // select and copy by hand.
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -89,9 +103,11 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   return (
     <div className={shellClassName}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="relative flex-shrink-0">
+        <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-72" : "h-48"}`}>
+          {/* object-contain so the whole photo shows — object-cover was
+              cropping into it to fill the box instead of just fitting it. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pandal.image_url} alt={pandal.name} className={fullScreen ? "h-64 w-full object-cover" : "h-40 w-full object-cover"} />
+          <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
           <button
             onClick={onClose}
@@ -117,7 +133,18 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
           <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
             <MetaRow icon={<PinIcon className="h-4 w-4" />}>
-              <span className="line-clamp-2">{pandal.address}</span>
+              <span className="flex items-start gap-1.5">
+                <span className="line-clamp-2">{pandal.address}</span>
+                <button
+                  type="button"
+                  onClick={copyAddress}
+                  aria-label="Copy address"
+                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
+                >
+                  <CopyIcon className="h-3.5 w-3.5" />
+                </button>
+                {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
+              </span>
             </MetaRow>
             <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
               {dateLabel} · {pandal.timing_text}

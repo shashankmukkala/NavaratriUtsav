@@ -281,7 +281,7 @@ export default function MapPage() {
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
           <header className="nav-shell pointer-events-auto flex flex-shrink-0 items-center gap-4 px-5 py-3 sm:px-6">
             <Brand />
-            <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
+            <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} outOfAreaName={outOfAreaName} />
             <label className="flex flex-1 items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
               <input
@@ -370,7 +370,7 @@ export default function MapPage() {
           <div className="nav-shell pointer-events-auto flex flex-col gap-2.5 px-4 py-3.5">
             <div className="flex items-center justify-between gap-2">
               <Brand />
-              <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} />
+              <LocationToggle status={locationStatus} on={locationOn} onToggle={toggleLocation} outOfAreaName={outOfAreaName} />
             </div>
             <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2 text-sm text-[color:var(--muted)]">
               <SearchIcon className="h-4 w-4 flex-shrink-0" />
@@ -598,30 +598,49 @@ function LocationToggle({
   status,
   on,
   onToggle,
+  outOfAreaName,
 }: {
   status: LocationStatus;
   on: boolean;
   onToggle: () => void;
+  outOfAreaName: string | null;
 }) {
   const pending = status === "pending";
+  // Clicking the toggle and having nothing visibly happen (still off, no
+  // explanation) reads as broken — this makes the reason explicit instead
+  // of silently failing.
+  const hint =
+    status === "denied"
+      ? "Blocked — allow location for this site in your browser's settings, then try again."
+      : status === "unsupported"
+        ? "Location isn't supported on this browser."
+        : status === "outside-area"
+          ? `We're not serving ${outOfAreaName ?? "your area"} yet.`
+          : null;
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={pending || status === "unsupported"}
-      aria-pressed={on}
-      title={status === "outside-area" ? "Not available at your current location" : undefined}
-      className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-[rgba(43,22,8,0.06)] py-1 pl-2.5 pr-1 text-xs font-semibold text-[color:var(--muted)] transition-colors disabled:opacity-60"
-    >
-      {pending ? "Locating…" : "Location"}
-      <span
-        className={`relative h-4 w-7 flex-shrink-0 rounded-full transition-colors ${on ? "bg-green-600" : "bg-[rgba(43,22,8,0.2)]"}`}
+    <div className="relative flex-shrink-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={pending || status === "unsupported"}
+        aria-pressed={on}
+        className="flex items-center gap-1.5 rounded-full bg-[rgba(43,22,8,0.06)] py-1 pl-2.5 pr-1 text-xs font-semibold text-[color:var(--muted)] transition-colors disabled:opacity-60"
       >
+        {pending ? "Locating…" : "Location"}
         <span
-          className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${on ? "translate-x-3" : "translate-x-0"}`}
-        />
-      </span>
-    </button>
+          className={`relative h-4 w-7 flex-shrink-0 rounded-full transition-colors ${on ? "bg-green-600" : "bg-[rgba(43,22,8,0.2)]"}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${on ? "translate-x-3" : "translate-x-0"}`}
+          />
+        </span>
+      </button>
+      {hint && (
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-lg bg-[color:var(--foreground)] px-2.5 py-1.5 text-[0.6875rem] leading-snug text-white shadow-lg">
+          {hint}
+        </div>
+      )}
+    </div>
   );
 }
 
