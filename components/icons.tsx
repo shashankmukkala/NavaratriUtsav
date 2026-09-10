@@ -155,6 +155,15 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function PencilIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M15 4.5 19.5 9 8 20.5 3.5 21l.5-4.5Z" strokeLinejoin="round" />
+      <path d="M13 6.5 17.5 11" />
+    </Icon>
+  );
+}
+
 export function RefreshIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

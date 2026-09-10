@@ -64,10 +64,14 @@ body {
 
 /* Scroll still works everywhere (page and every internal scroll container —
    the sidebar list, mobile sheets, etc.) — this only hides the visible
-   track/thumb chrome so it doesn't compete with the festive imagery. */
+   track/thumb chrome so it doesn't compete with the festive imagery.
+   -webkit-overflow-scrolling: touch also goes here — iOS Safari has a real
+   quirk where a nested overflow-y-auto div (like the mandapam card's
+   description area) can otherwise just not respond to touch-drag at all. */
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 *::-webkit-scrollbar {
