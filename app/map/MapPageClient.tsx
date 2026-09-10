@@ -166,12 +166,32 @@ export default function MapPageClient() {
   // Coarse, IP-based fallback — only actually used if the real GPS prompt
   // below gets denied/times out/isn't supported, so there's still a
   // reasonable starting view (the visitor's city) instead of Hyderabad.
-  const flyToApproxLocation = () => {
+  // Runs through the exact same served-state check as a real GPS fix —
+  // the /api/my-location bounding box is just a rectangle, so a nearby
+  // non-served city (Chennai, in Tamil Nadu) can still pass it; without
+  // this check that silently flew the camera there instead of showing the
+  // "we're not serving here yet" message a wrong GPS fix would.
+  const flyToApproxLocation = async () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("pandal") || params.get("q")) return;
-    fetchJson<{ location: { lat: number; lng: number; city: string | null } | null }>("/api/my-location").then((data) => {
-      if (data?.location) setFlyTarget({ lat: data.location.lat, lng: data.location.lng });
-    });
+    const data = await fetchJson<{ location: { lat: number; lng: number; city: string | null } | null }>("/api/my-location");
+    if (!data?.location) return;
+    const here = { lat: data.location.lat, lng: data.location.lng };
+    try {
+      const res = await fetch(`/api/geocode?lat=${here.lat}&lon=${here.lng}`);
+      const geo = await res.json();
+      const state = geo?.address?.state as string | undefined;
+      if (!isServedState(state)) {
+        setOutOfAreaName(state ?? data.location.city ?? null);
+        setLocationStatus("outside-area");
+        return;
+      }
+    } catch {
+      // Reverse-geocode failed — flying there anyway is still better than
+      // silently doing nothing, and worst case is a wrong-looking (but at
+      // least plausible) starting view rather than a false "not served" claim.
+    }
+    setFlyTarget(here);
   };
 
   // Asked for automatically once on load (see the mount effect below), so
