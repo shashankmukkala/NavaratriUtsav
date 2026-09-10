@@ -91,10 +91,11 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   // (rather than floating as a separate absolutely-positioned overlay), so
   // h-full makes it exactly as tall as that panel by construction.
   // Mobile (fullScreen): the popup wrapper is itself a flex column capped at
-  // max-h-[85dvh], so this needs to be `flex-1 min-h-0` (a flex child that
-  // can shrink) rather than `h-full` — percentage heights don't resolve
-  // against a max-height-only ancestor, which was silently clipping
-  // content instead of letting it scroll.
+  // max-h-[94dvh] — it grows to fit content first, only scrolling if
+  // content is still taller than that — so this needs to be `flex-1
+  // min-h-0` (a flex child that can shrink) rather than `h-full`, since
+  // percentage heights don't resolve against a max-height-only ancestor
+  // (that was silently clipping content instead of letting it scroll).
   const shellClassName = fullScreen
     ? "pointer-events-auto flex min-h-0 w-full flex-1 flex-col bg-[color:var(--cream-50)]"
     : "card-elevated pointer-events-auto flex h-full w-full max-w-md flex-col overflow-hidden";
@@ -183,14 +184,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
               there, whether filled or waiting for one. */}
           <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
             {bannerImages.length > 0 ? (
-              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-52" : "min-h-32 flex-1"}`}>
+              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-52" : "min-h-24 flex-1"}`}>
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
             ) : (
               <Link
                 href="/profile"
                 className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
-                  fullScreen ? "h-52" : "min-h-32 flex-1"
+                  fullScreen ? "h-52" : "min-h-24 flex-1"
                 }`}
               >
                 <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />

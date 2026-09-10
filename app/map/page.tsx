@@ -512,7 +512,7 @@ export default function MapPage() {
             the whole screen or anchoring to an edge. */}
         {selected && (
           <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
-            <div className="flex max-h-[85dvh] w-full max-w-sm flex-col overflow-hidden rounded-3xl shadow-2xl">
+            <div className="flex max-h-[94dvh] w-full max-w-sm flex-col overflow-hidden rounded-3xl shadow-2xl">
               <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
             </div>
           </div>
