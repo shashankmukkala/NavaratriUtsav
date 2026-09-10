@@ -89,116 +89,133 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   // Desktop: shares the same flex row as the ad panel in app/map/page.tsx
   // (rather than floating as a separate absolutely-positioned overlay), so
-  // h-full makes it exactly as tall as that panel by construction.
-  // Mobile (fullScreen): the popup wrapper is itself a flex column capped at
-  // max-h-[94dvh] — it grows to fit content first, only scrolling if
-  // content is still taller than that — so this needs to be `flex-1
-  // min-h-0` (a flex child that can shrink) rather than `h-full`, since
-  // percentage heights don't resolve against a max-height-only ancestor
-  // (that was silently clipping content instead of letting it scroll).
+  // h-full makes it exactly as tall as that panel by construction. Mobile
+  // (fullScreen): a fixed-size popup (see app/map/page.tsx) — the image and
+  // the Get Directions/banner footer stay pinned in place, and only the
+  // text block in between scrolls, so a long description can't push the
+  // banner out of reach or get silently cut off.
   const shellClassName = fullScreen
-    ? "pointer-events-auto flex min-h-0 w-full flex-1 flex-col bg-[color:var(--cream-50)]"
+    ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
     : "card-elevated pointer-events-auto flex h-full w-full max-w-md flex-col overflow-hidden";
+
+  const header = (
+    <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-56" : "h-48"}`}>
+      {/* object-contain so the whole photo shows — object-cover was
+          cropping into it to fill the box instead of just fitting it. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
+      <div className="absolute right-3 top-3 flex items-center gap-2">
+        <button
+          onClick={share}
+          aria-label="Share"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
+        >
+          <ShareIcon className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+      </div>
+      {linkCopied && (
+        <span className="absolute right-3 top-14 rounded-full bg-black/70 px-2.5 py-1 text-xs font-medium text-white">Link copied</span>
+      )}
+    </div>
+  );
+
+  const infoBlock = (
+    <>
+      <div className="flex items-center gap-2">
+        {eventStatus && (
+          <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
+        )}
+        <span className="badge-verified">
+          <VerifiedIcon className="h-3.5 w-3.5" />
+          Verified
+        </span>
+      </div>
+
+      <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
+
+      <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
+        <MetaRow icon={<PinIcon className="h-4 w-4" />}>
+          <span className="flex items-start gap-1.5">
+            <span className={fullScreen ? "" : "line-clamp-2"}>{pandal.address}</span>
+            <button
+              type="button"
+              onClick={copyAddress}
+              aria-label="Copy address"
+              className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
+            >
+              <CopyIcon className="h-3.5 w-3.5" />
+            </button>
+            {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
+          </span>
+        </MetaRow>
+        <MetaRow icon={<BowlIcon className="h-4 w-4" />}>
+          {pandal.event_date && pandal.timing_text ? pandal.timing_text : "No annadhanam info available"}
+        </MetaRow>
+        <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
+      </div>
+
+      {pandal.description && (
+        <p className={`text-sm text-[color:var(--muted)] ${fullScreen ? "" : "line-clamp-2"}`}>{pandal.description}</p>
+      )}
+    </>
+  );
+
+  const footerBlock = (
+    <>
+      <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full justify-center py-2.5">
+        <DirectionsIcon className="h-4 w-4" />
+        Get Directions
+      </a>
+
+      {/* Always reserves this space (rather than collapsing to nothing
+          when there's no ad to show) so the card doesn't look broken —
+          paying for a banner slot should mean it's always visibly
+          there, whether filled or waiting for one. */}
+      <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
+        {bannerImages.length > 0 ? (
+          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-52" : "min-h-24 flex-1"}`}>
+            <AdBannerSlideshow images={bannerImages} alt="" />
+          </div>
+        ) : (
+          <Link
+            href="/profile"
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
+              fullScreen ? "h-52" : "min-h-24 flex-1"
+            }`}
+          >
+            <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
+          </Link>
+        )}
+      </div>
+    </>
+  );
+
+  if (fullScreen) {
+    return (
+      <div className={shellClassName}>
+        {header}
+        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-4">{infoBlock}</div>
+        <div className="flex-shrink-0 space-y-2.5 p-4 pt-0">{footerBlock}</div>
+      </div>
+    );
+  }
 
   return (
     <div className={shellClassName}>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-56" : "h-48"}`}>
-          {/* object-contain so the whole photo shows — object-cover was
-              cropping into it to fill the box instead of just fitting it. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
-          <div className="absolute right-3 top-3 flex items-center gap-2">
-            <button
-              onClick={share}
-              aria-label="Share"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
-            >
-              <ShareIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[color:var(--foreground)] shadow-sm transition-colors hover:bg-white"
-            >
-              <CloseIcon className="h-4 w-4" />
-            </button>
-          </div>
-          {linkCopied && (
-            <span className="absolute right-3 top-14 rounded-full bg-black/70 px-2.5 py-1 text-xs font-medium text-white">
-              Link copied
-            </span>
-          )}
-        </div>
-
+        {header}
         <div className="flex min-h-0 flex-1 flex-col space-y-2.5 p-4">
-          <div className="flex items-center gap-2">
-            {eventStatus && (
-              <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
-            )}
-            <span className="badge-verified">
-              <VerifiedIcon className="h-3.5 w-3.5" />
-              Verified
-            </span>
-          </div>
-
-          <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
-
-          <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
-            <MetaRow icon={<PinIcon className="h-4 w-4" />}>
-              <span className="flex items-start gap-1.5">
-                <span className="line-clamp-2">{pandal.address}</span>
-                <button
-                  type="button"
-                  onClick={copyAddress}
-                  aria-label="Copy address"
-                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
-                >
-                  <CopyIcon className="h-3.5 w-3.5" />
-                </button>
-                {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
-              </span>
-            </MetaRow>
-            <MetaRow icon={<BowlIcon className="h-4 w-4" />}>
-              {pandal.event_date && pandal.timing_text ? pandal.timing_text : "No annadhanam info available"}
-            </MetaRow>
-            <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
-          </div>
-
-          {pandal.description && <p className="line-clamp-2 text-sm text-[color:var(--muted)]">{pandal.description}</p>}
-
-          <a
-            href={directionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary w-full justify-center py-2.5"
-          >
-            <DirectionsIcon className="h-4 w-4" />
-            Get Directions
-          </a>
-
-          {/* Always reserves this space (rather than collapsing to nothing
-              when there's no ad to show) so the card doesn't look broken —
-              paying for a banner slot should mean it's always visibly
-              there, whether filled or waiting for one. */}
-          <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
-            {bannerImages.length > 0 ? (
-              <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-52" : "min-h-24 flex-1"}`}>
-                <AdBannerSlideshow images={bannerImages} alt="" />
-              </div>
-            ) : (
-              <Link
-                href="/profile"
-                className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
-                  fullScreen ? "h-52" : "min-h-24 flex-1"
-                }`}
-              >
-                <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-                <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
-              </Link>
-            )}
-          </div>
+          {infoBlock}
+          {footerBlock}
         </div>
       </div>
     </div>
