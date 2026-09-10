@@ -5,8 +5,9 @@ import { fetchJson } from "@/lib/fetchJson";
 
 const REFRESH_MS = 60_000;
 
-/** Tiny "N people have visited" badge — purely a showcase number, refreshed
- * on an interval so it stays current without anyone needing to reload.
+/** Tiny "N visits" badge — total page loads, not deduped by visitor — purely
+ * a showcase number, refreshed on an interval so it stays current without
+ * anyone needing to reload.
  * Rendered as a child of the map's own container (not `fixed` to the
  * viewport) so it's positioned relative to the map card itself, clear of
  * the floating header — a `fixed` badge near the top edge risked sitting
@@ -41,7 +42,7 @@ export default function VisitorCountBadge() {
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
       </span>
-      {count.toLocaleString("en-IN")} visited
+      {count.toLocaleString("en-IN")} visits
     </div>
   );
 }
