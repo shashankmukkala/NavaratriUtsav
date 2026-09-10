@@ -19,6 +19,16 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [addressCopied, setAddressCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  // Sponsorship is money changing hands for a specific mandapam — the
+  // "add a banner" prompt below must only ever be a real, actionable offer
+  // to the person who actually owns this listing, never a generic link
+  // that happens to be sitting on someone else's card.
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const isOwner = !!viewerId && viewerId === pandal.user_id;
+
+  useEffect(() => {
+    fetchJson<{ user?: { id?: string } }>("/api/auth/session").then((data) => setViewerId(data?.user?.id ?? null));
+  }, []);
 
   const copyAddress = async () => {
     try {
@@ -196,9 +206,13 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-36" : "min-h-24 flex-1"}`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
-        ) : (
+        ) : isOwner ? (
+          // Only the person who actually submitted this mandapam ever sees
+          // this as a clickable offer — deep-links straight to this
+          // listing's own banner flow, which is itself still gated by an
+          // ownership check server-side.
           <Link
-            href="/profile"
+            href={`/profile?addBanner=${pandal.id}`}
             className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
               fullScreen ? "h-36" : "min-h-24 flex-1"
             }`}
@@ -206,6 +220,19 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
           </Link>
+        ) : (
+          // Anyone else just sees an inert placeholder — no link, and
+          // wording that makes clear this isn't an offer to sponsor
+          // someone else's mandapam.
+          <div
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${
+              fullScreen ? "h-36" : "min-h-24 flex-1"
+            }`}
+          >
+            <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
+            <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
+            <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
+          </div>
         )}
       </div>
     </>

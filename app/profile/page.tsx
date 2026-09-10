@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import BackButton from "@/components/BackButton";
@@ -31,10 +31,23 @@ export default function ProfilePage() {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
-  const loadData = () => {
-    fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => setPandals(data?.pandals ?? []));
+  const loadData = useCallback(() => {
+    fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => {
+      const list = data?.pandals ?? [];
+      setPandals(list);
+      // Deep link from a mandapam's own card ("Add your association
+      // banner") — only ever opens the modal if that pandal is actually in
+      // this signed-in user's own list, so it can't be used to jump to
+      // someone else's listing even if the id in the URL isn't theirs.
+      const addBannerId = new URLSearchParams(window.location.search).get("addBanner");
+      if (addBannerId) {
+        const match = list.find((p) => p.id === addBannerId);
+        if (match) setAddingBannerTo(match);
+        router.replace("/profile", { scroll: false });
+      }
+    });
     fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/me/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchJson<{ user?: SessionUser }>("/api/auth/session").then((data) => setSession(data ?? null));
@@ -42,7 +55,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (session?.user) loadData();
-  }, [session]);
+  }, [session, loadData]);
 
   const deletePandal = async (id: string) => {
     if (!confirm("Delete this mandapam listing? This can't be undone.")) return;
