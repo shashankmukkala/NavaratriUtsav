@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckIcon, CloseIcon, RefreshIcon, TrashIcon } from "@/components/icons";
+import { CheckIcon, CloseIcon, PencilIcon, RefreshIcon, TrashIcon } from "@/components/icons";
 import ImageUploadField from "@/components/ImageUploadField";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
@@ -33,6 +33,7 @@ export default function AdminPage() {
   const [bannerSearch, setBannerSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [editingPandal, setEditingPandal] = useState<Pandal | null>(null);
 
   useEffect(() => {
     fetchJson<{ loggedIn: boolean }>("/api/admin/session").then((data) => setLoggedIn(data?.loggedIn ?? false));
@@ -111,6 +112,15 @@ export default function AdminPage() {
     if (!confirm("Permanently delete this mandapam listing?")) return;
     await sendJson(`/api/admin/pandals/${id}`, undefined, "DELETE");
     loadData();
+  };
+
+  const savePandalEdit = async (id: string, patch: Record<string, unknown>) => {
+    const result = await sendJson(`/api/admin/pandals/${id}`, patch, "PATCH");
+    if (result.ok) {
+      setEditingPandal(null);
+      loadData();
+    }
+    return result;
   };
 
   const updateSponsorStatus = async (id: string, status: "approved" | "rejected") => {
@@ -311,6 +321,9 @@ export default function AdminPage() {
                     {pandal.status === "pending" ? "Reject" : "Unpublish"}
                   </ActionButton>
                 )}
+                <ActionButton color="gray" icon={<PencilIcon className="h-3.5 w-3.5" />} onClick={() => setEditingPandal(pandal)}>
+                  Edit
+                </ActionButton>
                 <ActionButton color="gray" icon={<TrashIcon className="h-3.5 w-3.5" />} onClick={() => deletePandal(pandal.id)}>
                   Delete
                 </ActionButton>
@@ -429,6 +442,10 @@ export default function AdminPage() {
 
       {tab === "settings" && (
         <SettingsPanel key={settings ? "loaded" : "loading"} settings={settings} onSave={saveSettings} />
+      )}
+
+      {editingPandal && (
+        <AdminEditPandalModal pandal={editingPandal} onClose={() => setEditingPandal(null)} onSave={savePandalEdit} />
       )}
     </div>
   );
@@ -549,6 +566,109 @@ function SettingsPanel({
             Save prices
           </button>
           {pricesSaved && <p className="text-xs text-green-700">Saved.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Lets admin fix up a listing's own content directly — name, contact,
+ * address text, photo, annadhanam date/timing, description — rather than
+ * only being able to approve/reject/delete it. Unlike an owner's edit (see
+ * profile's EditPandalModal), this never resets status back to "pending":
+ * admin is the one who'd have to re-review it anyway. */
+function AdminEditPandalModal({
+  pandal,
+  onClose,
+  onSave,
+}: {
+  pandal: Pandal;
+  onClose: () => void;
+  onSave: (id: string, patch: Record<string, unknown>) => Promise<{ ok: true; data: unknown } | { ok: false; error: string }>;
+}) {
+  const [name, setName] = useState(pandal.name);
+  const [organizerName, setOrganizerName] = useState(pandal.organizer_name);
+  const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
+  const [address, setAddress] = useState(pandal.address);
+  const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
+  const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
+  const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
+  const [description, setDescription] = useState(pandal.description ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setError(null);
+    setSaving(true);
+    const result = await onSave(pandal.id, {
+      name,
+      organizer_name: organizerName,
+      contact_phone: contactPhone,
+      address,
+      image_url: imageUrl,
+      event_date: eventDate || null,
+      timing_text: timingText || null,
+      description: description || null,
+    });
+    setSaving(false);
+    if (!result.ok) setError(result.error);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="card-elevated max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
+        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit mandapam</p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Saved immediately — no re-review needed, you&apos;re the reviewer.</p>
+
+        <div className="mt-4 space-y-4">
+          <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Organizer name</label>
+            <input value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Contact phone</label>
+            <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Address</label>
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className="field-input" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date</label>
+              <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time</label>
+              <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Additional details</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="field-input" />
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
+
+        <div className="mt-5 flex gap-2">
+          <button type="button" onClick={onClose} className="btn-ghost flex-1 justify-center py-2.5">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center py-2.5">
+            {saving ? "Saving…" : "Save changes"}
+          </button>
         </div>
       </div>
     </div>

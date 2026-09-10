@@ -23,6 +23,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     admin_note?: string | null;
     banner_image_urls?: null;
     banner_payment_proof_url?: null;
+    name?: string;
+    organizer_name?: string;
+    contact_phone?: string;
+    address?: string;
+    image_url?: string;
+    event_date?: string | null;
+    timing_text?: string | null;
+    description?: string | null;
   } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -44,6 +52,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     update.banner_payment_proof_url = null;
     update.banner_paid = false;
   }
+
+  // Admin editing the listing's own content — unlike an owner's edit (see
+  // /api/me/pandals/[id]), this doesn't reset status back to "pending":
+  // admin is the reviewer, so there's no one else who needs to re-approve it.
+  const stringFields = ["name", "organizer_name", "contact_phone", "address", "image_url"] as const;
+  for (const field of stringFields) {
+    if (body?.[field] !== undefined) {
+      update[field] = String(body[field]).slice(0, field === "address" ? 500 : 200);
+    }
+  }
+  if (body?.event_date !== undefined) {
+    update.event_date = body.event_date ? String(body.event_date) : null;
+  }
+  if (body?.timing_text !== undefined) {
+    update.timing_text = body.timing_text ? String(body.timing_text).slice(0, 200) : null;
+  }
+  if (body?.description !== undefined) {
+    update.description = body.description ? String(body.description).slice(0, 2000) : null;
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
