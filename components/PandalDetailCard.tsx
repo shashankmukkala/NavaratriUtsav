@@ -87,11 +87,16 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // Shares the same flex row as the ad panel in app/map/page.tsx (rather
-  // than floating as a separate absolutely-positioned overlay), so h-full
-  // makes it exactly as tall as that panel by construction.
+  // Desktop: shares the same flex row as the ad panel in app/map/page.tsx
+  // (rather than floating as a separate absolutely-positioned overlay), so
+  // h-full makes it exactly as tall as that panel by construction.
+  // Mobile (fullScreen): the popup wrapper is itself a flex column capped at
+  // max-h-[85dvh], so this needs to be `flex-1 min-h-0` (a flex child that
+  // can shrink) rather than `h-full` — percentage heights don't resolve
+  // against a max-height-only ancestor, which was silently clipping
+  // content instead of letting it scroll.
   const shellClassName = fullScreen
-    ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
+    ? "pointer-events-auto flex min-h-0 w-full flex-1 flex-col bg-[color:var(--cream-50)]"
     : "card-elevated pointer-events-auto flex h-full w-full max-w-md flex-col overflow-hidden";
 
   return (
