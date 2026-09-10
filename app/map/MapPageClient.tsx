@@ -7,6 +7,7 @@ import Brand from "@/components/Brand";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
+import VisitorCountBadge from "@/components/VisitorCountBadge";
 import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
@@ -331,6 +332,7 @@ export default function MapPageClient() {
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
+      <VisitorCountBadge />
       {/* ===== Desktop / tablet layout ===== */}
       <div className="relative hidden h-full lg:block">
         {/* Full-bleed map, base layer — the nav bar and sidebar float on top
