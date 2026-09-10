@@ -48,6 +48,9 @@ export default function MapPageClient() {
   // drags, this holds an explicit px height so the sheet actually follows
   // the finger instead of only snapping once at the end of the gesture.
   const [sheetHeightPx, setSheetHeightPx] = useState<number | null>(null);
+  // Bumped every time the mobile "Map" tab is tapped, to snap the camera
+  // back to the default view (not just zoom in if needed, like `flyTarget`).
+  const [mapResetTrigger, setMapResetTrigger] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const listSheetRef = useRef<HTMLDivElement | null>(null);
   const listDrag = useRef<{ startY: number; startHeight: number } | null>(null);
@@ -394,7 +397,7 @@ export default function MapPageClient() {
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} />
           <VisitorCountBadge />
         </div>
 
@@ -507,7 +510,7 @@ export default function MapPageClient() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
@@ -591,6 +594,11 @@ export default function MapPageClient() {
                 onClick={() => {
                   setShowList(false);
                   setSheetHeightPx(null);
+                  // Clearing the query also clears areaCenter/searchOutOfArea
+                  // automatically — see the search effect below, which
+                  // already resets those once the query is too short to search.
+                  setQuery("");
+                  setMapResetTrigger((v) => v + 1);
                 }}
               />
               <TabButton
