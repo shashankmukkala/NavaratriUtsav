@@ -163,25 +163,21 @@ export default function MapPageClient() {
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
   }, []);
 
-  useEffect(() => {
-    // A shared mandapam link or a homepage search already has a more
-    // specific, intentional destination — this coarse IP-based guess
-    // should never clobber either of those.
+  // Coarse, IP-based fallback — only actually used if the real GPS prompt
+  // below gets denied/times out/isn't supported, so there's still a
+  // reasonable starting view (the visitor's city) instead of Hyderabad.
+  const flyToApproxLocation = () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("pandal") || params.get("q")) return;
-    // Purely a nicer starting camera position (e.g. Khammam instead of
-    // always Hyderabad) — never asks for GPS permission, and doesn't touch
-    // `coords`/`locationOn`, so it has no effect on "near you" sorting.
     fetchJson<{ location: { lat: number; lng: number; city: string | null } | null }>("/api/my-location").then((data) => {
       if (data?.location) setFlyTarget({ lat: data.location.lat, lng: data.location.lng });
     });
-  }, []);
+  };
 
-  // Only ever asked for on an explicit tap (the "Enable Location"/"Near Me"
-  // control) — never automatically on load. Two reasons: the full list is
-  // shown regardless of location now, so there's nothing to unblock, and
-  // some mobile browsers (iOS Safari included) silently ignore a permission
-  // request that isn't triggered by a direct user gesture.
+  // Asked for automatically once on load (see the mount effect below), so
+  // the map opens centered on exactly where the user is instead of a
+  // district-wide guess. Also still reachable from the "Enable Location"/
+  // "Near Me" control for whenever the auto-prompt was missed or denied.
   //
   // Always re-queries the device rather than reusing cached coords — a
   // stale fix could silently hide that the user has since turned off
@@ -190,6 +186,7 @@ export default function MapPageClient() {
   const requestLocation = () => {
     if (!navigator.geolocation) {
       setLocationStatus("unsupported");
+      flyToApproxLocation();
       return;
     }
     setLocationStatus("pending");
@@ -223,10 +220,34 @@ export default function MapPageClient() {
         setSidebarOpen(true);
         setShowList(true);
       },
-      () => setLocationStatus("denied"),
+      () => {
+        setLocationStatus("denied");
+        // Precise GPS wasn't granted — still better to land on roughly the
+        // right city than always Hyderabad.
+        flyToApproxLocation();
+      },
       { enableHighAccuracy: false, timeout: 8000 }
     );
   };
+
+  useEffect(() => {
+    // A shared mandapam link or a homepage search already has a specific,
+    // intentional destination — don't interrupt either with a permission
+    // prompt that would then fly the camera away from it.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pandal") || params.get("q")) return;
+    // Fires the real GPS permission prompt as soon as the map opens, so the
+    // camera can center on exactly where the user is rather than a
+    // district-wide guess. Note: iOS Safari has historically ignored a
+    // geolocation request that isn't triggered by a direct user gesture —
+    // works reliably on Chrome/most Android browsers, may silently no-op
+    // there. requestLocation()'s own denied/unsupported branches fall back
+    // to the coarse IP-based guess either way, so there's always some
+    // reasonable camera position even when the prompt itself never appears.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The navbar location toggle: off -> on reuses cached coords instantly (or
   // asks the browser if we don't have any yet); on -> off just stops using
