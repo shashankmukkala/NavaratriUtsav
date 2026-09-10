@@ -181,14 +181,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           there, whether filled or waiting for one. */}
       <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
         {bannerImages.length > 0 ? (
-          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-52" : "min-h-24 flex-1"}`}>
+          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-36" : "min-h-24 flex-1"}`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : (
           <Link
             href="/profile"
             className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
-              fullScreen ? "h-52" : "min-h-24 flex-1"
+              fullScreen ? "h-36" : "min-h-24 flex-1"
             }`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
