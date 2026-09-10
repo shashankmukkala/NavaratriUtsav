@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { BowlIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
@@ -77,14 +78,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     };
   }, [pandal.id]);
 
-  const dateLabel = pandal.event_date
-    ? (() => {
-        const d = new Date(pandal.event_date + "T00:00:00");
-        return Number.isNaN(d.getTime())
-          ? pandal.event_date
-          : d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-      })()
-    : null;
   const eventStatus = getEventStatus(pandal.event_date);
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
 
@@ -161,14 +154,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
                 {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
               </span>
             </MetaRow>
-            {dateLabel ? (
-              <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
-                {dateLabel}
-                {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
-              </MetaRow>
-            ) : (
-              <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>Mandapam only — no annadhanam date shared</MetaRow>
-            )}
+            <MetaRow icon={<BowlIcon className="h-4 w-4" />}>
+              {pandal.event_date && pandal.timing_text ? pandal.timing_text : "No info available"}
+            </MetaRow>
             <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
           </div>
 
@@ -184,13 +172,27 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             Get Directions
           </a>
 
-          {bannerImages.length > 0 && (
-            <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
+          {/* Always reserves this space (rather than collapsing to nothing
+              when there's no ad to show) so the card doesn't look broken —
+              paying for a banner slot should mean it's always visibly
+              there, whether filled or waiting for one. */}
+          <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
+            {bannerImages.length > 0 ? (
               <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-36" : "min-h-24 flex-1"}`}>
                 <AdBannerSlideshow images={bannerImages} alt="" />
               </div>
-            </div>
-          )}
+            ) : (
+              <Link
+                href="/profile"
+                className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
+                  fullScreen ? "h-36" : "min-h-24 flex-1"
+                }`}
+              >
+                <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+                <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>

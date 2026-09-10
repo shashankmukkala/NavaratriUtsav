@@ -3,8 +3,19 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import { ArrowRightIcon, HeartIcon, MapIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export default function AdsChoicePage() {
+export default async function AdsChoicePage() {
+  // Server component, so this reads the live prices directly rather than
+  // adding a client-side fetch waterfall for two numbers.
+  const { data: settings } = await supabaseAdmin()
+    .from("payment_settings")
+    .select("map_ad_price, card_ad_price")
+    .eq("id", true)
+    .single();
+  const mapAdPrice = settings?.map_ad_price ?? 500;
+  const cardAdPrice = settings?.card_ad_price ?? 200;
+
   return (
     <div
       className="min-h-dvh w-full"
@@ -39,7 +50,7 @@ export default function AdsChoicePage() {
                 <MapIcon className="h-6 w-6" />
               </span>
               <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
-                ₹500 / 2 days
+                ₹{mapAdPrice} / 2 days
               </span>
             </div>
             <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on the map</h2>
@@ -59,7 +70,7 @@ export default function AdsChoicePage() {
                 <MegaphoneIcon className="h-6 w-6" />
               </span>
               <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
-                ₹200 / 2 days
+                ₹{cardAdPrice} / 2 days
               </span>
             </div>
             <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on mandapam cards</h2>

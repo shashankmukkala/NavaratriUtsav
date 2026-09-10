@@ -54,6 +54,9 @@ export interface Sponsor {
 export interface PaymentSettings {
   upi_id: string;
   qr_image_url: string | null;
+  map_ad_price: number;
+  card_ad_price: number;
+  banner_price: number;
 }
 
 /** A single result from /api/geocode (proxying Nominatim / OpenStreetMap). */

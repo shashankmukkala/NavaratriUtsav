@@ -62,10 +62,10 @@ function SponsorPageInner() {
   // client render the same branch on the very first paint.
   const searchParams = useSearchParams();
   const isPandalTarget = searchParams.get("target") === "pandal";
-  const price = isPandalTarget ? 200 : 500;
 
   const [draft] = useState(readSponsorDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
+  const price = isPandalTarget ? (settings?.card_ad_price ?? 200) : (settings?.map_ad_price ?? 500);
   const [sponsorName, setSponsorName] = useState(draft?.sponsorName ?? "");
   const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
   const [linkUrl, setLinkUrl] = useState(draft?.linkUrl ?? "");

@@ -235,7 +235,7 @@ export default function SubmitPage() {
                   Want to showcase your banner?
                 </p>
                 <p className="mt-1 text-xs text-[color:var(--muted)]">
-                  Pay a one-time fee of ₹200 to unlock a banner on your card, for good.
+                  Pay a one-time fee of ₹{settings?.banner_price ?? 200} to unlock a banner on your card, for good.
                 </p>
               </button>
 
@@ -258,7 +258,7 @@ export default function SubmitPage() {
               >
                 ×
               </button>
-              <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Pay ₹200 for your banner</p>
+              <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Pay ₹{settings?.banner_price ?? 200} for your banner</p>
               <p className="mt-1 text-sm text-[color:var(--muted)]">One-time payment — unlocks your banner for good.</p>
 
               <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
@@ -274,7 +274,7 @@ export default function SubmitPage() {
                   <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
                     {settings?.upi_id ?? "annadhanam@upi"}
                   </p>
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹200 to this UPI ID.</p>
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.banner_price ?? 200} to this UPI ID.</p>
                 </div>
               </div>
 
@@ -416,7 +416,7 @@ export default function SubmitPage() {
                 {submitting ? "Submitting…" : "Submit — it's free"}
               </button>
               <p className="text-center text-xs text-[color:var(--muted-soft)]">
-                Listing your Annadhanam costs nothing. The ₹200 banner on the right is a separate, optional add-on.
+                Listing your Annadhanam costs nothing. The ₹{settings?.banner_price ?? 200} banner on the right is a separate, optional add-on.
               </p>
             </form>
 
@@ -434,6 +434,7 @@ export default function SubmitPage() {
                 onBannerChange={handleBannerChange}
                 proofUrl={bannerProofUrl}
                 onOpenPayment={() => setShowPaymentModal(true)}
+                bannerPrice={settings?.banner_price ?? 200}
               />
             </div>
           </div>
@@ -470,6 +471,7 @@ function LivePreviewCard({
   onBannerChange,
   proofUrl,
   onOpenPayment,
+  bannerPrice,
 }: {
   imageUrl: string | null;
   name: string;
@@ -480,6 +482,7 @@ function LivePreviewCard({
   onBannerChange: (urls: string[]) => void;
   proofUrl: string | null;
   onOpenPayment: () => void;
+  bannerPrice: number;
 }) {
   return (
     <div className="card-elevated max-w-md overflow-hidden">
@@ -535,7 +538,7 @@ function LivePreviewCard({
 
         {bannerUrls.length === 0 ? (
           <p className="mt-2 text-xs text-[color:var(--muted)]">
-            Optional, not required to list — a one-time ₹200 unlocks a banner on this card for good.
+            Optional, not required to list — a one-time ₹{bannerPrice} unlocks a banner on this card for good.
           </p>
         ) : proofUrl ? (
           <p className="mt-2 text-xs text-[color:var(--muted)]">
@@ -547,7 +550,7 @@ function LivePreviewCard({
             onClick={onOpenPayment}
             className="mt-2 text-xs font-semibold text-[color:var(--accent-deep)] underline"
           >
-            Complete the ₹200 payment
+            Complete the ₹{bannerPrice} payment
           </button>
         )}
       </div>

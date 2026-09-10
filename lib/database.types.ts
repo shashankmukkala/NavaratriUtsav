@@ -98,11 +98,17 @@ export interface Database {
           id: boolean;
           upi_id: string;
           qr_image_url: string | null;
+          map_ad_price: number;
+          card_ad_price: number;
+          banner_price: number;
         };
         Insert: {
           id?: boolean;
           upi_id?: string;
           qr_image_url?: string | null;
+          map_ad_price?: number;
+          card_ad_price?: number;
+          banner_price?: number;
         };
         Update: Partial<Database["public"]["Tables"]["payment_settings"]["Insert"]>;
         Relationships: [];
