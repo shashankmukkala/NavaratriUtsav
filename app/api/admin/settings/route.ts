@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin()
     .from("payment_settings")
-    .select("upi_id, qr_image_url")
+    .select("upi_id, qr_image_url, map_ad_price, card_ad_price, banner_price")
     .eq("id", true)
     .single();
 
@@ -20,19 +20,34 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ settings: data });
 }
 
-// Admin: update the UPI ID and/or QR code image shown across the app.
+// Admin: update the UPI ID, QR code image, and/or ad/banner prices shown across the app.
 export async function PATCH(request: NextRequest) {
   if (!requireAdmin(request)) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
-  const update: { upi_id?: string; qr_image_url?: string | null } = {};
+  const update: {
+    upi_id?: string;
+    qr_image_url?: string | null;
+    map_ad_price?: number;
+    card_ad_price?: number;
+    banner_price?: number;
+  } = {};
   if (typeof body?.upi_id === "string" && body.upi_id.trim()) {
     update.upi_id = body.upi_id.trim().slice(0, 100);
   }
   if (body?.qr_image_url !== undefined) {
     update.qr_image_url = body.qr_image_url ? String(body.qr_image_url) : null;
+  }
+  for (const field of ["map_ad_price", "card_ad_price", "banner_price"] as const) {
+    if (body?.[field] !== undefined) {
+      const price = Number(body[field]);
+      if (!Number.isFinite(price) || price < 0) {
+        return NextResponse.json({ error: `Invalid ${field}` }, { status: 400 });
+      }
+      update[field] = Math.round(price);
+    }
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

@@ -25,6 +25,11 @@ export default function ProfilePage() {
   const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
+  const [settings, setSettings] = useState<PaymentSettings | null>(null);
+
+  useEffect(() => {
+    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, []);
 
   const loadData = () => {
     fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => setPandals(data?.pandals ?? []));
@@ -211,8 +216,8 @@ export default function ProfilePage() {
                 My banners ({pandals.length})
               </h2>
               <p className="mb-3 text-xs text-[color:var(--muted-soft)]">
-                A one-time ₹200 per mandapam, live for as long as the listing is — unlike the ads below, which run for
-                a limited time.
+                A one-time ₹{settings?.banner_price ?? 200} per mandapam, live for as long as the listing is —
+                unlike the ads below, which run for a limited time.
               </p>
               {pandals.length === 0 ? (
                 <Empty>Add a mandapam first, then you can give it a banner.</Empty>
@@ -546,7 +551,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           {alreadyPaid
             ? `Already paid — swap the image on ${pandal.name}'s card any time, for free.`
-            : `One-time ₹200 — shows on ${pandal.name}'s card, for good.`}
+            : `One-time ₹${settings?.banner_price ?? 200} — shows on ${pandal.name}'s card, for good.`}
         </p>
 
         <div className="mt-4">
@@ -572,7 +577,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
                 <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
                   {settings?.upi_id ?? "annadhanam@upi"}
                 </p>
-                <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹200 to this UPI ID.</p>
+                <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.banner_price ?? 200} to this UPI ID.</p>
               </div>
             </div>
 

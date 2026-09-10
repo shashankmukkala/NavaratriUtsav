@@ -170,6 +170,15 @@ export default function AdminPage() {
         p.address.toLowerCase().includes(pandalSearchLower))
   );
   const annadhanamPandalsCount = pandals.filter((p) => !!p.event_date).length;
+  const usersById = new Map(users.map((u) => [u.id, u]));
+  // A submission's user_id predates our users table for anyone who signed
+  // in before that table existed, so this can legitimately come up empty.
+  const submitterLabel = (userId: string | null) => {
+    if (!userId) return "unknown user";
+    const u = usersById.get(userId);
+    if (!u) return `unknown user (${userId.slice(0, 8)}…)`;
+    return u.name && u.email ? `${u.name} (${u.email})` : (u.name ?? u.email ?? userId.slice(0, 8) + "…");
+  };
 
   const userSearchLower = userSearch.trim().toLowerCase();
   const filteredUsers = users.filter(
@@ -290,7 +299,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
-              <PandalRow key={pandal.id} pandal={pandal} onSendNote={sendAdminNote}>
+              <PandalRow key={pandal.id} pandal={pandal} onSendNote={sendAdminNote} submittedBy={submitterLabel(pandal.user_id)}>
                 <StatusBadge status={pandal.status} />
                 {pandal.status !== "approved" && (
                   <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
@@ -358,7 +367,7 @@ export default function AdminPage() {
               <div className="space-y-2">
                 {filteredBanners.length === 0 && <Empty>No banners match this filter.</Empty>}
                 {filteredBanners.map((pandal) => (
-                  <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onDeny={denyBanner} />
+                  <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onDeny={denyBanner} settings={settings} />
                 ))}
               </div>
             </div>
@@ -381,7 +390,7 @@ export default function AdminPage() {
               <div className="space-y-2">
                 {filteredSponsors.length === 0 && <Empty>No ads match this filter.</Empty>}
                 {filteredSponsors.map((sponsor) => (
-                  <SponsorRow key={sponsor.id} sponsor={sponsor} onSetEditUnlocked={setSponsorEditUnlocked}>
+                  <SponsorRow key={sponsor.id} sponsor={sponsor} onSetEditUnlocked={setSponsorEditUnlocked} settings={settings}>
                     <StatusBadge status={sponsor.status} />
                     {sponsor.status !== "approved" && (
                       <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "approved")}>
@@ -433,7 +442,11 @@ function SettingsPanel({
   onSave: (patch: Partial<PaymentSettings>) => void;
 }) {
   const [upiId, setUpiId] = useState(settings?.upi_id ?? "");
+  const [mapAdPrice, setMapAdPrice] = useState(String(settings?.map_ad_price ?? 500));
+  const [cardAdPrice, setCardAdPrice] = useState(String(settings?.card_ad_price ?? 200));
+  const [bannerPrice, setBannerPrice] = useState(String(settings?.banner_price ?? 200));
   const [saved, setSaved] = useState(false);
+  const [pricesSaved, setPricesSaved] = useState(false);
   const [qrSaved, setQrSaved] = useState<"saved" | "removed" | null>(null);
 
   if (!settings) {
@@ -485,6 +498,58 @@ function SettingsPanel({
           }}
         />
         {qrSaved && <p className="mt-1 text-xs text-green-700">{qrSaved === "saved" ? "Saved." : "Removed."}</p>}
+      </div>
+
+      <div className="border-t border-[rgba(43,22,8,0.1)] pt-5">
+        <h2 className="text-sm font-semibold text-[color:var(--foreground)]">Ad &amp; banner prices</h2>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">
+          Shown on /ads, /sponsor, /submit and the profile banner add-on — in rupees.
+        </p>
+
+        <div className="mt-3 space-y-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Map ad (per 2 days)</label>
+            <input
+              type="number"
+              min={0}
+              value={mapAdPrice}
+              onChange={(e) => setMapAdPrice(e.target.value)}
+              className="field-input"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Mandapam card ad (per 2 days)</label>
+            <input
+              type="number"
+              min={0}
+              value={cardAdPrice}
+              onChange={(e) => setCardAdPrice(e.target.value)}
+              className="field-input"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association banner (one-time)</label>
+            <input
+              type="number"
+              min={0}
+              value={bannerPrice}
+              onChange={(e) => setBannerPrice(e.target.value)}
+              className="field-input"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              onSave({ map_ad_price: Number(mapAdPrice), card_ad_price: Number(cardAdPrice), banner_price: Number(bannerPrice) });
+              setPricesSaved(true);
+              setTimeout(() => setPricesSaved(false), 2000);
+            }}
+            className="btn-primary px-4 text-sm"
+          >
+            Save prices
+          </button>
+          {pricesSaved && <p className="text-xs text-green-700">Saved.</p>}
+        </div>
       </div>
     </div>
   );
@@ -614,10 +679,12 @@ function PandalRow({
   pandal,
   children,
   onSendNote,
+  submittedBy,
 }: {
   pandal: Pandal;
   children: React.ReactNode;
   onSendNote: (id: string, note: string) => void;
+  submittedBy: string;
 }) {
   const [noteDraft, setNoteDraft] = useState(pandal.admin_note ?? "");
   return (
@@ -659,7 +726,8 @@ function PandalRow({
         </p>
         {pandal.description && <p className="text-xs text-[color:var(--muted-soft)]">{pandal.description}</p>}
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">
-          Submitted {new Date(pandal.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          Submitted {new Date(pandal.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} by{" "}
+          {submittedBy}
         </p>
 
         <div className="flex items-center gap-1.5 pt-1">
@@ -713,13 +781,15 @@ function SponsorRow({
   sponsor,
   children,
   onSetEditUnlocked,
+  settings,
 }: {
   sponsor: SponsorWithPandal;
   children: React.ReactNode;
   onSetEditUnlocked: (id: string, unlocked: boolean) => void;
+  settings: PaymentSettings | null;
 }) {
   const images = sponsor.banner_image_urls?.length ? sponsor.banner_image_urls : sponsor.banner_image_url ? [sponsor.banner_image_url] : [];
-  const price = sponsor.placement === "card" ? 200 : 500;
+  const price = sponsor.placement === "card" ? (settings?.card_ad_price ?? 200) : (settings?.map_ad_price ?? 500);
 
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
@@ -805,10 +875,12 @@ function BannerRow({
   pandal,
   onSetBannerPaid,
   onDeny,
+  settings,
 }: {
   pandal: Pandal;
   onSetBannerPaid: (id: string, paid: boolean) => void;
   onDeny: (id: string) => void;
+  settings: PaymentSettings | null;
 }) {
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
@@ -820,7 +892,7 @@ function BannerRow({
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
-        <p className="text-xs text-[color:var(--muted)]">Association banner · ₹200 one-time</p>
+        <p className="text-xs text-[color:var(--muted)]">Association banner · ₹{settings?.banner_price ?? 200} one-time</p>
         <div className="flex flex-wrap items-center gap-2">
           <span className={pandal.banner_paid ? "status-badge status-approved" : "status-badge status-pending"}>
             {pandal.banner_paid ? "Paid" : "Unpaid"}
