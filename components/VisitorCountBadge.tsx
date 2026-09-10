@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { UsersIcon } from "@/components/icons";
 import { fetchJson } from "@/lib/fetchJson";
 
 const REFRESH_MS = 60_000;
@@ -34,9 +33,14 @@ export default function VisitorCountBadge() {
 
   return (
     // Mobile's header is two rows (brand+location, then search) so it needs
-    // more clearance than desktop's single-row nav-shell.
-    <div className="pointer-events-none absolute right-3 top-32 z-10 flex items-center gap-1 rounded-full bg-white/85 px-2 py-1 text-[0.6875rem] font-medium text-[color:var(--muted)] shadow-sm backdrop-blur-sm lg:top-20">
-      <UsersIcon className="h-3 w-3 flex-shrink-0" />
+    // more clearance than desktop's single-row nav-shell. Dark pill + a
+    // pulsing green dot reads as a "live" counter, distinct from the
+    // light/cream chrome used everywhere else on the map.
+    <div className="pointer-events-none absolute left-3 top-32 z-10 flex items-center gap-1.5 rounded-full bg-[rgba(20,12,4,0.82)] px-2.5 py-1 text-[0.6875rem] font-semibold text-white shadow-sm backdrop-blur-sm lg:top-20">
+      <span className="relative flex h-2 w-2 flex-shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+      </span>
       {count.toLocaleString("en-IN")} visited
     </div>
   );
