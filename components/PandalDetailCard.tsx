@@ -144,7 +144,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
         <MetaRow icon={<PinIcon className="h-4 w-4" />}>
           <span className="flex items-start gap-1.5">
-            <span className={fullScreen ? "" : "line-clamp-2"}>{pandal.address}</span>
+            <span className="line-clamp-2">{pandal.address}</span>
             <button
               type="button"
               onClick={copyAddress}
