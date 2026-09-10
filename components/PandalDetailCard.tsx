@@ -127,19 +127,24 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </div>
   );
 
-  const infoBlock = (
+  // Split so the mobile layout can guarantee location, annadhanam info and
+  // organizer are always visible without scrolling — only the description
+  // ("additional details") goes in the scrollable part.
+  const essentialInfo = (
     <>
-      <div className="flex items-center gap-2">
-        {eventStatus && (
+      {eventStatus && (
+        <div>
           <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
-        )}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
         <span className="badge-verified">
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
         </span>
       </div>
-
-      <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
 
       <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
         <MetaRow icon={<PinIcon className="h-4 w-4" />}>
@@ -161,10 +166,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
         </MetaRow>
         <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
       </div>
+    </>
+  );
 
-      {pandal.description && (
-        <p className={`text-sm text-[color:var(--muted)] ${fullScreen ? "" : "line-clamp-2"}`}>{pandal.description}</p>
-      )}
+  const descriptionBlock = pandal.description && (
+    <p className={`text-sm text-[color:var(--muted)] ${fullScreen ? "" : "line-clamp-2"}`}>{pandal.description}</p>
+  );
+
+  const infoBlock = (
+    <>
+      {essentialInfo}
+      {descriptionBlock}
     </>
   );
 
@@ -203,8 +215,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     return (
       <div className={shellClassName}>
         {header}
-        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-4">{infoBlock}</div>
-        <div className="flex-shrink-0 space-y-2.5 p-4 pt-0">{footerBlock}</div>
+        <div className="flex-shrink-0 space-y-2.5 p-4 pb-0">{essentialInfo}</div>
+        {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
+        <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5">{footerBlock}</div>
       </div>
     );
   }
