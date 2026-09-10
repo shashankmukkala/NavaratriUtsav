@@ -163,6 +163,20 @@ export default function MapPageClient() {
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
   }, []);
 
+  useEffect(() => {
+    // A shared mandapam link or a homepage search already has a more
+    // specific, intentional destination — this coarse IP-based guess
+    // should never clobber either of those.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pandal") || params.get("q")) return;
+    // Purely a nicer starting camera position (e.g. Khammam instead of
+    // always Hyderabad) — never asks for GPS permission, and doesn't touch
+    // `coords`/`locationOn`, so it has no effect on "near you" sorting.
+    fetchJson<{ location: { lat: number; lng: number; city: string | null } | null }>("/api/my-location").then((data) => {
+      if (data?.location) setFlyTarget({ lat: data.location.lat, lng: data.location.lng });
+    });
+  }, []);
+
   // Only ever asked for on an explicit tap (the "Enable Location"/"Near Me"
   // control) — never automatically on load. Two reasons: the full list is
   // shown regardless of location now, so there's nothing to unblock, and
