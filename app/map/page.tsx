@@ -647,19 +647,6 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
           <span className="text-xs font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
         </Link>
       ))}
-      {/* All slots are taken — the empty "Advertise here" placeholder above
-          only shows up when there's room, so without this someone wanting
-          to advertise would have no way to know it's even possible right
-          now (just a fully booked-looking panel). */}
-      {emptySlots === 0 && (
-        <Link
-          href="/sponsor"
-          className="flex flex-shrink-0 items-center justify-center gap-1.5 rounded-xl border border-dashed border-[rgba(234,108,29,0.4)] px-2 py-2 text-center text-[0.7rem] font-semibold text-[color:var(--accent-deep)] transition-colors hover:bg-[rgba(234,108,29,0.05)]"
-        >
-          <MegaphoneIcon className="h-3.5 w-3.5 flex-shrink-0" />
-          All slots full — click to advertise
-        </Link>
-      )}
     </aside>
   );
 }
@@ -696,18 +683,6 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
           <span className="text-[0.625rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
         </Link>
       ))}
-      {/* Same reasoning as AdSlotPanel's desktop version — once every slot
-          is filled, nothing left in this strip hints that advertising is
-          still possible. */}
-      {emptySlots === 0 && (
-        <Link
-          href="/sponsor"
-          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.4)] bg-white/70 px-1.5 text-center"
-        >
-          <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
-          <span className="text-[0.5625rem] font-semibold leading-tight text-[color:var(--foreground)]">All full — advertise</span>
-        </Link>
-      )}
     </div>
   );
 }
