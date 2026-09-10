@@ -20,9 +20,12 @@ interface MapViewProps {
   /** Camera target independent of any pin — the user's own location once
    * fetched, or a searched area once geocoded. */
   flyTo?: { lat: number; lng: number } | null;
+  /** Bumped (any new value) to snap the camera back to the exact default
+   * center/zoom — unlike `flyTo`, which only zooms in if needed, never out. */
+  resetTrigger?: number;
 }
 
-export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo }: MapViewProps) {
+export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; el: HTMLButtonElement }>>(new globalThis.Map());
@@ -31,6 +34,10 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   const [showAttribution, setShowAttribution] = useState(false);
+  // Skips the very first time `resetTrigger` becomes usable (map just
+  // loaded, already sitting at the default view) — only actual changes to
+  // it afterward (the "Map" tab being tapped again) should trigger a fly.
+  const resetMountedRef = useRef(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
@@ -141,6 +148,17 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
     if (!map || !loaded || !flyTo) return;
     map.flyTo({ center: [flyTo.lng, flyTo.lat], zoom: Math.max(map.getZoom(), 12), duration: 1000 });
   }, [loaded, flyTo]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    if (!resetMountedRef.current) {
+      resetMountedRef.current = true;
+      return;
+    }
+    if (resetTrigger === undefined) return;
+    map.flyTo({ center: DEFAULT_MAP_CENTER, zoom: DEFAULT_ZOOM, duration: 800 });
+  }, [loaded, resetTrigger]);
 
   useEffect(() => {
     const existing = markersRef.current;
