@@ -332,7 +332,6 @@ export default function MapPageClient() {
 
   return (
     <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
-      <VisitorCountBadge />
       {/* ===== Desktop / tablet layout ===== */}
       <div className="relative hidden h-full lg:block">
         {/* Full-bleed map, base layer — the nav bar and sidebar float on top
@@ -341,6 +340,7 @@ export default function MapPageClient() {
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
+          <VisitorCountBadge />
         </div>
 
         <div className="pointer-events-none absolute inset-4 flex flex-col gap-4">
@@ -453,6 +453,7 @@ export default function MapPageClient() {
 
         <div className="relative flex-1">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} />
+          <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
               the map stays visible above it for context. */}
