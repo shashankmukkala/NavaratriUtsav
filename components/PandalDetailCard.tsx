@@ -226,19 +226,19 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // Header, essential info (location/annadhanam info/organizer) and the
-  // footer (Get Directions/banner) are all pinned and always fully
-  // visible, never requiring a scroll — only the description text in
-  // between scrolls if it's long. (The earlier clipping bug here wasn't
-  // this layout's math — it was the popup's outer height being pegged to
-  // `dvh`, which some mobile browser chrome reports larger than what's
-  // actually on screen; see the `svh` fix where this card is mounted.)
+  // Header and footer (Get Directions/banner) are fixed-size and always
+  // fully visible. The essential-info block (location/annadhanam
+  // info/organizer) is capped at a fixed height with its own internal
+  // scroll instead of growing to whatever its content needs — an
+  // uncapped block here was what left the footer with nowhere to go but
+  // the very bottom edge of the card, no breathing room beneath it. The
+  // description, when there is one, gets whatever's left over.
   return (
     <div className={shellClassName}>
       {header}
-      <div className="flex-shrink-0 space-y-2.5 p-4 pb-0">{essentialInfo}</div>
+      <div className="max-h-36 flex-shrink-0 space-y-2.5 overflow-y-auto p-4 pb-0">{essentialInfo}</div>
       {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
-      <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5">{footerBlock}</div>
+      <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5 pb-5">{footerBlock}</div>
     </div>
   );
 }
