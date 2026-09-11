@@ -97,17 +97,16 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // Desktop: this element's own ancestor chain is all real `height`
-  // properties (not just max-height) up to the root, so max-h-full here
-  // resolves to a genuine pixel value and this can safely be its own
-  // scroll container. Mobile: the popup wrapper in app/map/page.tsx
-  // already owns the max-height cap AND the scrolling (a percentage
-  // max-height nested another level inside a max-height-only ancestor
-  // doesn't resolve to anything — see that file for why), so this is
-  // just a plain block here, not a second, non-functional scroll box.
+  // Mobile: no height constraint of its own — it's simply as tall as its
+  // content (header + essential info + description + footer stacked in
+  // normal flow), letting the popup wrapper in app/map/page.tsx be the
+  // only thing that ever caps/scrolls it (as a rare-case safety net, not
+  // something normal content ever reaches). Desktop: this sits in a flex
+  // row with a real, definite height (the ad panel), so it can safely be
+  // its own scroll container if its content ever exceeds that.
   const shellClassName = fullScreen
-    ? "pointer-events-auto w-full bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto max-h-full w-full max-w-sm overflow-y-auto overflow-x-hidden";
+    ? "pointer-events-auto flex w-full flex-col bg-[color:var(--cream-50)]"
+    : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-y-auto overflow-x-hidden";
 
   const header = (
     // aspect-video matches the 16:9 crop every photo is uploaded at, so the
@@ -183,20 +182,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
+  // line-clamp instead of a scrollable box — simplest way to guarantee
+  // this never pushes the footer down or needs its own scroll handling.
   const descriptionBlock = pandal.description && (
-    <p className="mt-2.5 border-t border-[rgba(43,22,8,0.08)] pt-2.5 text-[13px] text-[color:var(--muted)]">
+    <p className="line-clamp-3 border-t border-[rgba(43,22,8,0.08)] pt-2.5 text-[13px] text-[color:var(--muted)]">
       {pandal.description}
     </p>
   );
 
   const footerBlock = (
     <>
-      <a
-        href={directionsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`btn-primary w-full justify-center ${fullScreen ? "py-2" : "py-2.5"}`}
-      >
+      <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full justify-center py-2.5">
         <DirectionsIcon className="h-4 w-4" />
         Get Directions
       </a>
@@ -204,19 +200,13 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       {/* Always reserves this space (rather than collapsing to nothing
           when there's no ad to show) so the card doesn't look broken —
           paying for a banner slot should mean it's always visibly there,
-          whether filled or waiting for one. */}
-      {/* aspect-video (not a fixed height), scaled to 3/4 width, so this
-          matches the 16:9 ratio a mandapam's own banner is uploaded at —
-          same shape on mobile and desktop, no cropping (object-contain
-          above handles the generic 1:1 sponsor ads that also rotate
-          through here), and reads smaller than the header photo. Sits in
-          the scrollable region below essential info, so it's never
-          clipped even if it doesn't fit above the fold. The placeholder
-          states below match it, so the slot doesn't change size once a
-          banner is actually added. */}
+          whether filled or waiting for one. A plain fixed height, not an
+          aspect ratio — simplest way to guarantee it always fits
+          completely, at the cost of sometimes cropping into an upload
+          that isn't exactly this shape. */}
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className={`mx-auto w-3/4 aspect-video overflow-hidden rounded-lg`}>
+          <div className="h-28 overflow-hidden rounded-lg">
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -226,7 +216,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]`}
+            className="flex h-28 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]"
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -235,7 +225,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center`}>
+          <div className="flex h-28 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center">
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
@@ -245,31 +235,18 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // Header and essential info (location/annadhanam info/organizer) are
-  // pinned, natural-height, and always fully visible without scrolling —
-  // that part is non-negotiable and isn't sized against a guessed
-  // percentage of the screen, so it can't be squeezed by one.
-  //
-  // The header + essential info stick to the top of this scroll
-  // container (position: sticky, not flex-shrink-0 in a separate scroll
-  // region) — they scroll away with everything else when the card's
-  // short content doesn't need to scroll at all, and stay pinned in
-  // place the moment it does. This needs no knowledge of how tall
-  // anything actually is: if the card's natural content fits under the
-  // max-height cap, nothing scrolls and this looks identical to a plain
-  // static card; if it doesn't fit, this box scrolls and the sticky
-  // header/info stay put while Get Directions/the banner/the
-  // description scroll underneath — always reachable, never clipped.
+  // Everything is fixed-size and pinned — nothing here scrolls or
+  // depends on the screen's height. Header, essential info, description
+  // and the footer (Get Directions/banner) all just stack in normal
+  // document flow; the whole card is exactly as tall as they add up to.
   return (
     <div className={shellClassName}>
-      <div className="sticky top-0 z-10 bg-[color:var(--cream-50)]">
-        {header}
-        <div className="space-y-2.5 p-4">{essentialInfo}</div>
-      </div>
-      <div className="space-y-2.5 p-4 pt-0">
-        {footerBlock}
+      {header}
+      <div className="flex-shrink-0 space-y-2.5 p-4">
+        {essentialInfo}
         {descriptionBlock}
       </div>
+      <div className="flex-shrink-0 space-y-2.5 p-4 pt-0">{footerBlock}</div>
     </div>
   );
 }
