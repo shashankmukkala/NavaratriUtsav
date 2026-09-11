@@ -97,15 +97,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // Desktop: shares the same flex row as the ad panel in app/map/page.tsx
-  // (rather than floating as a separate absolutely-positioned overlay), so
-  // h-full makes it exactly as tall as that panel by construction. Mobile
-  // (fullScreen): a fixed-size popup (see app/map/page.tsx) — the image and
-  // the Get Directions/banner footer stay pinned in place, and only the
-  // text block in between scrolls, so a long description can't push the
-  // banner out of reach or get silently cut off.
+  // Both shrink to fit their actual content, capped at a max height (the
+  // ad panel's height on desktop, the popup wrapper's on mobile — see
+  // app/map/page.tsx) rather than always stretching to fill it — a fixed
+  // height regardless of content left a wall of empty space below the
+  // footer whenever a card had a short essential-info block and no
+  // description. The image/Get Directions/banner stay pinned in place
+  // either way, with only the text block in between scrolling — so a
+  // long description still can't push the footer out of reach when the
+  // content-driven height does hit the cap.
   const shellClassName = fullScreen
-    ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
+    ? "pointer-events-auto flex max-h-full w-full flex-col bg-[color:var(--cream-50)]"
     : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-hidden";
 
   const header = (

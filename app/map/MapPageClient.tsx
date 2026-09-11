@@ -570,10 +570,12 @@ export default function MapPageClient() {
 
         {/* Centered popup card, mobile only — floats over the map (which
             stays visible behind the dimmed backdrop) instead of covering
-            the whole screen or anchoring to an edge. Fixed height (not
-            max-height): the card's own header/footer are pinned and only
-            its middle text section scrolls, which needs a definite height
-            to size against — a max-height-only ancestor doesn't give one. */}
+            the whole screen or anchoring to an edge. max-height (not a
+            fixed height): the card sizes to its own content — a fixed
+            height left a wall of empty space below the footer whenever a
+            listing had no description. The card's internal text block
+            and header cap themselves independently, so they don't need a
+            definite height from this ancestor to scroll correctly. */}
         {selected && (
           <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
             {/* svh (smallest viewport height), not dvh — dvh tracks the
@@ -582,7 +584,7 @@ export default function MapPageClient() {
                 visible, which silently clipped the bottom of the card.
                 svh is pinned to the smallest possible viewport, so this
                 can never be taller than what's really on screen. */}
-            <div className="h-[90svh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
+            <div className="max-h-[90svh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
               <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
             </div>
           </div>
