@@ -274,12 +274,12 @@ function SponsorPageInner() {
                 max={3}
                 hint={
                   isPandalTarget
-                    ? "Square (1:1) works best. Upload up to 3 and they'll rotate like a slideshow."
+                    ? "A wide rectangle works best — that's the shape of the banner slot inside mandapam cards. Upload up to 3 and they'll rotate like a slideshow."
                     : "Square (1:1) works best — that's the shape of the ad slot on the map. Upload up to 3 and they'll rotate like a slideshow."
                 }
                 value={bannerUrls}
                 onChange={setBannerUrls}
-                aspect={1}
+                aspect={isPandalTarget ? 2.2 : 1}
               />
 
               <div>
