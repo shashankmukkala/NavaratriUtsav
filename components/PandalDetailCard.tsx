@@ -205,7 +205,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
           <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-40" : "h-28"}`}>
-            <AdBannerSlideshow images={bannerImages} alt="" />
+            <AdBannerSlideshow images={bannerImages} alt="" fit="contain" />
           </div>
         ) : isOwner ? (
           // Only the person who actually submitted this mandapam ever sees

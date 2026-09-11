@@ -9,7 +9,21 @@ const SLIDE_INTERVAL_MS = 4000;
  * through several different sponsors sharing one slot (e.g. the generic
  * "card"-placement pool shown inside a mandapam's detail card), so no ad
  * placement is permanently fixed to one advertiser. */
-export default function AdBannerSlideshow({ images, alt }: { images: string[]; alt: string }) {
+export default function AdBannerSlideshow({
+  images,
+  alt,
+  fit = "cover",
+}: {
+  images: string[];
+  alt: string;
+  /** "contain" only where the box is guaranteed to match the upload's own
+   * aspect ratio (the mandapam-card banner slot, cropped to that exact
+   * shape at upload) — showing the complete image there is free, since it
+   * already fills the box either way. Everywhere else (the map ad slots)
+   * the box's actual shape isn't guaranteed to match a square upload, so
+   * "cover" (the default) fills it completely instead of leaving gaps. */
+  fit?: "cover" | "contain";
+}) {
   const [index, setIndex] = useState(0);
   const indexRef = useRef(0);
 
@@ -30,11 +44,7 @@ export default function AdBannerSlideshow({ images, alt }: { images: string[]; a
           key={src}
           src={src}
           alt={alt}
-          // object-contain — uploads are already cropped to the slot's
-          // exact ratio at upload time, so this shows the complete image
-          // rather than cropping into it for a mismatch that shouldn't
-          // normally happen anyway.
-          className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
+          className={`absolute inset-0 h-full w-full transition-opacity duration-700 ${fit === "contain" ? "object-contain" : "object-cover"}`}
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}
