@@ -224,7 +224,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           actually added. */}
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className={`aspect-video overflow-hidden rounded-lg ${fullScreen ? "max-h-[22svh]" : ""}`}>
+          <div className={`mx-auto w-3/4 aspect-video overflow-hidden rounded-lg ${fullScreen ? "max-h-[22svh]" : ""}`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -234,7 +234,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className={`flex aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "max-h-[22svh]" : ""}`}
+            className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "max-h-[22svh]" : ""}`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -243,7 +243,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div className={`flex aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "max-h-[22svh]" : ""}`}>
+          <div className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "max-h-[22svh]" : ""}`}>
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
