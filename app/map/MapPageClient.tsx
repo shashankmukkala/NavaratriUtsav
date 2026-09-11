@@ -8,7 +8,7 @@ import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
-import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { BowlIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
@@ -1057,23 +1057,27 @@ function PandalList({
               <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
-                <p className="truncate text-xs text-[color:var(--muted)]">
+                {/* Scrolls horizontally instead of being cut off with an
+                    ellipsis, so the full address is still reachable. */}
+                <p className="overflow-x-auto whitespace-nowrap text-xs text-[color:var(--muted)] [-webkit-overflow-scrolling:touch]">
                   {km !== null ? `${km.toFixed(1)} km · ` : ""}
                   {pandal.address}
                 </p>
                 {pandal.event_date && (
-                  <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-[color:var(--accent-deep)]">
-                    <CalendarIcon className="h-3 w-3 flex-shrink-0" />
-                    {formatEventDate(pandal.event_date)}
-                    {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-[color:var(--accent-deep)]">
+                    <span className="flex min-w-0 items-center gap-1 truncate">
+                      <BowlIcon className="h-3 w-3 flex-shrink-0" />
+                      {formatEventDate(pandal.event_date)}
+                      {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
+                    </span>
+                    {eventStatus && (
+                      <span className={`flex-shrink-0 ${eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}`}>
+                        {eventStatusLabel(eventStatus)}
+                      </span>
+                    )}
                   </p>
                 )}
                 <div className="mt-1 flex items-center gap-2">
-                  {eventStatus && (
-                    <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>
-                      {eventStatusLabel(eventStatus)}
-                    </span>
-                  )}
                   <span className="badge-verified">
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified
