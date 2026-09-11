@@ -102,9 +102,12 @@ export default function HomePage() {
                 </Link>
                 <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
                   <PlusIcon className="h-4 w-4" />
-                  Add Mandapam
+                  Add Your Mandapam
                 </Link>
               </div>
+              <p className="mt-3 text-sm text-[color:var(--muted-soft)]">
+                Know a mandapam or annadhanam near you? Add its details and make this festival more special for everyone.
+              </p>
 
               <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4">
                 <Stat icon={<UsersIcon className="h-5 w-5" />} label="Let's celebrate together" />

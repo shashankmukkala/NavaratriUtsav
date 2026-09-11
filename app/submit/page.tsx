@@ -310,7 +310,7 @@ export default function SubmitPage() {
         {!done && (
           <div className="pt-8 lg:pt-16">
             <div className="mb-8 max-w-2xl">
-              <p className="eyebrow">Add Mandapam</p>
+              <p className="eyebrow">Add Your Mandapam</p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
                 Let the people know. Let the seva grow.
               </h1>
