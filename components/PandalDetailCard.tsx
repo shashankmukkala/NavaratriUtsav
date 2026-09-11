@@ -106,12 +106,13 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   // banner out of reach or get silently cut off.
   const shellClassName = fullScreen
     ? "pointer-events-auto flex h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex h-full w-full max-w-md flex-col overflow-hidden";
+    : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-hidden";
 
   const header = (
-    <div className={`relative flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "h-56" : "h-48"}`}>
-      {/* object-contain so the whole photo shows — object-cover was
-          cropping into it to fill the box instead of just fitting it. */}
+    // aspect-video matches the 16:9 crop every photo is uploaded at, so the
+    // frame fits the photo exactly — a mismatched fixed height was what
+    // left gray letterboxing bars around it.
+    <div className="relative aspect-video w-full flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
@@ -149,14 +150,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
+        <h2 className="text-base font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
         <span className="badge-verified">
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
         </span>
       </div>
 
-      <div className="space-y-1.5 text-sm text-[color:var(--muted)]">
+      <div className="space-y-1.5 text-[13px] text-[color:var(--muted)]">
         <MetaRow icon={<PinIcon className="h-4 w-4" />}>
           <span className="flex items-start gap-1.5">
             <span className="line-clamp-2">{pandal.address}</span>
@@ -180,14 +181,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   );
 
   const descriptionBlock = pandal.description && (
-    <p className={`text-sm text-[color:var(--muted)] ${fullScreen ? "" : "line-clamp-2"}`}>{pandal.description}</p>
-  );
-
-  const infoBlock = (
-    <>
-      {essentialInfo}
-      {descriptionBlock}
-    </>
+    <p className="text-[13px] text-[color:var(--muted)]">{pandal.description}</p>
   );
 
   const footerBlock = (
@@ -201,9 +195,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           when there's no ad to show) so the card doesn't look broken —
           paying for a banner slot should mean it's always visibly
           there, whether filled or waiting for one. */}
-      <div className={`flex min-h-0 flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5 ${fullScreen ? "" : "flex-1"}`}>
+      <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-36" : "min-h-24 flex-1"}`}>
+          <div className="h-32 overflow-hidden rounded-lg">
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -213,9 +207,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
-              fullScreen ? "h-36" : "min-h-24 flex-1"
-            }`}
+            className="flex h-32 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]"
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -224,11 +216,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div
-            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${
-              fullScreen ? "h-36" : "min-h-24 flex-1"
-            }`}
-          >
+          <div className="flex h-32 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center">
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
@@ -238,26 +226,16 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  if (fullScreen) {
-    return (
-      <div className={shellClassName}>
-        {header}
-        <div className="flex-shrink-0 space-y-2.5 p-4 pb-0">{essentialInfo}</div>
-        {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
-        <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5">{footerBlock}</div>
-      </div>
-    );
-  }
-
+  // Same shape for both: fixed header, fixed essential-info block, fixed
+  // footer (Get Directions + banner) — only the description in between
+  // scrolls, so the card never grows past its container and Get
+  // Directions/the banner are never pushed off the bottom or cut.
   return (
     <div className={shellClassName}>
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {header}
-        <div className="flex min-h-0 flex-1 flex-col space-y-2.5 p-4">
-          {infoBlock}
-          {footerBlock}
-        </div>
-      </div>
+      {header}
+      <div className="flex-shrink-0 space-y-2.5 p-4 pb-0">{essentialInfo}</div>
+      {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
+      <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5">{footerBlock}</div>
     </div>
   );
 }
