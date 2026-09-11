@@ -431,7 +431,7 @@ export default function MapPageClient() {
             </Link>
             <Link href="/submit" className="btn-primary flex-shrink-0">
               <PlusIcon className="h-4 w-4" />
-              Add Mandapam
+              Add Your Mandapam
             </Link>
             <ProfileNavLink />
           </header>
