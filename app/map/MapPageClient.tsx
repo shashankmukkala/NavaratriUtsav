@@ -576,7 +576,13 @@ export default function MapPageClient() {
             to size against — a max-height-only ancestor doesn't give one. */}
         {selected && (
           <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
-            <div className="h-[85dvh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
+            {/* svh (smallest viewport height), not dvh — dvh tracks the
+                browser chrome live and some in-app browsers (Instagram's
+                included) report a taller value than what's actually
+                visible, which silently clipped the bottom of the card.
+                svh is pinned to the smallest possible viewport, so this
+                can never be taller than what's really on screen. */}
+            <div className="h-[90svh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
               <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
             </div>
           </div>
