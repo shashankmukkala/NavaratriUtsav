@@ -111,11 +111,12 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const header = (
     // aspect-video matches the 16:9 crop every photo is uploaded at, so the
     // frame fits the photo exactly — a mismatched fixed height was what
-    // left gray letterboxing bars around it. max-h caps how much vertical
-    // room it can claim on a short screen, so essential info/Get
-    // Directions/the banner below always have enough space left to render
-    // in full instead of getting pushed past the bottom edge.
-    <div className="relative aspect-video max-h-[26svh] w-full flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
+    // left gray letterboxing bars around it. On mobile only, max-h also
+    // caps how much vertical room it can claim on a short screen, so
+    // essential info/Get Directions/the banner below always have enough
+    // space left to render in full — desktop has no such height pressure
+    // (and capping it there just reintroduced the letterboxing instead).
+    <div className={`relative aspect-video w-full flex-shrink-0 bg-[rgba(43,22,8,0.06)] ${fullScreen ? "max-h-[26svh]" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
@@ -197,10 +198,11 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       {/* Always reserves this space (rather than collapsing to nothing
           when there's no ad to show) so the card doesn't look broken —
           paying for a banner slot should mean it's always visibly
-          there, whether filled or waiting for one. */}
+          there, whether filled or waiting for one. Slightly shorter on
+          mobile only, to leave enough room on a short screen. */}
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className="h-24 overflow-hidden rounded-lg">
+          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-24" : "h-32"}`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -210,7 +212,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className="flex h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]"
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${
+              fullScreen ? "h-24" : "h-32"
+            }`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -219,7 +223,11 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div className="flex h-24 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center">
+          <div
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${
+              fullScreen ? "h-24" : "h-32"
+            }`}
+          >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
@@ -240,7 +248,15 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     <div className={shellClassName}>
       {header}
       <div className="max-h-36 flex-shrink-0 space-y-2.5 overflow-y-auto p-4 pb-0">{essentialInfo}</div>
-      {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
+      {descriptionBlock && (
+        // The global scrollbar-hiding rule means an overflowing box here
+        // otherwise looks like the text is just abruptly cut off instead
+        // of scrollable — this fade hints that there's more below.
+        <div className="relative min-h-0 flex-1">
+          <div className="h-full overflow-y-auto px-4 pt-2.5 pb-3">{descriptionBlock}</div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-[color:var(--cream-50)] to-transparent" />
+        </div>
+      )}
       <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5 pb-5">{footerBlock}</div>
     </div>
   );
