@@ -624,7 +624,7 @@ function AdminEditPandalModal({
           <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association name</label>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="field-input" />
           </div>
 

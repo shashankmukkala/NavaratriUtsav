@@ -400,6 +400,7 @@ function EditPandalModal({
   onSaved: () => void;
 }) {
   const [name, setName] = useState(pandal.name);
+  const [organizerName, setOrganizerName] = useState(pandal.organizer_name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
   const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
@@ -423,7 +424,7 @@ function EditPandalModal({
       `/api/me/pandals/${pandal.id}`,
       {
         name,
-        organizer_name: name,
+        organizer_name: organizerName,
         contact_phone: contactPhone,
         event_date: eventDate || null,
         timing_text: timingText || null,
@@ -449,11 +450,16 @@ function EditPandalModal({
         </p>
 
         <div className="mt-4 space-y-4">
-          <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+          <ImageUploadField label="Ganesh Maharaj picture" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="field-input" />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="field-input" />
+            <input value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} className="field-input" />
           </div>
 
           <div>
