@@ -30,7 +30,11 @@ export default function AdBannerSlideshow({ images, alt }: { images: string[]; a
           key={src}
           src={src}
           alt={alt}
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
+          // object-contain — uploads are already cropped to the slot's
+          // exact ratio at upload time, so this shows the complete image
+          // rather than cropping into it for a mismatch that shouldn't
+          // normally happen anyway.
+          className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}
