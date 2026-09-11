@@ -510,7 +510,7 @@ export default function MapPageClient() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} showZoomControl={false} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
