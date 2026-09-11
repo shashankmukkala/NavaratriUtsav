@@ -226,16 +226,23 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // Same shape for both: fixed header, fixed essential-info block, fixed
-  // footer (Get Directions + banner) — only the description in between
-  // scrolls, so the card never grows past its container and Get
-  // Directions/the banner are never pushed off the bottom or cut.
+  // Header and essential info (location/annadhanam info/organizer) are
+  // pinned and always visible without scrolling — that part's non-
+  // negotiable. Description + footer (Get Directions/banner) share one
+  // scrollable region below that instead of the footer being pinned on
+  // its own: on a short screen with no description to absorb the extra
+  // height, a pinned footer had nothing to shrink and silently got
+  // clipped by the card's own overflow-hidden edge. Scrollable means it's
+  // always reachable — and with room to spare, which is the common case,
+  // it just renders in full with no visible scrollbar anyway.
   return (
     <div className={shellClassName}>
       {header}
       <div className="flex-shrink-0 space-y-2.5 p-4 pb-0">{essentialInfo}</div>
-      {descriptionBlock && <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2.5">{descriptionBlock}</div>}
-      <div className="flex-shrink-0 space-y-2.5 p-4 pt-2.5">{footerBlock}</div>
+      <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-4 pb-4 pt-2.5">
+        {descriptionBlock}
+        {footerBlock}
+      </div>
     </div>
   );
 }
