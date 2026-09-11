@@ -570,20 +570,11 @@ export default function MapPageClient() {
 
         {/* Centered popup card, mobile only — floats over the map (which
             stays visible behind the dimmed backdrop) instead of covering
-            the whole screen or anchoring to an edge. max-height (not a
-            fixed height): the card sizes to its own content — a fixed
-            height left a wall of empty space below the footer whenever a
-            listing had no description.
-            This element (not a nested one inside PandalDetailCard) is
-            both the height cap AND the scroll container — max-h-[90svh]
-            is a real, absolute value, so overflow-y-auto here always has
-            a definite box to measure overflow against. A percentage
-            max-height nested one level deeper (e.g. max-h-full) would be
-            measured against THIS element's own used height, which — since
-            it only has a max-height, not a height — CSS treats as
-            indefinite, silently making that nested percentage cap do
-            nothing at all (content then grows unbounded and either gets
-            clipped or never triggers a scrollbar to reach it). */}
+            the whole screen or anchoring to an edge. The card itself is
+            plain fixed-size content (see PandalDetailCard) that normally
+            fits comfortably well under this cap; max-h-[90svh] +
+            overflow-y-auto here is just a last-resort safety net for the
+            rare case it doesn't, not something relied on day to day. */}
         {selected && (
           <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
             {/* svh (smallest viewport height), not dvh — dvh tracks the

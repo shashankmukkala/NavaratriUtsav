@@ -30,11 +30,7 @@ export default function AdBannerSlideshow({ images, alt }: { images: string[]; a
           key={src}
           src={src}
           alt={alt}
-          // object-contain, not object-cover — the slot mixes 16:9 (a
-          // mandapam's own banner) and 1:1 (generic sponsor ads) uploads,
-          // and cover would crop into whichever one doesn't match this
-          // box's shape instead of showing the complete image.
-          className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
           style={{ opacity: i === index ? 1 : 0 }}
         />
       ))}
