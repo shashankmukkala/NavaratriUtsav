@@ -573,9 +573,17 @@ export default function MapPageClient() {
             the whole screen or anchoring to an edge. max-height (not a
             fixed height): the card sizes to its own content — a fixed
             height left a wall of empty space below the footer whenever a
-            listing had no description. The card's internal text block
-            and header cap themselves independently, so they don't need a
-            definite height from this ancestor to scroll correctly. */}
+            listing had no description.
+            This element (not a nested one inside PandalDetailCard) is
+            both the height cap AND the scroll container — max-h-[90svh]
+            is a real, absolute value, so overflow-y-auto here always has
+            a definite box to measure overflow against. A percentage
+            max-height nested one level deeper (e.g. max-h-full) would be
+            measured against THIS element's own used height, which — since
+            it only has a max-height, not a height — CSS treats as
+            indefinite, silently making that nested percentage cap do
+            nothing at all (content then grows unbounded and either gets
+            clipped or never triggers a scrollbar to reach it). */}
         {selected && (
           <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4">
             {/* svh (smallest viewport height), not dvh — dvh tracks the
@@ -584,7 +592,7 @@ export default function MapPageClient() {
                 visible, which silently clipped the bottom of the card.
                 svh is pinned to the smallest possible viewport, so this
                 can never be taller than what's really on screen. */}
-            <div className="max-h-[90svh] w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl">
+            <div className="max-h-[90svh] w-full max-w-sm overflow-y-auto rounded-3xl shadow-2xl">
               <PandalDetailCard pandal={selected} onClose={() => setSelected(null)} fullScreen />
             </div>
           </div>

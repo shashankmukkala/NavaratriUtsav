@@ -97,18 +97,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // Both shrink to fit their actual content, capped at a max height (the
-  // ad panel's height on desktop, the popup wrapper's on mobile — see
-  // app/map/page.tsx) rather than always stretching to fill it — a fixed
-  // height regardless of content left a wall of empty space below the
-  // footer whenever a card had a short essential-info block and no
-  // description. The image/Get Directions/banner stay pinned in place
-  // either way, with only the text block in between scrolling — so a
-  // long description still can't push the footer out of reach when the
-  // content-driven height does hit the cap.
+  // Desktop: this element's own ancestor chain is all real `height`
+  // properties (not just max-height) up to the root, so max-h-full here
+  // resolves to a genuine pixel value and this can safely be its own
+  // scroll container. Mobile: the popup wrapper in app/map/page.tsx
+  // already owns the max-height cap AND the scrolling (a percentage
+  // max-height nested another level inside a max-height-only ancestor
+  // doesn't resolve to anything — see that file for why), so this is
+  // just a plain block here, not a second, non-functional scroll box.
   const shellClassName = fullScreen
-    ? "pointer-events-auto flex max-h-full w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-hidden";
+    ? "pointer-events-auto w-full bg-[color:var(--cream-50)]"
+    : "card-elevated pointer-events-auto max-h-full w-full max-w-sm overflow-y-auto overflow-x-hidden";
 
   const header = (
     // aspect-video matches the 16:9 crop every photo is uploaded at, so the
@@ -143,13 +142,8 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </div>
   );
 
-  // Essential info (location/annadhanam info/organizer) and the
-  // description share one small scrollable text block below — by
-  // default only essential info shows; the description sits below the
-  // fold and only appears once that block is scrolled. Keeping this one
-  // compact area (instead of reserving separate space for the
-  // description) is what leaves the extra room for Get Directions/the
-  // banner below.
+  // Location/annadhanam info/organizer — always fully visible, never
+  // part of anything that scrolls.
   const essentialInfo = (
     <>
       {eventStatus && (
@@ -211,20 +205,18 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           when there's no ad to show) so the card doesn't look broken —
           paying for a banner slot should mean it's always visibly there,
           whether filled or waiting for one. */}
-      {/* aspect-video (not a fixed height) so this matches the 16:9 ratio
-          a mandapam's own banner is uploaded at — same shape on mobile and
-          desktop, no cropping (object-contain above handles the generic
-          1:1 sponsor ads that also rotate through here). On mobile only,
-          a max-height caps it on short screens so it can't push the
-          footer past the bottom edge — the trade-off there is mild
-          pillarboxing instead of clipping, but it only engages below
-          roughly 700-750px of viewport height; taller phones render the
-          exact upload ratio untouched. The placeholder states below
-          match it too, so the slot doesn't change size once a banner is
-          actually added. */}
+      {/* aspect-video (not a fixed height), scaled to 3/4 width, so this
+          matches the 16:9 ratio a mandapam's own banner is uploaded at —
+          same shape on mobile and desktop, no cropping (object-contain
+          above handles the generic 1:1 sponsor ads that also rotate
+          through here), and reads smaller than the header photo. Sits in
+          the scrollable region below essential info, so it's never
+          clipped even if it doesn't fit above the fold. The placeholder
+          states below match it, so the slot doesn't change size once a
+          banner is actually added. */}
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className={`mx-auto w-3/4 aspect-video overflow-hidden rounded-lg ${fullScreen ? "max-h-[22svh]" : ""}`}>
+          <div className={`mx-auto w-3/4 aspect-video overflow-hidden rounded-lg`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -234,7 +226,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "max-h-[22svh]" : ""}`}
+            className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -243,7 +235,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "max-h-[22svh]" : ""}`}>
+          <div className={`mx-auto flex w-3/4 aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center`}>
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
@@ -253,31 +245,31 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // Header and footer (Get Directions/banner) are fixed-size and always
-  // fully visible. Essential info and the description share one compact,
-  // FIXED-height scrollable block (flex-shrink-0, not flex-1 — it must
-  // not grow to fill leftover space): only essential info is visible by
-  // default, and the description sits just below the fold, revealed by
-  // scrolling. Keeping this block small (rather than reserving however
-  // much space the description happens to need) is what leaves the
-  // extra room below for Get Directions to sit higher and the banner to
-  // be bigger.
+  // Header and essential info (location/annadhanam info/organizer) are
+  // pinned, natural-height, and always fully visible without scrolling —
+  // that part is non-negotiable and isn't sized against a guessed
+  // percentage of the screen, so it can't be squeezed by one.
+  //
+  // The header + essential info stick to the top of this scroll
+  // container (position: sticky, not flex-shrink-0 in a separate scroll
+  // region) — they scroll away with everything else when the card's
+  // short content doesn't need to scroll at all, and stay pinned in
+  // place the moment it does. This needs no knowledge of how tall
+  // anything actually is: if the card's natural content fits under the
+  // max-height cap, nothing scrolls and this looks identical to a plain
+  // static card; if it doesn't fit, this box scrolls and the sticky
+  // header/info stay put while Get Directions/the banner/the
+  // description scroll underneath — always reachable, never clipped.
   return (
     <div className={shellClassName}>
-      {header}
-      <div className="relative flex-shrink-0">
-        <div className={`overflow-y-auto p-4 ${fullScreen ? "max-h-[15svh]" : "max-h-36"}`}>
-          {essentialInfo}
-          {descriptionBlock}
-        </div>
-        {descriptionBlock && (
-          // The global scrollbar-hiding rule means an overflowing box
-          // here otherwise looks like the text just ends instead of
-          // being scrollable — this fade hints that there's more below.
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-[color:var(--cream-50)] to-transparent" />
-        )}
+      <div className="sticky top-0 z-10 bg-[color:var(--cream-50)]">
+        {header}
+        <div className="space-y-2.5 p-4">{essentialInfo}</div>
       </div>
-      <div className={`flex-shrink-0 space-y-2.5 p-4 pt-2.5 ${fullScreen ? "pb-3" : "pb-5"}`}>{footerBlock}</div>
+      <div className="space-y-2.5 p-4 pt-0">
+        {footerBlock}
+        {descriptionBlock}
+      </div>
     </div>
   );
 }
