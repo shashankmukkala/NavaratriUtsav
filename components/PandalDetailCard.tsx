@@ -68,19 +68,21 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   useEffect(() => {
     let cancelled = false;
     // "card"-placement ads aren't targeted at any one mandapam — they're a
-    // shared pool shown generically inside detail cards. Not fixed to any
-    // one sponsor or slot: every sponsor with an available banner rotates
-    // through this same spot, in a fresh shuffled order each time a card
-    // opens, rather than one sponsor always being shown (or always first).
+    // shared pool shown generically inside detail cards. With few
+    // mandapams having a free (unbannered) slot and potentially many more
+    // sponsors than that, cycling every sponsor through every slot meant
+    // sponsors later in rotation order could go largely unseen — most
+    // people don't keep a card open long enough to reach ad #8 of 10. So
+    // instead, each card independently picks just ONE random sponsor (an
+    // independent dice roll every time a card opens, not a shared
+    // sequence), and shows that sponsor's own images (which can still be
+    // a little slideshow if they uploaded more than one) — exposure
+    // evens out across sponsors in aggregate over many people opening
+    // many cards, rather than depending on how long any one viewer stays.
     fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors?placement=card").then((data) => {
-      if (cancelled || !data) return;
-      const images = data.sponsors
-        .map((s) => s.banner_image_urls?.[0] ?? s.banner_image_url)
-        .filter((url): url is string => Boolean(url));
-      for (let i = images.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [images[i], images[j]] = [images[j], images[i]];
-      }
+      if (cancelled || !data || data.sponsors.length === 0) return;
+      const pick = data.sponsors[Math.floor(Math.random() * data.sponsors.length)];
+      const images = pick.banner_image_urls?.length ? pick.banner_image_urls : pick.banner_image_url ? [pick.banner_image_url] : [];
       setCardAdImages(images);
     });
     return () => {
