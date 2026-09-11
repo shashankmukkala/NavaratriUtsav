@@ -16,6 +16,7 @@ import {
   ClockIcon,
   MegaphoneIcon,
   PinIcon,
+  UserIcon,
   VerifiedIcon,
 } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
@@ -24,6 +25,7 @@ import type { PaymentSettings } from "@/lib/types";
 const DRAFT_KEY = "bappaseva_submit_draft";
 
 interface SubmitDraft {
+  name: string;
   organizerName: string;
   contactPhone: string;
   eventDate: string;
@@ -55,6 +57,7 @@ function readSubmitDraft(): SubmitDraft | null {
 
 export default function SubmitPage() {
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
+  const [name, setName] = useState("");
   const [organizerName, setOrganizerName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [eventDate, setEventDate] = useState("");
@@ -88,6 +91,7 @@ export default function SubmitPage() {
     // sign-in redirect — exactly the case this lint rule allows an effect
     // to opt out of.
     /* eslint-disable react-hooks/set-state-in-effect */
+    setName(draft.name);
     setOrganizerName(draft.organizerName);
     setContactPhone(draft.contactPhone);
     setEventDate(draft.eventDate);
@@ -126,12 +130,16 @@ export default function SubmitPage() {
     e.preventDefault();
     setError(null);
 
+    if (!name.trim()) {
+      setError("Please fill in the mandapam's name.");
+      return;
+    }
     if (!location) {
       setError("Please set the mandapam's location on the map.");
       return;
     }
     if (!imageUrl) {
-      setError("Please upload a photo of the mandapam.");
+      setError("Please upload a picture of Ganesh Maharaj.");
       return;
     }
     if (!address.trim()) {
@@ -141,6 +149,7 @@ export default function SubmitPage() {
 
     if (!session?.user) {
       const draft: SubmitDraft = {
+        name,
         organizerName,
         contactPhone,
         eventDate,
@@ -164,7 +173,7 @@ export default function SubmitPage() {
 
     setSubmitting(true);
     const result = await sendJson("/api/pandals", {
-      name: organizerName,
+      name,
       organizer_name: organizerName,
       contact_phone: contactPhone,
       address,
@@ -332,7 +341,17 @@ export default function SubmitPage() {
 
           <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12">
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
-              <ImageUploadField label="Photo of the mandapam" folder="pandals" required value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+              <ImageUploadField label="Ganesh Maharaj picture" folder="pandals" required value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+
+              <Field label="Name" required>
+                <input
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Secunderabad Ka Raja"
+                  className="field-input"
+                />
+              </Field>
 
               <Field label="Association name" required>
                 <input
@@ -426,7 +445,8 @@ export default function SubmitPage() {
               </p>
               <LivePreviewCard
                 imageUrl={imageUrl}
-                name={organizerName}
+                name={name}
+                organizerName={organizerName}
                 address={address}
                 dateLabel={previewDateLabel}
                 timingText={timingText}
@@ -464,6 +484,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 function LivePreviewCard({
   imageUrl,
   name,
+  organizerName,
   address,
   dateLabel,
   timingText,
@@ -475,6 +496,7 @@ function LivePreviewCard({
 }: {
   imageUrl: string | null;
   name: string;
+  organizerName: string;
   address: string;
   dateLabel: string;
   timingText: string;
@@ -512,6 +534,13 @@ function LivePreviewCard({
           </p>
         ) : (
           <div className="h-3 w-full animate-pulse rounded bg-[rgba(43,22,8,0.07)]" />
+        )}
+
+        {organizerName && (
+          <p className="flex items-center gap-1.5 text-sm text-[color:var(--muted)]">
+            <UserIcon className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--accent-deep)]" />
+            Organized by {organizerName}
+          </p>
         )}
 
         <div className="flex flex-wrap items-center gap-3 pt-0.5 text-sm font-medium text-[color:var(--accent-deep)]">
