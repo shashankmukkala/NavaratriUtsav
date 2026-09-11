@@ -23,9 +23,13 @@ interface MapViewProps {
   /** Bumped (any new value) to snap the camera back to the exact default
    * center/zoom — unlike `flyTo`, which only zooms in if needed, never out. */
   resetTrigger?: number;
+  /** Mobile relies on pinch-to-zoom — the on-screen +/- control is desktop-
+   * only chrome there, and otherwise ends up floating awkwardly right
+   * against the corner of the fullscreen detail card popup. */
+  showZoomControl?: boolean;
 }
 
-export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger }: MapViewProps) {
+export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger, showZoomControl = true }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; el: HTMLButtonElement }>>(new globalThis.Map());
@@ -64,7 +68,9 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     mapRef.current = map;
-    map.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
+    if (showZoomControl) {
+      map.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
+    }
     map.on("load", () => setLoaded(true));
     map.on("error", () => setErrored(true));
     // Marker elements are real DOM nodes overlaid on the canvas, not part
@@ -78,6 +84,9 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
       map.remove();
       mapRef.current = null;
     };
+    // showZoomControl is a fixed per-instance choice (mobile vs. desktop),
+    // never toggled after mount, so it's deliberately not a reactive dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
