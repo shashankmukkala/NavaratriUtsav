@@ -15,6 +15,10 @@ const PLACE_PIN = /!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/;
 const VIEWPORT_CENTER = /@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/;
 const QUERY_PARAM = /[?&]q=(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/;
 const BARE_COORDS = /^(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/;
+// Newer share links resolve to a `?q=<place name>&ftid=...` URL with no
+// coordinates anywhere on the page at all — the address text is all we get,
+// so it's geocoded the same way a manually typed search would be.
+const QUERY_TEXT_PARAM = /[?&]q=([^&]+)/;
 
 function extractCoords(text: string): { lat: number; lng: number } | null {
   const place = text.match(PLACE_PIN);
@@ -23,6 +27,51 @@ function extractCoords(text: string): { lat: number; lng: number } | null {
   if (viewport) return { lat: Number(viewport[1]), lng: Number(viewport[2]) };
   const query = text.match(QUERY_PARAM);
   if (query) return { lat: Number(query[1]), lng: Number(query[2]) };
+  return null;
+}
+
+const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
+const USER_AGENT = "AnnadhanamMap/1.0 (contact via repo issues)";
+
+async function searchNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
+  const url = new URL(NOMINATIM_SEARCH_URL);
+  url.searchParams.set("q", query);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("countrycodes", "in");
+
+  try {
+    const res = await fetch(url.toString(), { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const first = Array.isArray(data) ? data[0] : null;
+    if (!first) return null;
+    return { lat: Number(first.lat), lng: Number(first.lon) };
+  } catch {
+    return null;
+  }
+}
+
+async function geocodeAddressFromUrl(finalUrl: string): Promise<{ lat: number; lng: number } | null> {
+  const match = finalUrl.match(QUERY_TEXT_PARAM);
+  if (!match) return null;
+  const query = decodeURIComponent(match[1].replace(/\+/g, " ")).trim();
+  if (!query || /^-?\d{1,2}\.\d+,-?\d{1,3}\.\d+$/.test(query)) return null;
+
+  const exact = await searchNominatim(query);
+  if (exact) return exact;
+
+  // Place links often lead with a shop/building name Nominatim doesn't
+  // index ("Shop no. 11, Nampally Ka Maharaja, ...") — drop leading
+  // comma-separated segments one at a time until something matches, but
+  // keep at least the last two (locality + city/state) so the result
+  // doesn't collapse into an entire city.
+  const parts = query.split(",").map((p) => p.trim()).filter(Boolean);
+  for (let start = 1; start <= parts.length - 2; start++) {
+    const trimmed = parts.slice(start).join(", ");
+    const hit = await searchNominatim(trimmed);
+    if (hit) return hit;
+  }
   return null;
 }
 
@@ -62,6 +111,10 @@ export async function GET(request: NextRequest) {
     const body = await res.text();
     const fromBody = extractCoords(body);
     if (fromBody) return NextResponse.json(fromBody);
+
+    // Newer links carry only a place name/address — geocode that text instead.
+    const fromAddress = await geocodeAddressFromUrl(finalUrl);
+    if (fromAddress) return NextResponse.json(fromAddress);
 
     return NextResponse.json({ error: "Couldn't find a location in that link." }, { status: 422 });
   } catch {
