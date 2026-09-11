@@ -97,16 +97,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
   const bannerImages = ownBanner ?? cardAdImages;
 
-  // Mobile: no height constraint of its own — it's simply as tall as its
-  // content (header + essential info + description + footer stacked in
-  // normal flow), letting the popup wrapper in app/map/page.tsx be the
-  // only thing that ever caps/scrolls it (as a rare-case safety net, not
-  // something normal content ever reaches). Desktop: this sits in a flex
-  // row with a real, definite height (the ad panel), so it can safely be
-  // its own scroll container if its content ever exceeds that.
+  // Mobile: a fixed height matching the popup wrapper (app/map/page.tsx)
+  // exactly — the whole card never scrolls. Only the text block below
+  // (essential info + description) scrolls internally; everything else
+  // is pinned. Desktop: sized to its actual content, capped at the ad
+  // panel's height.
   const shellClassName = fullScreen
-    ? "pointer-events-auto flex w-full flex-col bg-[color:var(--cream-50)]"
-    : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-y-auto overflow-x-hidden";
+    ? "pointer-events-auto flex h-full w-full flex-col overflow-hidden bg-[color:var(--cream-50)]"
+    : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-hidden";
 
   const header = (
     // aspect-video matches the 16:9 crop every photo is uploaded at, so the
@@ -182,10 +180,8 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // line-clamp instead of a scrollable box — simplest way to guarantee
-  // this never pushes the footer down or needs its own scroll handling.
   const descriptionBlock = pandal.description && (
-    <p className="line-clamp-3 border-t border-[rgba(43,22,8,0.08)] pt-2.5 text-[13px] text-[color:var(--muted)]">
+    <p className="mt-2.5 border-t border-[rgba(43,22,8,0.08)] pt-2.5 text-[13px] text-[color:var(--muted)]">
       {pandal.description}
     </p>
   );
@@ -206,7 +202,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           that isn't exactly this shape. */}
       <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
         {bannerImages.length > 0 ? (
-          <div className="h-28 overflow-hidden rounded-lg">
+          <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-20" : "h-28"}`}>
             <AdBannerSlideshow images={bannerImages} alt="" />
           </div>
         ) : isOwner ? (
@@ -216,7 +212,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className="flex h-28 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)]"
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "h-20" : "h-28"}`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
@@ -225,7 +221,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
           // someone else's mandapam.
-          <div className="flex h-28 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center">
+          <div className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "h-20" : "h-28"}`}>
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
             <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
@@ -235,18 +231,31 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </>
   );
 
-  // Everything is fixed-size and pinned — nothing here scrolls or
-  // depends on the screen's height. Header, essential info, description
-  // and the footer (Get Directions/banner) all just stack in normal
-  // document flow; the whole card is exactly as tall as they add up to.
+  // The card itself never scrolls — header and footer (Get
+  // Directions/banner) are fixed and pinned. Essential info and the
+  // description share one small, fixed-height text block that scrolls
+  // on its own: only essential info shows by default, and the
+  // description sits below the fold, revealed by scrolling that block
+  // specifically. Keeping this block small (instead of reserving
+  // whatever space the description needs) is what leaves the extra room
+  // for Get Directions to sit higher and the banner to be fully visible
+  // with a clean margin below it.
   return (
     <div className={shellClassName}>
       {header}
-      <div className="flex-shrink-0 space-y-2.5 p-4">
-        {essentialInfo}
-        {descriptionBlock}
+      <div className="relative flex-shrink-0">
+        <div className="max-h-36 overflow-y-auto p-4">
+          {essentialInfo}
+          {descriptionBlock}
+        </div>
+        {descriptionBlock && (
+          // The global scrollbar-hiding rule means an overflowing box
+          // here otherwise looks like the text just ends instead of
+          // being scrollable — this fade hints that there's more below.
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-[color:var(--cream-50)] to-transparent" />
+        )}
       </div>
-      <div className="flex-shrink-0 space-y-2.5 p-4 pt-0">{footerBlock}</div>
+      <div className={`flex-shrink-0 space-y-2.5 p-4 pt-2.5 ${fullScreen ? "pb-3" : "pb-4"}`}>{footerBlock}</div>
     </div>
   );
 }
