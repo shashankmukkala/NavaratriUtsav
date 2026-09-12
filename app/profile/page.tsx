@@ -7,7 +7,7 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import SignInPrompt from "@/components/SignInPrompt";
-import { CalendarIcon, ClockIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
+import { CalendarIcon, ClockIcon, CopyIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
@@ -529,10 +529,22 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [upiCopied, setUpiCopied] = useState(false);
 
   useEffect(() => {
     if (!alreadyPaid) fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, [alreadyPaid]);
+
+  const copyUpiId = async () => {
+    try {
+      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      setUpiCopied(true);
+      setTimeout(() => setUpiCopied(false), 1500);
+    } catch {
+      // Clipboard access can be blocked (permissions, non-secure context) —
+      // failing silently is fine, the UPI ID is still right there to select.
+    }
+  };
 
   // Once it's already paid, swapping the image is free — no need to pay or
   // prove payment again for a banner that's already live.
@@ -593,8 +605,17 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-sm font-mono font-semibold text-[color:var(--foreground)]">
+                <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
                   {settings?.upi_id ?? "annadhanam@upi"}
+                  <button
+                    type="button"
+                    onClick={copyUpiId}
+                    aria-label="Copy UPI ID"
+                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
+                  >
+                    <CopyIcon className="h-3.5 w-3.5" />
+                  </button>
+                  {upiCopied && <span className="text-xs font-medium text-green-700">Copied</span>}
                 </p>
                 <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.banner_price ?? 200} to this UPI ID.</p>
               </div>
