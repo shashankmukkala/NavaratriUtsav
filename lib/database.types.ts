@@ -14,6 +14,7 @@ export interface Database {
           lng: number;
           event_date: string | null;
           timing_text: string | null;
+          nimajjanam_date: string | null;
           description: string | null;
           image_url: string;
           banner_image_urls: string[] | null;
@@ -34,6 +35,7 @@ export interface Database {
           lng: number;
           event_date?: string | null;
           timing_text?: string | null;
+          nimajjanam_date?: string | null;
           description?: string | null;
           image_url: string;
           banner_image_urls?: string[] | null;
