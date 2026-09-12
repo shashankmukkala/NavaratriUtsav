@@ -30,6 +30,7 @@ interface SubmitDraft {
   contactPhone: string;
   eventDate: string;
   timingText: string;
+  nimajjanamDate: string;
   description: string;
   imageUrl: string | null;
   bannerUrls: string[];
@@ -62,6 +63,7 @@ export default function SubmitPage() {
   const [contactPhone, setContactPhone] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [timingText, setTimingText] = useState("");
+  const [nimajjanamDate, setNimajjanamDate] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [bannerUrls, setBannerUrls] = useState<string[]>([]);
@@ -96,6 +98,7 @@ export default function SubmitPage() {
     setContactPhone(draft.contactPhone);
     setEventDate(draft.eventDate);
     setTimingText(draft.timingText);
+    setNimajjanamDate(draft.nimajjanamDate);
     setDescription(draft.description);
     setImageUrl(draft.imageUrl);
     setBannerUrls(draft.bannerUrls);
@@ -154,6 +157,7 @@ export default function SubmitPage() {
         contactPhone,
         eventDate,
         timingText,
+        nimajjanamDate,
         description,
         imageUrl,
         bannerUrls,
@@ -181,6 +185,7 @@ export default function SubmitPage() {
       lng: location.lng,
       event_date: eventDate || null,
       timing_text: timingText || null,
+      nimajjanam_date: nimajjanamDate || null,
       description: description || null,
       image_url: imageUrl,
       banner_image_urls: bannerUrls,
@@ -418,6 +423,15 @@ export default function SubmitPage() {
                 Only serving free meals (annadhanam)? Fill this in and it&apos;ll be listed under Annadhanams.
                 Otherwise leave it blank and it&apos;ll show under Mandapams.
               </p>
+
+              <Field label="Nimajjanam date (optional)">
+                <input
+                  type="date"
+                  value={nimajjanamDate}
+                  onChange={(e) => setNimajjanamDate(e.target.value)}
+                  className="field-input"
+                />
+              </Field>
 
               <Field label="Additional details (optional)">
                 <textarea

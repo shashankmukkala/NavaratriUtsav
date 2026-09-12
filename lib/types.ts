@@ -13,6 +13,10 @@ export interface Pandal {
    * service date, so it shows under "Mandapams" instead of "Annadhanams". */
   event_date: string | null;
   timing_text: string | null; // free-form, e.g. "12:00 PM – 3:00 PM (till food lasts)"
+  /** ISO date — when the idol is immersed (visarjan/nimajjanam). Separate
+   * from event_date since the immersion day doesn't have to match when
+   * annadhanam is served. Optional. */
+  nimajjanam_date: string | null;
   description: string | null;
   image_url: string;
   banner_image_urls: string[] | null;

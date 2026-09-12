@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       lng,
       event_date: body.event_date ? String(body.event_date) : null,
       timing_text: body.timing_text ? String(body.timing_text).slice(0, 200) : null,
+      nimajjanam_date: body.nimajjanam_date ? String(body.nimajjanam_date) : null,
       description: body.description ? String(body.description).slice(0, 2000) : null,
       image_url: String(body.image_url),
       banner_image_urls: Array.isArray(body.banner_image_urls)
