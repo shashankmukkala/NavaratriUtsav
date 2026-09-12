@@ -23,12 +23,17 @@ interface MapViewProps {
   /** Bumped (any new value) to snap the camera back to the exact default
    * center/zoom — unlike `flyTo`, which only zooms in if needed, never out. */
   resetTrigger?: number;
+  /** The device's own GPS position, only while location is switched on —
+   * shown as a small pulsing "you are here" dot, separate from any pandal
+   * pin and never clickable. */
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger }: MapViewProps) {
+export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger, userLocation }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; el: HTMLButtonElement }>>(new globalThis.Map());
+  const userLocationMarkerRef = useRef<Marker | null>(null);
   const onSelectRef = useRef(onSelect);
   const onDeselectRef = useRef(onDeselect);
   const [loaded, setLoaded] = useState(false);
@@ -160,11 +165,39 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
     map.flyTo({ center: DEFAULT_MAP_CENTER, zoom: DEFAULT_ZOOM, duration: 800 });
   }, [loaded, resetTrigger]);
 
+  // Creates the dot once and just moves it on subsequent updates, rather
+  // than removing/re-adding — cheaper, and avoids a visible flicker every
+  // time a fresh GPS fix comes in.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+
+    if (!userLocation) {
+      userLocationMarkerRef.current?.remove();
+      userLocationMarkerRef.current = null;
+      return;
+    }
+
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
+      return;
+    }
+
+    const el = document.createElement("div");
+    el.className = "user-location-dot";
+    el.setAttribute("aria-hidden", "true");
+    userLocationMarkerRef.current = new Marker({ element: el, anchor: "center" })
+      .setLngLat([userLocation.lng, userLocation.lat])
+      .addTo(map);
+  }, [loaded, userLocation]);
+
   useEffect(() => {
     const existing = markersRef.current;
     return () => {
       for (const entry of existing.values()) entry.marker.remove();
       existing.clear();
+      userLocationMarkerRef.current?.remove();
+      userLocationMarkerRef.current = null;
     };
   }, []);
 
