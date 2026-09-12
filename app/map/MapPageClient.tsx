@@ -397,7 +397,7 @@ export default function MapPageClient() {
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
         <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
           <VisitorCountBadge />
         </div>
 
@@ -510,7 +510,7 @@ export default function MapPageClient() {
         </header>
 
         <div className="relative flex-1">
-          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} />
+          <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —

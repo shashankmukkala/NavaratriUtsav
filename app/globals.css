@@ -181,6 +181,47 @@ body {
   display: inline;
 }
 
+/* "You are here" — the device's own GPS position, once location is on.
+   A solid dot (never clickable/selectable, unlike a pandal pin) with a
+   soft pulsing halo, the same visual language as a live-location dot in
+   most map apps. */
+.user-location-dot {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.user-location-dot::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.25);
+  animation: user-location-pulse 2.2s ease-out infinite;
+}
+
+.user-location-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #2563eb;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 6px rgba(20, 12, 4, 0.35);
+}
+
+@keyframes user-location-pulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 /* Floating top bar / bottom sheet material used across the public map,
    submit, sponsor, and admin pages. */
 .topbar-shell {
