@@ -12,6 +12,7 @@ import {
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
+  CopyIcon,
   HeartIcon,
   LockIcon,
   MegaphoneIcon,
@@ -76,6 +77,7 @@ function SponsorPageInner() {
   const [done, setDone] = useState(false);
   const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [upiCopied, setUpiCopied] = useState(false);
 
   useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
@@ -89,6 +91,17 @@ function SponsorPageInner() {
   // are filled, so it isn't just sitting exposed for anyone to screenshot
   // without actually being a real advertiser.
   const detailsFilled = sponsorName.trim() !== "" && contactPhone.trim() !== "" && bannerUrls.length > 0;
+
+  const copyUpiId = async () => {
+    try {
+      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      setUpiCopied(true);
+      setTimeout(() => setUpiCopied(false), 1500);
+    } catch {
+      // Clipboard access can be blocked (permissions, non-secure context) —
+      // failing silently is fine, the UPI ID is still right there to select.
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,11 +325,24 @@ function SponsorPageInner() {
                   </div>
                   <div className="relative flex h-28 flex-1 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 px-3">
                     <p
-                      className="text-center text-sm font-mono font-semibold text-[color:var(--foreground)] transition-[filter] duration-300"
+                      className="flex items-center justify-center gap-1.5 text-center text-sm font-mono font-semibold text-[color:var(--foreground)] transition-[filter] duration-300"
                       style={{ filter: detailsFilled ? "none" : "blur(6px)" }}
                     >
                       {settings?.upi_id ?? "annadhanam@upi"}
+                      {detailsFilled && (
+                        <button
+                          type="button"
+                          onClick={copyUpiId}
+                          aria-label="Copy UPI ID"
+                          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
+                        >
+                          <CopyIcon className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </p>
+                    {upiCopied && (
+                      <span className="absolute bottom-1 right-1 text-xs font-medium text-green-700">Copied</span>
+                    )}
                     {!detailsFilled && (
                       <div className="absolute inset-0 flex items-center justify-center bg-[color:var(--cream-50)]">
                         <LockIcon className="h-6 w-6 text-[color:var(--muted)]" />
