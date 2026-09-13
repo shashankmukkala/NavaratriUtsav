@@ -17,3 +17,10 @@ export function eventStatusLabel(status: EventStatus): string {
   if (status === "upcoming") return "Upcoming";
   return "Past";
 }
+
+/** "21 Sept", for showing the annadhanam date alongside its serving time. */
+export function formatEventDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}

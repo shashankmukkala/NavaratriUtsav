@@ -9,7 +9,7 @@ import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
 import { BowlIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
-import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
+import { getEventStatus, eventStatusLabel, formatEventDate } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import { isServedState } from "@/lib/servedArea";
@@ -26,12 +26,6 @@ const NEARBY_RADIUS_KM = 5;
 
 function isToday(dateStr: string | null) {
   return !!dateStr && dateStr === new Date().toISOString().slice(0, 10);
-}
-
-function formatEventDate(dateStr: string | null) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr + "T00:00:00");
-  return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 export default function MapPageClient() {

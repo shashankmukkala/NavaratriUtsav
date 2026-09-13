@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import { BowlIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
-import { getEventStatus, eventStatusLabel } from "@/lib/eventStatus";
+import { getEventStatus, eventStatusLabel, formatEventDate } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
 
@@ -145,12 +145,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   // part of anything that scrolls.
   const essentialInfo = (
     <>
-      {eventStatus && (
-        <div>
-          <span className={eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}>{eventStatusLabel(eventStatus)}</span>
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-base font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
         <span className="badge-verified">
@@ -175,7 +169,20 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           </span>
         </MetaRow>
         <MetaRow icon={<BowlIcon className="h-4 w-4" />}>
-          {pandal.event_date && pandal.timing_text ? pandal.timing_text : "No annadhanam info available"}
+          {pandal.event_date && pandal.timing_text ? (
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span>
+                {formatEventDate(pandal.event_date)} · {pandal.timing_text}
+              </span>
+              {eventStatus && (
+                <span className={`flex-shrink-0 ${eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}`}>
+                  {eventStatusLabel(eventStatus)}
+                </span>
+              )}
+            </span>
+          ) : (
+            "No annadhanam info available"
+          )}
         </MetaRow>
         <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
       </div>
@@ -246,7 +253,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     <div className={shellClassName}>
       {header}
       <div className="relative flex-shrink-0">
-        <div className="max-h-36 overflow-y-auto p-4">
+        <div className="max-h-40 overflow-y-auto p-4">
           {essentialInfo}
           {descriptionBlock}
         </div>
