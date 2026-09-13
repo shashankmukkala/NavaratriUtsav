@@ -162,6 +162,11 @@ export default function SubmitPage() {
       setError("Please fill in the address.");
       return;
     }
+    if (bannerUrls.length > 0 && !bannerProofUrl) {
+      setError("Please complete the banner payment (or remove the banner images) before submitting.");
+      setShowPaymentModal(true);
+      return;
+    }
 
     if (!session?.user) {
       const draft: SubmitDraft = {
