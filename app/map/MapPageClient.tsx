@@ -22,8 +22,6 @@ type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" 
 // service date set. A subset, not a separate partition.
 type Category = "annadhanams" | "mandapams";
 
-const NEARBY_RADIUS_KM = 5;
-
 function isToday(dateStr: string | null) {
   return !!dateStr && dateStr === new Date().toISOString().slice(0, 10);
 }
@@ -370,16 +368,14 @@ export default function MapPageClient() {
 
   const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
-  // Both your own GPS location and a searched area are capped to the same
-  // radius — an area search used to skip this cap entirely (matching every
-  // listing anywhere, just sorted by distance), which meant a search for a
-  // specific neighborhood could surface a listing from an unrelated part of
-  // the state instead of correctly showing nothing nearby.
+  // No radius cap — every listing shows, just ordered nearest-first once a
+  // center (GPS or a searched area) is known. A cap here used to hide
+  // anything past 5km, which meant a sparse area could show nothing at all
+  // even though the next-closest listing was only a little further out.
   const nearby = useMemo(() => {
     if (!effectiveCenter) return filtered;
     const withKm = filtered.map((p) => ({ p, km: distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) }));
-    const scoped = withKm.filter(({ km }) => km <= NEARBY_RADIUS_KM);
-    return scoped.sort((a, b) => a.km - b.km).map(({ p }) => p);
+    return withKm.sort((a, b) => a.km - b.km).map(({ p }) => p);
   }, [filtered, effectiveCenter]);
 
   return (
@@ -892,7 +888,7 @@ function NearbyListHeader({
       )}
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {effectiveCenter
-          ? `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"} within ${NEARBY_RADIUS_KM} km`
+          ? `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"}, nearest first`
           : `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"}`}
       </p>
       {areaCenter && (
@@ -1028,9 +1024,7 @@ function PandalList({
     return (
       <div className="space-y-3 p-6 text-center">
         <p className="text-sm text-[color:var(--muted)]">
-          {nearbyScoped
-            ? `No ${noun}s within ${NEARBY_RADIUS_KM} km yet.`
-            : `No ${noun}s published yet. Be the first to add one!`}
+          {nearbyScoped ? `No ${noun}s found.` : `No ${noun}s published yet. Be the first to add one!`}
         </p>
         {nearbyScoped && onQueryChange && (
           <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-left text-sm text-[color:var(--muted)]">
