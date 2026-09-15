@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, CloseIcon, PencilIcon, RefreshIcon, TrashIcon } from "@/components/icons";
 import ImageUploadField from "@/components/ImageUploadField";
+import MultiImageUploadField from "@/components/MultiImageUploadField";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
@@ -34,6 +35,7 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [editingPandal, setEditingPandal] = useState<Pandal | null>(null);
+  const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
 
   useEffect(() => {
     fetchJson<{ loggedIn: boolean }>("/api/admin/session").then((data) => setLoggedIn(data?.loggedIn ?? false));
@@ -131,6 +133,15 @@ export default function AdminPage() {
   const setSponsorEditUnlocked = async (id: string, edit_unlocked: boolean) => {
     await sendJson(`/api/admin/sponsors/${id}`, { edit_unlocked }, "PATCH");
     loadData();
+  };
+
+  const saveSponsorEdit = async (id: string, patch: Record<string, unknown>) => {
+    const result = await sendJson(`/api/admin/sponsors/${id}`, patch, "PATCH");
+    if (result.ok) {
+      setEditingSponsor(null);
+      loadData();
+    }
+    return result;
   };
 
   if (loggedIn === null) {
@@ -415,6 +426,9 @@ export default function AdminPage() {
                         {sponsor.status === "pending" ? "Reject" : "Unpublish"}
                       </ActionButton>
                     )}
+                    <ActionButton color="gray" icon={<PencilIcon className="h-3.5 w-3.5" />} onClick={() => setEditingSponsor(sponsor)}>
+                      Edit
+                    </ActionButton>
                   </SponsorRow>
                 ))}
               </div>
@@ -446,6 +460,10 @@ export default function AdminPage() {
 
       {editingPandal && (
         <AdminEditPandalModal pandal={editingPandal} onClose={() => setEditingPandal(null)} onSave={savePandalEdit} />
+      )}
+
+      {editingSponsor && (
+        <AdminEditSponsorModal sponsor={editingSponsor} onClose={() => setEditingSponsor(null)} onSave={saveSponsorEdit} />
       )}
     </div>
   );
@@ -657,6 +675,109 @@ function AdminEditPandalModal({
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Additional details</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="field-input" />
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
+
+        <div className="mt-5 flex gap-2">
+          <button type="button" onClick={onClose} className="btn-ghost flex-1 justify-center py-2.5">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center py-2.5">
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Lets admin fix up an ad's content directly (a redirect link sent after
+ * the fact, a typo in the name/phone, swapping a banner image) without the
+ * request/unlock dance the owner-initiated edit flow requires, and set a
+ * future start date so it begins showing on a specific festival day
+ * instead of immediately. */
+function AdminEditSponsorModal({
+  sponsor,
+  onClose,
+  onSave,
+}: {
+  sponsor: SponsorWithPandal;
+  onClose: () => void;
+  onSave: (id: string, patch: Record<string, unknown>) => Promise<{ ok: true; data: unknown } | { ok: false; error: string }>;
+}) {
+  const [sponsorName, setSponsorName] = useState(sponsor.sponsor_name);
+  const [contactPhone, setContactPhone] = useState(sponsor.contact_phone);
+  const [linkUrl, setLinkUrl] = useState(sponsor.link_url ?? "");
+  const [bannerUrls, setBannerUrls] = useState<string[]>(
+    sponsor.banner_image_urls?.length ? sponsor.banner_image_urls : sponsor.banner_image_url ? [sponsor.banner_image_url] : []
+  );
+  // yyyy-mm-dd for the date input — starts_at only ever needs day
+  // granularity ("start on day 4"), not a specific time of day.
+  const [startsAt, setStartsAt] = useState(sponsor.starts_at ? sponsor.starts_at.slice(0, 10) : "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    setError(null);
+    setSaving(true);
+    const result = await onSave(sponsor.id, {
+      sponsor_name: sponsorName,
+      contact_phone: contactPhone,
+      link_url: linkUrl.trim() || null,
+      banner_image_urls: bannerUrls,
+      starts_at: startsAt || null,
+    });
+    setSaving(false);
+    if (!result.ok) setError(result.error);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="card-elevated max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
+        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit ad</p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Saved immediately — no re-review needed, you&apos;re the reviewer.</p>
+
+        <div className="mt-4 space-y-4">
+          <MultiImageUploadField
+            label="Ad banner image(s)"
+            folder="sponsors"
+            max={3}
+            value={bannerUrls}
+            onChange={setBannerUrls}
+            aspect={sponsor.placement === "card" ? 2.2 : 1}
+          />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Sponsor / brand name</label>
+            <input value={sponsorName} onChange={(e) => setSponsorName(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Contact phone</label>
+            <input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="field-input" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Redirect link</label>
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://…"
+              className="field-input"
+            />
+            <p className="mt-1 text-xs text-[color:var(--muted-soft)]">For when a sponsor sends this after already paying.</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Start showing on (optional)</label>
+            <input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="field-input" />
+            <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
+              Leave blank to show immediately once approved. Its 2-day display window is counted from this date, not
+              from approval — use this to schedule an ad for a specific festival day (e.g. day 4).
+            </p>
           </div>
         </div>
 
@@ -897,6 +1018,10 @@ function UserRow({ user }: { user: AdminUser }) {
   );
 }
 
+function isScheduledForFuture(startsAt: string | null): boolean {
+  return !!startsAt && new Date(startsAt).getTime() > Date.now();
+}
+
 function SponsorRow({
   sponsor,
   children,
@@ -938,6 +1063,11 @@ function SponsorRow({
             <> · Expires {new Date(sponsor.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>
           )}
         </p>
+        {isScheduledForFuture(sponsor.starts_at) && (
+          <p className="text-[0.6875rem] font-semibold text-[color:var(--accent-deep)]">
+            Scheduled to start {new Date(sponsor.starts_at as string).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={sponsor.payment_proof_url}

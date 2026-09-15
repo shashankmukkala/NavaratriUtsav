@@ -61,6 +61,7 @@ export interface Database {
           payment_proof_url: string;
           status: "pending" | "approved" | "rejected";
           expires_at: string | null;
+          starts_at: string | null;
           user_id: string | null;
           placement: "map" | "card";
           edit_requested: boolean;
@@ -78,6 +79,7 @@ export interface Database {
           payment_proof_url: string;
           status?: "pending" | "approved" | "rejected";
           expires_at?: string | null;
+          starts_at?: string | null;
           user_id?: string | null;
           placement?: "map" | "card";
           edit_requested?: boolean;
