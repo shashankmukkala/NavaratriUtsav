@@ -10,12 +10,15 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export async function GET(request: NextRequest) {
   const placement = request.nextUrl.searchParams.get("placement") === "card" ? "card" : "map";
 
+  const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin()
     .from("sponsors")
     .select("*")
     .eq("status", "approved")
     .eq("placement", placement)
-    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    // Scheduled to start on a future day (starts_at) shouldn't show yet.
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
     .order("created_at", { ascending: false });
 
   if (error) {

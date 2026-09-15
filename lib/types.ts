@@ -41,6 +41,11 @@ export interface Sponsor {
   payment_proof_url: string;
   status: PandalStatus;
   expires_at: string | null;
+  /** Admin-set — when this ad should start showing. Null means "immediately
+   * on approval" (the original behavior); a future date schedules it to
+   * start then instead (e.g. day 4 of the festival), with its 2-day
+   * display window counted from that date, not from approval time. */
+  starts_at: string | null;
   user_id: string | null;
   /** "map" = map-wide sponsored slots. "card" = shown generically inside
    * mandapam detail cards, not targeted at any one specific mandapam. */
