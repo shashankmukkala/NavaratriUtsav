@@ -6,4 +6,4 @@
 export const SITE_URL = process.env.NEXTAUTH_URL || "https://bappa-seva.vercel.app";
 export const SITE_TITLE = "BappaSeva";
 export const SITE_DESCRIPTION = "Find the best mandapams and annadhanams being served around you this Ganesh Chaturthi.";
-export const DEFAULT_OG_IMAGE = "/images/new_mandap.png";
+export const DEFAULT_OG_IMAGE = "/images/new_mandap.webp";

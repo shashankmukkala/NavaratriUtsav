@@ -19,7 +19,7 @@ export default function Brand({ tagline = false, size = "sm" }: BrandProps) {
         className={`flex ${iconBox} flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--cream-50)] shadow-[inset_0_0_0_1.5px_rgba(234,108,29,0.35)]`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/bappa-logo.png" alt="" className={`${iconSize} object-contain`} />
+        <img src="/images/bappa-logo.webp" alt="" className={`${iconSize} object-contain`} />
       </span>
       <div className="leading-tight">
         <p className={`${nameSize} font-extrabold tracking-tight text-[color:var(--foreground)]`}>BappaSeva</p>

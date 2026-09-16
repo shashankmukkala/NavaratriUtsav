@@ -154,7 +154,7 @@ export default function AdminPage() {
         <div className="card-elevated p-6">
           <span className="icon-tile icon-tile-circle mb-4 h-12 w-12" style={{ background: "#ffffff" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/bappa-logo.png" alt="" className="h-7 w-7 object-contain" />
+            <img src="/images/bappa-logo.webp" alt="" className="h-7 w-7 object-contain" />
           </span>
           <h1 className="mb-4 text-xl font-bold text-[color:var(--foreground)]">Admin sign in</h1>
           <form onSubmit={handleLogin} className="space-y-3">
@@ -238,7 +238,7 @@ export default function AdminPage() {
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="icon-tile icon-tile-circle h-9 w-9 flex-shrink-0" style={{ background: "#ffffff" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/bappa-logo.png" alt="" className="h-6 w-6 object-contain" />
+            <img src="/images/bappa-logo.webp" alt="" className="h-6 w-6 object-contain" />
           </span>
           <h1 className="truncate text-xl font-bold text-[color:var(--foreground)]">Admin</h1>
         </div>
