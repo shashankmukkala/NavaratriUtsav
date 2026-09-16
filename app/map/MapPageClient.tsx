@@ -9,7 +9,7 @@ import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
 import { BowlIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
-import { getEventStatus, eventStatusLabel, formatEventDate } from "@/lib/eventStatus";
+import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import { isServedState } from "@/lib/servedArea";
@@ -22,8 +22,8 @@ type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" 
 // service date set. A subset, not a separate partition.
 type Category = "annadhanams" | "mandapams";
 
-function isToday(dateStr: string | null) {
-  return !!dateStr && dateStr === new Date().toISOString().slice(0, 10);
+function isServingToday(startDate: string | null, endDate: string | null) {
+  return getEventStatus(startDate, endDate) === "today";
 }
 
 export default function MapPageClient() {
@@ -354,7 +354,7 @@ export default function MapPageClient() {
       // date; "Mandapams" is everyone — an annadhanam-serving mandapam is
       // still a mandapam, so it shouldn't disappear from that view.
       .filter((p) => (category === "annadhanams" ? !!p.event_date : true))
-      .filter((p) => (filter === "today" ? isToday(p.event_date) : true))
+      .filter((p) => (filter === "today" ? isServingToday(p.event_date, p.event_date_end) : true))
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
       // need structured start/end times on the pandal record.
@@ -1044,7 +1044,7 @@ function PandalList({
     <ul className="space-y-1">
       {pandals.map((pandal) => {
         const km = distanceFor(pandal);
-        const eventStatus = getEventStatus(pandal.event_date);
+        const eventStatus = getEventStatus(pandal.event_date, pandal.event_date_end);
         return (
           <li key={pandal.id}>
             <button onClick={() => onSelect(pandal)} className={`list-row w-full ${selectedId === pandal.id ? "list-row-active" : ""}`}>
@@ -1062,7 +1062,7 @@ function PandalList({
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-[color:var(--accent-deep)]">
                     <span className="flex min-w-0 items-center gap-1 truncate">
                       <BowlIcon className="h-3 w-3 flex-shrink-0" />
-                      {formatEventDate(pandal.event_date)}
+                      {formatEventDateRange(pandal.event_date, pandal.event_date_end)}
                       {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
                     </span>
                     {eventStatus && (

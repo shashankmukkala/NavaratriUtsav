@@ -12,6 +12,10 @@ export interface Pandal {
    * it does. Optional: null means it's a mandapam listing with no food
    * service date, so it shows under "Mandapams" instead of "Annadhanams". */
   event_date: string | null;
+  /** ISO date, inclusive — when set, annadhanam runs every day from
+   * event_date through this date (e.g. "every day till the last day of
+   * the festival") instead of just a single day. Null means one day only. */
+  event_date_end: string | null;
   timing_text: string | null; // free-form, e.g. "12:00 PM – 3:00 PM (till food lasts)"
   /** ISO date — when the idol is immersed (visarjan/nimajjanam). Separate
    * from event_date since the immersion day doesn't have to match when

@@ -20,6 +20,7 @@ import {
   UserIcon,
   VerifiedIcon,
 } from "@/components/icons";
+import { formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { PaymentSettings } from "@/lib/types";
 
@@ -30,6 +31,7 @@ interface SubmitDraft {
   organizerName: string;
   contactPhone: string;
   eventDate: string;
+  eventDateEnd: string;
   timingText: string;
   nimajjanamDate: string;
   description: string;
@@ -63,6 +65,7 @@ export default function SubmitPage() {
   const [organizerName, setOrganizerName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [eventDateEnd, setEventDateEnd] = useState("");
   const [timingText, setTimingText] = useState("");
   const [nimajjanamDate, setNimajjanamDate] = useState("");
   const [description, setDescription] = useState("");
@@ -99,6 +102,7 @@ export default function SubmitPage() {
     setOrganizerName(draft.organizerName);
     setContactPhone(draft.contactPhone);
     setEventDate(draft.eventDate);
+    setEventDateEnd(draft.eventDateEnd);
     setTimingText(draft.timingText);
     setNimajjanamDate(draft.nimajjanamDate);
     setDescription(draft.description);
@@ -110,13 +114,7 @@ export default function SubmitPage() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
-  const previewDateLabel = (() => {
-    if (!eventDate) return "";
-    const d = new Date(eventDate + "T00:00:00");
-    return Number.isNaN(d.getTime())
-      ? eventDate
-      : d.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
-  })();
+  const previewDateLabel = formatEventDateRange(eventDate || null, eventDateEnd || null);
 
   useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
@@ -174,6 +172,7 @@ export default function SubmitPage() {
         organizerName,
         contactPhone,
         eventDate,
+        eventDateEnd,
         timingText,
         nimajjanamDate,
         description,
@@ -202,6 +201,7 @@ export default function SubmitPage() {
       lat: location.lat,
       lng: location.lng,
       event_date: eventDate || null,
+      event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
       nimajjanam_date: nimajjanamDate || null,
       description: description || null,
@@ -450,6 +450,34 @@ export default function SubmitPage() {
                 Only serving free meals (annadhanam)? Fill this in and it&apos;ll be listed under Annadhanams.
                 Otherwise leave it blank and it&apos;ll show under Mandapams.
               </p>
+
+              {eventDate && (
+                <Field label="Serving until (optional — for multiple days)">
+                  <input
+                    type="date"
+                    min={eventDate}
+                    value={eventDateEnd}
+                    onChange={(e) => setEventDateEnd(e.target.value)}
+                    className="field-input"
+                  />
+                  <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
+                    Serving every day through the festival? Set the last day here — leave blank for just the one day
+                    above.
+                    {nimajjanamDate && !eventDateEnd && (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          onClick={() => setEventDateEnd(nimajjanamDate)}
+                          className="font-semibold text-[color:var(--accent-deep)] underline"
+                        >
+                          Use nimajjanam date ({nimajjanamDate})
+                        </button>
+                      </>
+                    )}
+                  </p>
+                </Field>
+              )}
 
               <Field label="Nimajjanam date (optional)">
                 <input

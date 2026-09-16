@@ -13,6 +13,7 @@ export interface Database {
           lat: number;
           lng: number;
           event_date: string | null;
+          event_date_end: string | null;
           timing_text: string | null;
           nimajjanam_date: string | null;
           description: string | null;
@@ -34,6 +35,7 @@ export interface Database {
           lat: number;
           lng: number;
           event_date?: string | null;
+          event_date_end?: string | null;
           timing_text?: string | null;
           nimajjanam_date?: string | null;
           description?: string | null;
