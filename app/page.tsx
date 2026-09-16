@@ -57,14 +57,14 @@ export default function HomePage() {
       <section className="relative overflow-hidden px-4 pb-4 pt-4 sm:px-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero-left.png"
+          src="/images/hero-left.webp"
           alt=""
           aria-hidden="true"
           className="pointer-events-none absolute left-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero-right.png"
+          src="/images/hero-right.webp"
           alt=""
           aria-hidden="true"
           className="pointer-events-none absolute right-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
@@ -120,7 +120,7 @@ export default function HomePage() {
 
             <div className="relative mx-auto w-full max-w-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/bappa.png" alt="Ganesha blessing the festival" className="relative z-10 w-full" />
+              <img src="/images/bappa.webp" alt="Ganesha blessing the festival" className="relative z-10 w-full" />
             
              
             </div>
@@ -216,7 +216,7 @@ export default function HomePage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/new_mandap.png"
+              src="/images/new_mandap.webp"
               alt="A decorated Ganesh mandapam pandal with devotees gathered for aarti"
               className="w-full"
             />
@@ -248,7 +248,7 @@ export default function HomePage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/place.png"
+              src="/images/place.webp"
               alt="Volunteers serving food at an Annadhanam Seva stall near a temple"
               className="w-full"
             />
@@ -293,7 +293,7 @@ export default function HomePage() {
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/food.png"
+              src="/images/food.webp"
               alt="A traditional festival thali served on a banana leaf"
               className="h-48 w-full object-cover sm:h-full sm:max-h-64"
               style={{
