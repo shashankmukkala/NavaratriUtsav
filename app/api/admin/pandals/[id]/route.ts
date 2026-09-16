@@ -29,6 +29,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     address?: string;
     image_url?: string;
     event_date?: string | null;
+    event_date_end?: string | null;
     timing_text?: string | null;
     description?: string | null;
   } = {};
@@ -64,6 +65,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (body?.event_date !== undefined) {
     update.event_date = body.event_date ? String(body.event_date) : null;
+  }
+  if (body?.event_date_end !== undefined) {
+    update.event_date_end = body.event_date_end ? String(body.event_date_end) : null;
   }
   if (body?.timing_text !== undefined) {
     update.timing_text = body.timing_text ? String(body.timing_text).slice(0, 200) : null;

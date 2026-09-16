@@ -610,6 +610,7 @@ function AdminEditPandalModal({
   const [address, setAddress] = useState(pandal.address);
   const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
   const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
+  const [eventDateEnd, setEventDateEnd] = useState(pandal.event_date_end ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
   const [description, setDescription] = useState(pandal.description ?? "");
   const [saving, setSaving] = useState(false);
@@ -625,6 +626,7 @@ function AdminEditPandalModal({
       address,
       image_url: imageUrl,
       event_date: eventDate || null,
+      event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
       description: description || null,
     });
@@ -671,6 +673,21 @@ function AdminEditPandalModal({
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>
+
+          {eventDate && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
+                Serving until (optional — for multiple days)
+              </label>
+              <input
+                type="date"
+                min={eventDate}
+                value={eventDateEnd}
+                onChange={(e) => setEventDateEnd(e.target.value)}
+                className="field-input"
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Additional details</label>
@@ -963,7 +980,9 @@ function PandalRow({
         <p className="text-xs text-[color:var(--muted)]">{pandal.address}</p>
         <p className="text-xs text-[color:var(--muted-soft)]">
           {pandal.organizer_name} · {pandal.contact_phone}
-          {pandal.event_date ? ` · ${pandal.event_date} · ${pandal.timing_text}` : " · Mandapam only — no annadhanam date"}
+          {pandal.event_date
+            ? ` · ${pandal.event_date}${pandal.event_date_end ? ` to ${pandal.event_date_end}` : ""} · ${pandal.timing_text}`
+            : " · Mandapam only — no annadhanam date"}
         </p>
         {pandal.description && <p className="text-xs text-[color:var(--muted-soft)]">{pandal.description}</p>}
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import { BowlIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
-import { getEventStatus, eventStatusLabel, formatEventDate } from "@/lib/eventStatus";
+import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
 
@@ -90,7 +90,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     };
   }, [pandal.id]);
 
-  const eventStatus = getEventStatus(pandal.event_date);
+  const eventStatus = getEventStatus(pandal.event_date, pandal.event_date_end);
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
 
   // A pandal's own paid banner takes priority; otherwise rotate through the
@@ -172,7 +172,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           {pandal.event_date && pandal.timing_text ? (
             <span className="flex flex-wrap items-center gap-1.5">
               <span>
-                {formatEventDate(pandal.event_date)} · {pandal.timing_text}
+                {formatEventDateRange(pandal.event_date, pandal.event_date_end)} · {pandal.timing_text}
               </span>
               {eventStatus && (
                 <span className={`flex-shrink-0 ${eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}`}>

@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
       lat,
       lng,
       event_date: body.event_date ? String(body.event_date) : null,
+      // Only meaningful alongside event_date — ignored otherwise so a
+      // stray end date can't turn into an "annadhanam" with no start day.
+      event_date_end: body.event_date && body.event_date_end ? String(body.event_date_end) : null,
       timing_text: body.timing_text ? String(body.timing_text).slice(0, 200) : null,
       nimajjanam_date: body.nimajjanam_date ? String(body.nimajjanam_date) : null,
       description: body.description ? String(body.description).slice(0, 2000) : null,

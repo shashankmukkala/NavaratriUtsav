@@ -8,6 +8,7 @@ import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import SignInPrompt from "@/components/SignInPrompt";
 import { CalendarIcon, ClockIcon, CopyIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
+import { formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
@@ -154,7 +155,7 @@ export default function ProfilePage() {
                               <>
                                 <span className="inline-flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3" />
-                                  {pandal.event_date}
+                                  {formatEventDateRange(pandal.event_date, pandal.event_date_end)}
                                 </span>
                                 {pandal.timing_text && (
                                   <span className="inline-flex items-center gap-1">
@@ -403,6 +404,7 @@ function EditPandalModal({
   const [organizerName, setOrganizerName] = useState(pandal.organizer_name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
   const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
+  const [eventDateEnd, setEventDateEnd] = useState(pandal.event_date_end ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
   const [description, setDescription] = useState(pandal.description ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
@@ -427,6 +429,7 @@ function EditPandalModal({
         organizer_name: organizerName,
         contact_phone: contactPhone,
         event_date: eventDate || null,
+        event_date_end: eventDateEnd || null,
         timing_text: timingText || null,
         description: description || null,
         image_url: imageUrl,
@@ -496,6 +499,21 @@ function EditPandalModal({
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>
+
+          {eventDate && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
+                Serving until (optional — for multiple days)
+              </label>
+              <input
+                type="date"
+                min={eventDate}
+                value={eventDateEnd}
+                onChange={(e) => setEventDateEnd(e.target.value)}
+                className="field-input"
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Additional details</label>
