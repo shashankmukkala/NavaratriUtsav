@@ -683,8 +683,14 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-hidden p-3 xl:flex">
-      <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
+    // overflow-y-auto, not overflow-hidden — 4 full-width squares (plus
+    // gaps and the label) can be taller than the panel has room for on a
+    // shorter screen; scrolling keeps every slot fully visible and
+    // reachable instead of silently clipping whichever one doesn't fit.
+    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-y-auto p-3 xl:flex">
+      <p className="sticky top-0 z-10 bg-[color:var(--cream-50)] px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
+        Sponsored
+      </p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
         // aspect-square (not flex-1) — these are uploaded as 1:1 squares,
