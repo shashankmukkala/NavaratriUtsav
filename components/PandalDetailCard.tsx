@@ -109,15 +109,14 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     : "card-elevated pointer-events-auto flex max-h-full w-full max-w-sm flex-col overflow-hidden";
 
   const header = (
-    // aspect-video matches the 16:9 crop every photo is uploaded at, so the
-    // frame fits the photo exactly — anything that caps or stretches this
-    // box away from that exact ratio (a fixed height, a max-height for
-    // short screens) is what reintroduces empty bars around the photo.
-    // Short-screen breathing room comes from the banner/footer sizing
-    // below instead, never from squeezing this box.
+    // aspect-video matches the 16:9 crop every photo is uploaded at through
+    // the app's own crop tool — but bulk-imported photos (e.g. the CSV
+    // import) never went through that crop, so object-cover here fills the
+    // frame and crops the excess instead of letterboxing, matching what
+    // the crop-tool preview would have produced.
     <div className="relative aspect-video w-full min-h-0 flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
+      <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-cover" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
       <div className="absolute right-3 top-3 flex items-center gap-2">
         <button
