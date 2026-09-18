@@ -687,7 +687,10 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "min-h-0 flex-1 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
+        // aspect-square (not flex-1) — these are uploaded as 1:1 squares,
+        // so a flexed height stretched them into whatever tall rectangle
+        // the sidebar had room for instead of the shape they were made for.
+        const className = "aspect-square w-full flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -702,7 +705,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex aspect-square w-full flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
             <MegaphoneIcon className="h-4 w-4" />
