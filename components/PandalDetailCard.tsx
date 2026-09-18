@@ -115,7 +115,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     // short screens) is what reintroduces empty bars around the photo.
     // Short-screen breathing room comes from the banner/footer sizing
     // below instead, never from squeezing this box.
-    <div className="relative aspect-video w-full flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
+    <div className="relative aspect-video w-full min-h-0 flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-contain" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
