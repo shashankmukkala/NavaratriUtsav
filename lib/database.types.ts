@@ -18,6 +18,7 @@ export interface Database {
           nimajjanam_date: string | null;
           description: string | null;
           image_url: string;
+          source_image_url: string | null;
           banner_image_urls: string[] | null;
           banner_payment_proof_url: string | null;
           banner_paid: boolean;
@@ -40,6 +41,7 @@ export interface Database {
           nimajjanam_date?: string | null;
           description?: string | null;
           image_url: string;
+          source_image_url?: string | null;
           banner_image_urls?: string[] | null;
           banner_payment_proof_url?: string | null;
           banner_paid?: boolean;
