@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckIcon, CloseIcon, PencilIcon, RefreshIcon, TrashIcon } from "@/components/icons";
+import ImageCropModal from "@/components/ImageCropModal";
 import ImageUploadField from "@/components/ImageUploadField";
 import MultiImageUploadField from "@/components/MultiImageUploadField";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
@@ -12,7 +13,7 @@ type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "card" | "map";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
-type PandalCategoryFilter = "all" | "annadhanams";
+type PandalCategoryFilter = "all" | "annadhanams" | "needs_photo_review";
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -183,7 +184,8 @@ export default function AdminPage() {
     (p) =>
       (pandalFilter === "all" || p.status === pandalFilter) &&
       (pandalCategoryFilter === "all" ||
-        (pandalCategoryFilter === "annadhanams") === !!p.event_date) &&
+        (pandalCategoryFilter === "annadhanams" && !!p.event_date) ||
+        (pandalCategoryFilter === "needs_photo_review" && !!p.source_image_url)) &&
       (pandalSearchLower === "" ||
         p.name.toLowerCase().includes(pandalSearchLower) ||
         p.organizer_name.toLowerCase().includes(pandalSearchLower) ||
@@ -191,6 +193,10 @@ export default function AdminPage() {
         p.address.toLowerCase().includes(pandalSearchLower))
   );
   const annadhanamPandalsCount = pandals.filter((p) => !!p.event_date).length;
+  // Bulk-imported pandals whose photo was auto-cropped with no manual
+  // review — kept as its own filter so admin can work through just these
+  // instead of hunting for them in the full list.
+  const needsPhotoReviewCount = pandals.filter((p) => !!p.source_image_url).length;
   const usersById = new Map(users.map((u) => [u.id, u]));
   // A submission's user_id predates our users table for anyone who signed
   // in before that table existed, so this can legitimately come up empty.
@@ -288,7 +294,7 @@ export default function AdminPage() {
               narrowing filter to just that subset, not a separate category
               (an annadhanam-serving listing is still a mandapam). */}
           <div className="flex flex-wrap gap-1.5">
-            {(["all", "annadhanams"] as const).map((f) => (
+            {(["all", "annadhanams", "needs_photo_review"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -299,7 +305,8 @@ export default function AdminPage() {
                     : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
                 }`}
               >
-                {f === "all" ? "All" : "Annadhanams"} ({f === "all" ? pandals.length : annadhanamPandalsCount})
+                {f === "all" ? "All" : f === "annadhanams" ? "Annadhanams" : "Needs photo review"} (
+                {f === "all" ? pandals.length : f === "annadhanams" ? annadhanamPandalsCount : needsPhotoReviewCount})
               </button>
             ))}
           </div>
@@ -615,6 +622,24 @@ function AdminEditPandalModal({
   const [description, setDescription] = useState(pandal.description ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recropping, setRecropping] = useState(false);
+  const [recropError, setRecropError] = useState<string | null>(null);
+
+  const handleRecropped = async (blob: Blob) => {
+    setRecropping(false);
+    setRecropError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", new File([blob], "photo.jpg", { type: "image/jpeg" }));
+      formData.append("folder", "pandals");
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Upload failed");
+      setImageUrl(data.url);
+    } catch (err) {
+      setRecropError(err instanceof Error ? err.message : "Recrop failed");
+    }
+  };
 
   const handleSave = async () => {
     setError(null);
@@ -642,6 +667,20 @@ function AdminEditPandalModal({
 
         <div className="mt-4 space-y-4">
           <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+
+          {pandal.source_image_url && (
+            // Only pandals bulk-imported from an external source have this —
+            // their stored photo was already auto-cropped once with no
+            // manual review, so this re-opens the crop tool on the actual
+            // original instead of the already-cropped (and already
+            // pixel-lossy) file "Change photo" above would otherwise offer.
+            <div>
+              <button type="button" onClick={() => setRecropping(true)} className="btn-secondary w-full justify-center py-2">
+                Adjust crop from original photo
+              </button>
+              {recropError && <p className="mt-1 text-xs text-[color:var(--coral-deep)]">{recropError}</p>}
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Name</label>
@@ -706,6 +745,15 @@ function AdminEditPandalModal({
           </button>
         </div>
       </div>
+
+      {recropping && pandal.source_image_url && (
+        <ImageCropModal
+          imageSrc={`/api/admin/image-proxy?url=${encodeURIComponent(pandal.source_image_url)}`}
+          aspect={16 / 9}
+          onCancel={() => setRecropping(false)}
+          onCropped={handleRecropped}
+        />
+      )}
     </div>
   );
 }
@@ -961,6 +1009,11 @@ function PandalRow({
           >
             {pandal.event_date ? "Annadhanam" : "Mandapam only"}
           </span>
+          {pandal.source_image_url && (
+            <span className="flex-shrink-0 rounded-full bg-[rgba(220,38,38,0.1)] px-2 py-0.5 text-[0.625rem] font-semibold text-red-700">
+              Photo needs review
+            </span>
+          )}
         </div>
       </div>
 
@@ -976,6 +1029,11 @@ function PandalRow({
           >
             {pandal.event_date ? "Annadhanam" : "Mandapam only"}
           </span>
+          {pandal.source_image_url && (
+            <span className="flex-shrink-0 rounded-full bg-[rgba(220,38,38,0.1)] px-2 py-0.5 text-[0.625rem] font-semibold text-red-700">
+              Photo needs review
+            </span>
+          )}
         </div>
         <p className="text-xs text-[color:var(--muted)]">{pandal.address}</p>
         <p className="text-xs text-[color:var(--muted-soft)]">
