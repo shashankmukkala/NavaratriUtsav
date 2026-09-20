@@ -114,10 +114,17 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     // import) never went through that crop, so object-cover here fills the
     // frame and crops the excess instead of letterboxing, matching what
     // the crop-tool preview would have produced.
-    <div className="relative aspect-video w-full min-h-0 flex-shrink-0 bg-[rgba(43,22,8,0.06)]">
+    <div className="relative aspect-video w-full min-h-0 flex-shrink-0 overflow-hidden bg-[rgba(43,22,8,0.06)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-cover" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
+      {pandal.featured && pandal.milestone_text && (
+        <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 overflow-hidden">
+          <div className="absolute -left-9 top-[18px] w-[150px] rotate-[-45deg] bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 py-1 text-center text-[11px] font-bold text-amber-950 shadow-md">
+            ✨ {pandal.milestone_text}
+          </div>
+        </div>
+      )}
       <div className="absolute right-3 top-3 flex items-center gap-2">
         <button
           onClick={share}
@@ -150,7 +157,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
         </span>
-        {pandal.featured && pandal.milestone_text && <span className="badge-milestone">✨ {pandal.milestone_text}</span>}
       </div>
 
       <div className="space-y-1.5 text-[13px] text-[color:var(--muted)]">
