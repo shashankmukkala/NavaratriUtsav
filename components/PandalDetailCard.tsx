@@ -150,6 +150,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
         </span>
+        {pandal.featured && pandal.milestone_text && <span className="badge-milestone">✨ {pandal.milestone_text}</span>}
       </div>
 
       <div className="space-y-1.5 text-[13px] text-[color:var(--muted)]">

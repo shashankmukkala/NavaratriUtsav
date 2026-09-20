@@ -620,6 +620,8 @@ function AdminEditPandalModal({
   const [eventDateEnd, setEventDateEnd] = useState(pandal.event_date_end ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
   const [description, setDescription] = useState(pandal.description ?? "");
+  const [featured, setFeatured] = useState(pandal.featured);
+  const [milestoneText, setMilestoneText] = useState(pandal.milestone_text ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recropping, setRecropping] = useState(false);
@@ -654,6 +656,8 @@ function AdminEditPandalModal({
       event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
       description: description || null,
+      featured,
+      milestone_text: milestoneText || null,
     });
     setSaving(false);
     if (!result.ok) setError(result.error);
@@ -731,6 +735,29 @@ function AdminEditPandalModal({
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Additional details</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="field-input" />
+          </div>
+
+          {/* A milestone worth calling out (e.g. a 114th year of
+              celebrations) — glows/pulses on the map pin and shows this
+              text as a badge on the card. Not a paid placement, so it's a
+              plain admin toggle rather than anything tied to the sponsor flow. */}
+          <div className="rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.05)] p-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-[color:var(--foreground)]">
+              <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="h-4 w-4" />
+              Featured (glowing highlight on map + card)
+            </label>
+            {featured && (
+              <div className="mt-2">
+                <label className="mb-1 block text-xs font-medium text-[color:var(--muted)]">Badge text (e.g. &quot;114th Year&quot;)</label>
+                <input
+                  value={milestoneText}
+                  onChange={(e) => setMilestoneText(e.target.value)}
+                  placeholder="114th Year"
+                  maxLength={60}
+                  className="field-input"
+                />
+              </div>
+            )}
           </div>
         </div>
 

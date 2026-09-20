@@ -32,6 +32,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     event_date_end?: string | null;
     timing_text?: string | null;
     description?: string | null;
+    featured?: boolean;
+    milestone_text?: string | null;
   } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -74,6 +76,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (body?.description !== undefined) {
     update.description = body.description ? String(body.description).slice(0, 2000) : null;
+  }
+  if (body?.featured !== undefined) {
+    update.featured = Boolean(body.featured);
+  }
+  if (body?.milestone_text !== undefined) {
+    update.milestone_text = body.milestone_text ? String(body.milestone_text).slice(0, 60) : null;
   }
 
   if (Object.keys(update).length === 0) {

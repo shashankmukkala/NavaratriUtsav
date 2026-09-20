@@ -131,13 +131,17 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
     }
   }, [loaded, pandals]);
 
-  // Toggle the selected pin's styling (filled saffron pill + visible name)
-  // without rebuilding markers.
+  // Toggle the selected pin's styling (filled saffron pill + visible name),
+  // and the featured glow — both need to react to data changes (an admin
+  // toggling "featured") without waiting for a marker to be recreated, so
+  // this can't rely on the className set once at marker-creation time above.
   useEffect(() => {
+    const featuredIds = new Set(pandals.filter((p) => p.featured).map((p) => p.id));
     for (const [id, entry] of markersRef.current) {
       entry.el.classList.toggle("map-pin-selected", id === selectedId);
+      entry.el.classList.toggle("map-pin-featured", featuredIds.has(id));
     }
-  }, [selectedId, pandals]);
+  }, [selectedId, pandals, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;

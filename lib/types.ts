@@ -32,6 +32,13 @@ export interface Pandal {
   /** A short note from admin to the owner — why a listing was rejected,
    * etc. Shown on the owner's profile until they dismiss it. */
   admin_note: string | null;
+  /** Glowing/pulsing highlight on the map pin + a badge on its card — for a
+   * milestone worth calling out (e.g. a 114th year of celebrations), not a
+   * paid placement. */
+  featured: boolean;
+  /** The badge's own text when featured (e.g. "114th Year"). Kept separate
+   * from `featured` so turning the highlight off doesn't lose what was typed. */
+  milestone_text: string | null;
   created_at: string;
 }
 
