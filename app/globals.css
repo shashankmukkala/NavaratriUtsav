@@ -193,7 +193,11 @@ body {
    orange used for "selected" so the two never look like the same thing. */
 .map-pin-featured {
   position: relative;
-  z-index: 500;
+  /* Just enough to sit above sibling pins (default stacking, z-index auto)
+     in a dense cluster — markers apparently share a stacking context with
+     the app's overlay panels (list sheet is z-10, detail popup is z-30),
+     so anything much higher here leaks out and floats above those too. */
+  z-index: 5;
   padding: 5px;
   background: linear-gradient(145deg, #fff3bf 0%, #fbbf24 55%, #d97706 100%);
   border: 2.5px solid #fef3c7;
