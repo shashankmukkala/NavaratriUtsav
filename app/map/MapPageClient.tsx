@@ -386,7 +386,12 @@ export default function MapPageClient() {
             of this as real glass panels (see GlassBlurLayer) so they mirror
             and blur the live map behind them, instead of sitting beside a
             separately-framed map panel with nothing to blur. */}
-        <div className="absolute inset-4 overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
+        {/* isolate: without its own stacking context, a marker's z-index
+            (e.g. the featured-pandal glow) compares directly against the
+            sidebar/header overlays floating on top of this instead of
+            being contained to just this map layer — isolate keeps any
+            z-index inside here from ever leaking past this box. */}
+        <div className="absolute inset-4 isolate overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
           <VisitorCountBadge />
         </div>
@@ -499,7 +504,7 @@ export default function MapPageClient() {
           </div>
         </header>
 
-        <div className="relative flex-1">
+        <div className="relative isolate flex-1">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
           <VisitorCountBadge />
 
