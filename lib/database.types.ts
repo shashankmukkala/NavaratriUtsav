@@ -25,6 +25,8 @@ export interface Database {
           user_id: string | null;
           status: "pending" | "approved" | "rejected";
           admin_note: string | null;
+          featured: boolean;
+          milestone_text: string | null;
           created_at: string;
         };
         Insert: {
@@ -48,6 +50,8 @@ export interface Database {
           user_id?: string | null;
           status?: "pending" | "approved" | "rejected";
           admin_note?: string | null;
+          featured?: boolean;
+          milestone_text?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["pandals"]["Insert"]>;

@@ -1056,7 +1056,10 @@ function PandalList({
         const eventStatus = getEventStatus(pandal.event_date, pandal.event_date_end);
         return (
           <li key={pandal.id}>
-            <button onClick={() => onSelect(pandal)} className={`list-row w-full ${selectedId === pandal.id ? "list-row-active" : ""}`}>
+            <button
+              onClick={() => onSelect(pandal)}
+              className={`list-row w-full ${selectedId === pandal.id ? "list-row-active" : ""} ${pandal.featured ? "list-row-featured" : ""}`}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 flex-1">
@@ -1081,11 +1084,12 @@ function PandalList({
                     )}
                   </p>
                 )}
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span className="badge-verified">
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified
                   </span>
+                  {pandal.featured && pandal.milestone_text && <span className="badge-milestone">✨ {pandal.milestone_text}</span>}
                 </div>
               </div>
               <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--muted-soft)]" />

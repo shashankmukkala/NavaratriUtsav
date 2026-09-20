@@ -181,6 +181,47 @@ body {
   display: inline;
 }
 
+/* A milestone-highlighted mandapam (e.g. a 114th year of celebrations) —
+   a warm gold glow plus a slow pulsing ring, distinct from the saffron/
+   orange used for "selected" so the two never read as the same thing. */
+.map-pin-featured {
+  position: relative;
+  border-color: #f9d776;
+  box-shadow: 0 4px 14px rgba(20, 12, 4, 0.28), 0 0 0 1px rgba(217, 160, 15, 0.5), 0 0 16px 2px rgba(250, 204, 21, 0.55);
+}
+
+.map-pin-featured::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.55) 0%, rgba(250, 204, 21, 0) 70%);
+  animation: featured-pin-pulse 2.4s ease-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.map-pin-featured.map-pin-selected {
+  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.48), 0 0 0 4px rgba(250, 204, 21, 0.55), 0 0 18px 3px rgba(250, 204, 21, 0.6);
+}
+
+@keyframes featured-pin-pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-pin-featured::before {
+    animation: none;
+  }
+}
+
 /* "You are here" — the device's own GPS position, once location is on.
    A solid dot (never clickable/selectable, unlike a pandal pin) with a
    soft pulsing halo, the same visual language as a live-location dot in
@@ -655,6 +696,10 @@ body {
   background: rgba(234, 108, 29, 0.08);
 }
 
+.list-row-featured {
+  box-shadow: inset 0 0 0 1.5px rgba(217, 160, 15, 0.5), 0 0 12px 1px rgba(250, 204, 21, 0.25);
+}
+
 .list-row-active {
   background: rgba(234, 108, 29, 0.12);
 }
@@ -687,4 +732,37 @@ body {
   font-size: 0.6875rem;
   font-weight: 650;
   color: var(--accent-deep);
+}
+
+/* Milestone badge (e.g. "114th Year") — same warm gold as the map pin's
+   glow, with a slow shimmer instead of a pulse (a pulsing badge sitting in
+   text is distracting; the map pin already carries the pulsing motion). */
+.badge-milestone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #7a4f01;
+  background: linear-gradient(100deg, #fde68a 0%, #fbbf24 45%, #fde68a 100%);
+  background-size: 220% 100%;
+  box-shadow: 0 0 10px 1px rgba(250, 204, 21, 0.45);
+  animation: milestone-shimmer 3.5s ease-in-out infinite;
+}
+
+@keyframes milestone-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-milestone {
+    animation: none;
+  }
 }
