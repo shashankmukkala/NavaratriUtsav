@@ -135,6 +135,10 @@ body {
   box-shadow: 0 8px 20px rgba(20, 12, 4, 0.34);
 }
 
+.map-pin-featured:hover {
+  transform: translateY(-2px) scale(1.18);
+}
+
 .map-pin-icon {
   display: flex;
   align-items: center;
@@ -182,36 +186,67 @@ body {
 }
 
 /* A milestone-highlighted mandapam (e.g. a 114th year of celebrations) —
-   a warm gold glow plus a slow pulsing ring, distinct from the saffron/
-   orange used for "selected" so the two never read as the same thing. */
+   the whole ring goes solid gold (not just an outline), sits above every
+   other pin even in a dense overlapping cluster, and pulses a bright halo
+   plus a small star badge so it reads as a highlight at a glance, not
+   just a slightly different border color. Distinct from the saffron/
+   orange used for "selected" so the two never look like the same thing. */
 .map-pin-featured {
   position: relative;
-  border-color: #f9d776;
-  box-shadow: 0 4px 14px rgba(20, 12, 4, 0.28), 0 0 0 1px rgba(217, 160, 15, 0.5), 0 0 16px 2px rgba(250, 204, 21, 0.55);
+  z-index: 500;
+  padding: 5px;
+  background: linear-gradient(145deg, #fff3bf 0%, #fbbf24 55%, #d97706 100%);
+  border: 2.5px solid #fef3c7;
+  transform: scale(1.14);
+  box-shadow: 0 6px 18px rgba(120, 72, 0, 0.45), 0 0 0 2px rgba(250, 204, 21, 0.9), 0 0 24px 6px rgba(250, 204, 21, 0.85);
+}
+
+.map-pin-featured .map-pin-icon {
+  background: linear-gradient(145deg, #fffbeb, #fde68a);
+  box-shadow: inset 0 0 0 1.5px rgba(180, 83, 9, 0.35);
 }
 
 .map-pin-featured::before {
   content: "";
   position: absolute;
-  inset: -6px;
+  inset: -12px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(250, 204, 21, 0.55) 0%, rgba(250, 204, 21, 0) 70%);
-  animation: featured-pin-pulse 2.4s ease-out infinite;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.7) 0%, rgba(250, 204, 21, 0) 70%);
+  animation: featured-pin-pulse 2s ease-out infinite;
   pointer-events: none;
   z-index: -1;
 }
 
+.map-pin-featured::after {
+  content: "\2605";
+  position: absolute;
+  top: -9px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: #78350f;
+  background: radial-gradient(circle, #fef9c3, #fbbf24);
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(120, 72, 0, 0.45);
+}
+
 .map-pin-featured.map-pin-selected {
-  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.48), 0 0 0 4px rgba(250, 204, 21, 0.55), 0 0 18px 3px rgba(250, 204, 21, 0.6);
+  background: var(--gradient-accent);
+  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.5), 0 0 0 3px rgba(250, 204, 21, 0.95), 0 0 26px 7px rgba(250, 204, 21, 0.9);
 }
 
 @keyframes featured-pin-pulse {
   0% {
     transform: scale(0.85);
-    opacity: 0.9;
+    opacity: 0.95;
   }
   100% {
-    transform: scale(1.6);
+    transform: scale(1.8);
     opacity: 0;
   }
 }
