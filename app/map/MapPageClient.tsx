@@ -13,14 +13,15 @@ import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/ev
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import { isServedState } from "@/lib/servedArea";
-import type { GeocodeResult, Pandal, Sponsor } from "@/lib/types";
+import type { GeocodeResult, Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type Filter = "all" | "today" | "open";
 type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" | "outside-area";
 // "mandapams" = every listing (a mandapam serving annadhanam is still a
 // mandapam); "annadhanams" narrows that down to just the ones with a food
-// service date set. A subset, not a separate partition.
-type Category = "annadhanams" | "mandapams";
+// service date set; "star" narrows to the paid/admin-picked highlighted
+// ones. All subsets of "mandapams", not separate partitions.
+type Category = "annadhanams" | "mandapams" | "star";
 
 function isServingToday(startDate: string | null, endDate: string | null) {
   return getEventStatus(startDate, endDate) === "today";
@@ -99,6 +100,10 @@ export default function MapPageClient() {
     setCategory(c);
     setFilter("all");
   };
+  const [settings, setSettings] = useState<PaymentSettings | null>(null);
+  useEffect(() => {
+    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+  }, []);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
   // The state name Nominatim resolved a rejected GPS fix or search to, so
@@ -354,6 +359,7 @@ export default function MapPageClient() {
       // date; "Mandapams" is everyone — an annadhanam-serving mandapam is
       // still a mandapam, so it shouldn't disappear from that view.
       .filter((p) => (category === "annadhanams" ? !!p.event_date : true))
+      .filter((p) => (category === "star" ? !!p.featured : true))
       .filter((p) => (filter === "today" ? isServingToday(p.event_date, p.event_date_end) : true))
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
@@ -447,6 +453,7 @@ export default function MapPageClient() {
                     filter={filter}
                     onFilterChange={setFilter}
                     searchOutOfArea={searchOutOfArea}
+                    starPrice={settings?.star_price ?? 99}
                   />
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
@@ -543,6 +550,7 @@ export default function MapPageClient() {
                   onFilterChange={setFilter}
                   scrollableFilters
                   searchOutOfArea={searchOutOfArea}
+                  starPrice={settings?.star_price ?? 99}
                 />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
@@ -846,6 +854,7 @@ function NearbyListHeader({
   onFilterChange,
   scrollableFilters = false,
   searchOutOfArea = null,
+  starPrice,
 }: {
   areaCenter: { lat: number; lng: number } | null;
   query: string;
@@ -859,9 +868,10 @@ function NearbyListHeader({
   onFilterChange: (f: Filter) => void;
   scrollableFilters?: boolean;
   searchOutOfArea?: string | null;
+  starPrice: number;
 }) {
   const searchedPlace = query.trim();
-  const noun = category === "annadhanams" ? "Annadhanam" : "Mandapam";
+  const noun = category === "annadhanams" ? "Annadhanam" : category === "star" ? "Starred Mandapam" : "Mandapam";
   // "Near You" is only honest once we're actually centered on the user's
   // real location — otherwise (no location, or a searched area) it's a
   // claim about proximity we can't back up.
@@ -915,10 +925,19 @@ function NearbyListHeader({
         <FilterChip active={category === "mandapams"} onClick={() => onCategoryChange("mandapams")}>
           Mandapams
         </FilterChip>
+        <FilterChip active={category === "star"} onClick={() => onCategoryChange("star")}>
+          ✨ Star
+        </FilterChip>
         <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
           Annadhanams
         </FilterChip>
       </div>
+
+      {category === "star" && (
+        <p className="mt-2 rounded-xl bg-[rgba(250,204,21,0.12)] px-3 py-2 text-xs text-[color:var(--muted)]">
+          ✨ Want your mandapam highlighted here? Open its card on the map and get a star for ₹{starPrice}.
+        </p>
+      )}
 
       {category === "annadhanams" && (
         <div className={`mt-2 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
