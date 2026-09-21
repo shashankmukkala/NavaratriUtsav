@@ -10,11 +10,12 @@ export default async function AdsChoicePage() {
   // adding a client-side fetch waterfall for two numbers.
   const { data: settings } = await supabaseAdmin()
     .from("payment_settings")
-    .select("map_ad_price, card_ad_price")
+    .select("map_ad_price, card_ad_price, crow_ad_price")
     .eq("id", true)
     .single();
   const mapAdPrice = settings?.map_ad_price ?? 500;
   const cardAdPrice = settings?.card_ad_price ?? 200;
+  const crowAdPrice = settings?.crow_ad_price ?? 300;
 
   return (
     <div
@@ -43,7 +44,7 @@ export default async function AdsChoicePage() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Link href="/sponsor" className="card-elevated group flex flex-col p-6 transition-transform hover:-translate-y-1 sm:p-8">
             <div className="flex items-center justify-between">
               <span className="icon-tile icon-tile-circle h-12 w-12">
@@ -77,6 +78,24 @@ export default async function AdsChoicePage() {
             <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
               Your banner shows inside mandapam detail cards — seen by people who open one to check details. Less
               reach than the map, so it costs less.
+            </p>
+            <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-deep)]">
+              Advertise now
+              <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </span>
+          </Link>
+
+          <Link href="/sponsor?target=crow" className="card-elevated group flex flex-col p-6 transition-transform hover:-translate-y-1 sm:p-8">
+            <div className="flex items-center justify-between">
+              <span className="icon-tile icon-tile-circle h-12 w-12 text-xl">★</span>
+              <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
+                ₹{crowAdPrice} / 2 days
+              </span>
+            </div>
+            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Flying ad (crow/rocket)</h2>
+            <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
+              Your banner trails behind a crow or rocket making a pass across the map every so often — the most
+              eye-catching placement, premium priced to match.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-deep)]">
               Advertise now

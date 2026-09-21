@@ -57,16 +57,19 @@ function readSponsorDraft(): SponsorDraft | null {
 
 function SponsorPageInner() {
   // ?target=pandal → the cheaper tier shown generically inside mandapam
-  // detail cards (not targeted at any one specific mandapam). Anything else
-  // → the map-wide sponsored slots. useSearchParams (not a raw
-  // window.location check) resolves correctly during SSR, so the server and
-  // client render the same branch on the very first paint.
+  // detail cards (not targeted at any one specific mandapam). ?target=crow
+  // → the premium animated flying-banner placement. Anything else → the
+  // map-wide sponsored slots. useSearchParams (not a raw window.location
+  // check) resolves correctly during SSR, so the server and client render
+  // the same branch on the very first paint.
   const searchParams = useSearchParams();
-  const isPandalTarget = searchParams.get("target") === "pandal";
+  const targetParam = searchParams.get("target");
+  const isPandalTarget = targetParam === "pandal";
+  const isCrowTarget = targetParam === "crow";
 
   const [draft] = useState(readSponsorDraft);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const price = isPandalTarget ? (settings?.card_ad_price ?? 200) : (settings?.map_ad_price ?? 500);
+  const price = isPandalTarget ? (settings?.card_ad_price ?? 200) : isCrowTarget ? (settings?.crow_ad_price ?? 300) : (settings?.map_ad_price ?? 500);
   const [sponsorName, setSponsorName] = useState(draft?.sponsorName ?? "");
   const [contactPhone, setContactPhone] = useState(draft?.contactPhone ?? "");
   const [linkUrl, setLinkUrl] = useState(draft?.linkUrl ?? "");
@@ -129,7 +132,7 @@ function SponsorPageInner() {
 
     setSubmitting(true);
     const result = await sendJson("/api/sponsors", {
-      placement: isPandalTarget ? "card" : "map",
+      placement: isPandalTarget ? "card" : isCrowTarget ? "crow" : "map",
       sponsor_name: sponsorName,
       contact_phone: contactPhone,
       link_url: linkUrl || null,
@@ -164,7 +167,7 @@ function SponsorPageInner() {
         <SignInPrompt
           open={showSignIn}
           onClose={() => setShowSignIn(false)}
-          callbackUrl={isPandalTarget ? "/sponsor?target=pandal" : "/sponsor"}
+          callbackUrl={isPandalTarget ? "/sponsor?target=pandal" : isCrowTarget ? "/sponsor?target=crow" : "/sponsor"}
           message="We use your Google account just to know who this ad belongs to — no accounts of our own to manage."
         />
 
@@ -184,21 +187,34 @@ function SponsorPageInner() {
         ) : (
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1.2fr] lg:items-start lg:gap-16 lg:pt-16">
             <div className="lg:sticky lg:top-8">
-              <p className="eyebrow">{isPandalTarget ? "Advertise on Mandapam Cards" : "Advertise on the Map"}</p>
+              <p className="eyebrow">
+                {isPandalTarget ? "Advertise on Mandapam Cards" : isCrowTarget ? "Advertise with a Flying Ad" : "Advertise on the Map"}
+              </p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
-                {isPandalTarget ? "Put your ad on mandapam cards." : "Put your ad in front of everyone."}
+                {isPandalTarget
+                  ? "Put your ad on mandapam cards."
+                  : isCrowTarget
+                    ? "Send your banner flying across the map."
+                    : "Put your ad in front of everyone."}
               </h1>
               <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
                 {isPandalTarget
                   ? "Your ad banner shows inside mandapam detail cards — seen by anyone who opens one."
-                  : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for an Annadhanam nearby."}
+                  : isCrowTarget
+                    ? "A crow (or rocket) tows your banner across the map every so often — the most eye-catching placement we have."
+                    : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for an Annadhanam nearby."}
               </p>
 
               <div className="mt-8 space-y-4">
-                <InfoRow icon={<MegaphoneIcon className="h-5 w-5" />} title={isPandalTarget ? "Shown on mandapam cards" : "Shown on the map"}>
+                <InfoRow
+                  icon={<MegaphoneIcon className="h-5 w-5" />}
+                  title={isPandalTarget ? "Shown on mandapam cards" : isCrowTarget ? "Flies across the map" : "Shown on the map"}
+                >
                   {isPandalTarget
                     ? "Your banner appears when someone opens any mandapam's card."
-                    : "Your banner appears in the sponsored slots everyone sees while browsing."}
+                    : isCrowTarget
+                      ? "Your banner trails behind a crow or rocket making a pass over the map, on a loop everyone browsing can see."
+                      : "Your banner appears in the sponsored slots everyone sees while browsing."}
                 </InfoRow>
                 <InfoRow icon={<VerifiedIcon className="h-5 w-5" />} title="Reviewed, not automatic">
                   An admin verifies your payment before your ad goes live.
@@ -288,11 +304,13 @@ function SponsorPageInner() {
                 hint={
                   isPandalTarget
                     ? "A wide rectangle works best — that's the shape of the banner slot inside mandapam cards. Upload up to 3 and they'll rotate like a slideshow."
-                    : "Square (1:1) works best — that's the shape of the ad slot on the map. Upload up to 3 and they'll rotate like a slideshow."
+                    : isCrowTarget
+                      ? "A long, thin banner (3:1) works best — that's the shape trailing behind the crow/rocket. Upload up to 3 and they'll rotate like a slideshow."
+                      : "Square (1:1) works best — that's the shape of the ad slot on the map. Upload up to 3 and they'll rotate like a slideshow."
                 }
                 value={bannerUrls}
                 onChange={setBannerUrls}
-                aspect={isPandalTarget ? 2.2 : 1}
+                aspect={isPandalTarget ? 2.2 : isCrowTarget ? 3 : 1}
               />
 
               <div>
