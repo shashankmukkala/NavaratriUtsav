@@ -70,7 +70,9 @@ export default function FlyingAdOverlay({
   if (images.length === 0) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-[3] overflow-hidden">
+    // z-[6]: above a featured mandapam's glowing map pin (z-index: 5, see
+    // .map-pin-featured in globals.css) — this was passing underneath it.
+    <div className="pointer-events-none absolute inset-0 z-[6] overflow-hidden">
       <div
         key={flight.key}
         className={`absolute ${topClassName} ${flight.reverse ? "flying-ad-rtl" : "flying-ad-ltr"}`}
@@ -82,7 +84,7 @@ export default function FlyingAdOverlay({
             the banner would flip the sponsor's actual uploaded image —
             any text or logo in it would render backwards, which is wrong
             regardless of which way it's flying. */}
-        <div className={`flex items-center gap-1 sm:gap-1.5 ${flight.reverse ? "flex-row" : "flex-row-reverse"}`}>
+        <div className={`flex items-center gap-0 ${flight.reverse ? "flex-row" : "flex-row-reverse"}`}>
           {flight.sponsor.vehicle === "rocket" ? (
             <RocketIcon
               className={`h-6 w-6 flex-shrink-0 drop-shadow-md sm:h-7 sm:w-7 xl:h-9 xl:w-9 ${flight.reverse ? "-scale-x-100" : ""}`}
@@ -91,19 +93,32 @@ export default function FlyingAdOverlay({
             // A real animated GIF (its own baked-in flap frames, transparent
             // background) instead of the flat SVG silhouette — much closer
             // to "a real nice crow" than shape-based CSS animation can get.
-            // Sized down on small screens — the desktop size would dwarf a
-            // phone-width map. Unlike the rocket (drawn nose-right on
-            // purpose), this GIF's own artwork faces left by default —
-            // checked frame-by-frame — so its flip condition is the
-            // opposite of the rocket's.
+            // The source frames have a large transparent margin baked
+            // around the bird itself, so the box is sized tighter than the
+            // frame's own aspect ratio to pull it visually closer to the
+            // rope/banner (re-encoding to trim that margin server-side
+            // isn't viable — this build's GIF/WebP encoder can't produce
+            // multi-frame output from reprocessed frames, confirmed via a
+            // minimal isolated test, only single-frame output). Sized down
+            // on small screens — the desktop size would dwarf a phone-width
+            // map. Unlike the rocket (drawn nose-right on purpose), this
+            // artwork faces left by default — checked frame-by-frame — so
+            // its flip condition is the opposite of the rocket's.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/images/crow-flying.gif"
               alt=""
-              className={`h-12 w-20 flex-shrink-0 object-contain drop-shadow-md sm:h-14 sm:w-24 xl:h-20 xl:w-32 ${flight.reverse ? "" : "-scale-x-100"}`}
+              // Negative margin pulls the visible bird closer to the rope,
+              // compensating for the transparent margin baked into the
+              // source frames — flex-row-reverse (LTR) swaps which side is
+              // physically trailing, so this has to flip with it or it'd
+              // push the bird further away instead of closer on that side.
+              className={`h-12 w-16 flex-shrink-0 object-contain drop-shadow-md sm:h-14 sm:w-20 xl:h-20 xl:w-28 ${
+                flight.reverse ? "-mr-3 sm:-mr-4 xl:-mr-6 " : "-ml-3 sm:-ml-4 xl:-ml-6 "
+              }${flight.reverse ? "" : "-scale-x-100"}`}
             />
           )}
-          <div className="h-px w-3 flex-shrink-0 bg-[rgba(43,22,8,0.45)] sm:w-4 xl:w-6" />
+          <div className="h-px w-1 flex-shrink-0 bg-[rgba(43,22,8,0.45)] sm:w-1.5 xl:w-2" />
           {flight.sponsor.link_url ? (
             <a
               href={flight.sponsor.link_url}
