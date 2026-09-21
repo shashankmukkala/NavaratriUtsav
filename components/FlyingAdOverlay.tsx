@@ -72,33 +72,37 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
             the banner would flip the sponsor's actual uploaded image —
             any text or logo in it would render backwards, which is wrong
             regardless of which way it's flying. */}
-        <div className={`flex items-center gap-1.5 ${flight.reverse ? "flex-row" : "flex-row-reverse"}`}>
+        <div className={`flex items-center gap-1 sm:gap-1.5 ${flight.reverse ? "flex-row" : "flex-row-reverse"}`}>
           {flight.sponsor.vehicle === "rocket" ? (
-            <RocketIcon className={`h-9 w-9 flex-shrink-0 drop-shadow-md ${flight.reverse ? "-scale-x-100" : ""}`} />
+            <RocketIcon
+              className={`h-6 w-6 flex-shrink-0 drop-shadow-md sm:h-7 sm:w-7 xl:h-9 xl:w-9 ${flight.reverse ? "-scale-x-100" : ""}`}
+            />
           ) : (
             // A real animated GIF (its own baked-in flap frames, transparent
             // background) instead of the flat SVG silhouette — much closer
             // to "a real nice crow" than shape-based CSS animation can get.
+            // Sized down on small screens — the desktop size would dwarf a
+            // phone-width map.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/images/crow-flying.gif"
               alt=""
-              className={`h-20 w-32 flex-shrink-0 object-contain drop-shadow-md ${flight.reverse ? "-scale-x-100" : ""}`}
+              className={`h-12 w-20 flex-shrink-0 object-contain drop-shadow-md sm:h-14 sm:w-24 xl:h-20 xl:w-32 ${flight.reverse ? "-scale-x-100" : ""}`}
             />
           )}
-          <div className="h-px w-6 flex-shrink-0 bg-[rgba(43,22,8,0.45)]" />
+          <div className="h-px w-3 flex-shrink-0 bg-[rgba(43,22,8,0.45)] sm:w-4 xl:w-6" />
           {flight.sponsor.link_url ? (
             <a
               href={flight.sponsor.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="pointer-events-auto block h-11 w-32 flex-shrink-0 overflow-hidden rounded-md border border-white/60 shadow-lg"
+              className="pointer-events-auto block h-7 w-20 flex-shrink-0 overflow-hidden rounded-md border border-white/60 shadow-lg sm:h-9 sm:w-24 xl:h-11 xl:w-32"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={images[0]} alt={flight.sponsor.sponsor_name} className="h-full w-full object-cover" />
             </a>
           ) : (
-            <div className="block h-11 w-32 flex-shrink-0 overflow-hidden rounded-md border border-white/60 shadow-lg">
+            <div className="block h-7 w-20 flex-shrink-0 overflow-hidden rounded-md border border-white/60 shadow-lg sm:h-9 sm:w-24 xl:h-11 xl:w-32">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={images[0]} alt={flight.sponsor.sponsor_name} className="h-full w-full object-cover" />
             </div>
