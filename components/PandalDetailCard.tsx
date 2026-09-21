@@ -136,7 +136,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
       {pandal.featured && pandal.milestone_text && (
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 overflow-hidden">
           <div className="absolute -left-9 top-[18px] w-[150px] rotate-[-45deg] bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 py-1 text-center text-[11px] font-bold text-amber-950 shadow-md">
-            ✨ {pandal.milestone_text}
+            ★ {pandal.milestone_text}
           </div>
         </div>
       )}
@@ -183,10 +183,10 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             onClick={() => setShowStarModal(true)}
             className="badge-milestone"
           >
-            ✨ Get a star
+            ★ Get a star
           </button>
         )}
-        {isOwner && starPending && <span className="badge-milestone opacity-70">✨ Star pending review</span>}
+        {isOwner && starPending && <span className="badge-milestone opacity-70">★ Star pending review</span>}
       </div>
 
       <div className="space-y-1.5 text-[13px] text-[color:var(--muted)]">

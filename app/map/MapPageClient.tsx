@@ -7,6 +7,7 @@ import Brand from "@/components/Brand";
 import MapView from "@/components/MapView";
 import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
+import StarHighlightCTA from "@/components/StarHighlightCTA";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
 import { BowlIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
@@ -926,18 +927,14 @@ function NearbyListHeader({
           Mandapams
         </FilterChip>
         <FilterChip active={category === "star"} onClick={() => onCategoryChange("star")}>
-          ✨ Star
+          ★ Star
         </FilterChip>
         <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
           Annadhanams
         </FilterChip>
       </div>
 
-      {category === "star" && (
-        <p className="mt-2 rounded-xl bg-[rgba(250,204,21,0.12)] px-3 py-2 text-xs text-[color:var(--muted)]">
-          ✨ Want your mandapam highlighted here? Open its card on the map and get a star for ₹{starPrice}.
-        </p>
-      )}
+      {category === "star" && <StarHighlightCTA starPrice={starPrice} />}
 
       {category === "annadhanams" && (
         <div className={`mt-2 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
@@ -1104,7 +1101,7 @@ function PandalList({
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified
                   </span>
-                  {pandal.featured && pandal.milestone_text && <span className="badge-milestone">✨ {pandal.milestone_text}</span>}
+                  {pandal.featured && pandal.milestone_text && <span className="badge-milestone">★ {pandal.milestone_text}</span>}
                 </div>
               </div>
               <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--muted-soft)]" />
