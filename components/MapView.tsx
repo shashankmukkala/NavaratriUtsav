@@ -109,7 +109,7 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
       const icon = document.createElement("span");
       icon.className = "map-pin-icon";
       const img = document.createElement("img");
-      img.src = pandal.image_url;
+      img.src = pandal.thumbnail_url || pandal.image_url;
       img.alt = "";
       icon.appendChild(img);
 

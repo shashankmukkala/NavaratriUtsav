@@ -10,6 +10,11 @@ interface ImageUploadFieldProps {
   required?: boolean;
   value: string | null;
   onChange: (url: string | null) => void;
+  /** Fired alongside onChange whenever the upload response includes a
+   * generated thumbnail (currently only for folder="pandals") — callers
+   * that store a pandal's thumbnail_url wire this up; everyone else can
+   * ignore it. */
+  onThumbnailChange?: (url: string | null) => void;
   /** When given, a selected photo goes through a drag/zoom crop step at this
    * aspect ratio before uploading — for photos shown in a fixed-shape frame
    * (mandapam photos, banners), where object-cover would otherwise silently
@@ -21,7 +26,7 @@ interface ImageUploadFieldProps {
 /** Uploads an image via /api/upload and reports back the public URL. A
  * dropzone-style picker — click or drag a photo in — instead of the raw
  * native file input, which looks inconsistent across browsers. */
-export default function ImageUploadField({ label, folder, required, value, onChange, aspect }: ImageUploadFieldProps) {
+export default function ImageUploadField({ label, folder, required, value, onChange, onThumbnailChange, aspect }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +45,11 @@ export default function ImageUploadField({ label, folder, required, value, onCha
       const data = text ? JSON.parse(text) : null;
       if (!res.ok) throw new Error(data?.error || "Upload failed");
       onChange(data.url);
+      onThumbnailChange?.(data.thumbnail_url ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       onChange(null);
+      onThumbnailChange?.(null);
     } finally {
       setUploading(false);
     }

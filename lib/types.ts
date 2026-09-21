@@ -23,6 +23,12 @@ export interface Pandal {
   nimajjanam_date: string | null;
   description: string | null;
   image_url: string;
+  /** ~160px version of image_url, for spots that only need a tiny
+   * thumbnail (map markers, list rows) — serving the full photo there was
+   * the single biggest driver of cached-egress usage, since every pandal's
+   * full image loaded on every map view just to render a ~30px circle.
+   * Null for photos uploaded before this existed; falls back to image_url. */
+  thumbnail_url: string | null;
   source_image_url: string | null;
   banner_image_urls: string[] | null;
   banner_payment_proof_url: string | null;
@@ -32,13 +38,23 @@ export interface Pandal {
   /** A short note from admin to the owner — why a listing was rejected,
    * etc. Shown on the owner's profile until they dismiss it. */
   admin_note: string | null;
-  /** Glowing/pulsing highlight on the map pin + a badge on its card — for a
-   * milestone worth calling out (e.g. a 114th year of celebrations), not a
-   * paid placement. */
+  /** Glowing/pulsing highlight on the map pin + a badge on its card — either
+   * an admin-picked milestone (e.g. a 114th year of celebrations) or a paid
+   * ₹99 self-serve highlight approved from star_payment_proof_url below.
+   * Both use the same flag; there's no need to distinguish the reason. */
   featured: boolean;
   /** The badge's own text when featured (e.g. "114th Year"). Kept separate
-   * from `featured` so turning the highlight off doesn't lose what was typed. */
+   * from `featured` so turning the highlight off doesn't lose what was typed.
+   * Left blank for a plain paid star with no specific milestone to name. */
   milestone_text: string | null;
+  /** Set once the owner submits proof of paying for the star highlight —
+   * same review pattern as banner_payment_proof_url: admin checks it, then
+   * approves by setting featured to true. */
+  star_payment_proof_url: string | null;
+  /** Up to 3 more photos alongside image_url (the cover photo) — max 4
+   * total. Null/empty means just the one cover photo, same as before this
+   * existed. */
+  extra_image_urls: string[] | null;
   created_at: string;
 }
 
@@ -78,6 +94,7 @@ export interface PaymentSettings {
   map_ad_price: number;
   card_ad_price: number;
   banner_price: number;
+  star_price: number;
 }
 
 /** A single result from /api/geocode (proxying Nominatim / OpenStreetMap). */

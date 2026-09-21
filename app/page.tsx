@@ -176,7 +176,7 @@ export default function HomePage() {
                   </button>
                   <div className="flex gap-2.5 pr-5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selectedPandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+                    <img src={selectedPandal.thumbnail_url || selectedPandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{selectedPandal.name}</p>
                       <p className="truncate text-xs text-[color:var(--muted)]">

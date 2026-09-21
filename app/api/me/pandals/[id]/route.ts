@@ -40,6 +40,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (body.banner_payment_proof_url !== undefined) {
     update.banner_payment_proof_url = body.banner_payment_proof_url ? String(body.banner_payment_proof_url) : null;
   }
+  // Submitting a star request doesn't touch the listing's own content, so
+  // it shouldn't reset status back to "pending" the way a core edit does.
+  if (body.star_payment_proof_url !== undefined) {
+    update.star_payment_proof_url = body.star_payment_proof_url ? String(body.star_payment_proof_url) : null;
+  }
   // Owners can only dismiss (clear) an admin note, never set one — writing
   // the note itself is admin-only, from /admin.
   if (body.admin_note === null) {
@@ -49,6 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const stringFields = ["name", "organizer_name", "contact_phone", "address", "image_url"] as const;
   const wantsCoreEdit =
     stringFields.some((field) => body[field] !== undefined) ||
+    body.thumbnail_url !== undefined ||
     body.description !== undefined ||
     body.event_date !== undefined ||
     body.event_date_end !== undefined ||
