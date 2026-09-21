@@ -697,19 +697,17 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    // Narrower than before (w-40, not w-56) specifically so true 1:1 squares
-    // — matching the crop tool's actual upload aspect, so what an
-    // advertiser previews is what shows here — still fit all 4 slots
-    // without needing to scroll on a normal laptop screen. overflow-y-auto
-    // stays on as a fallback for unusually short windows, not the primary
-    // way to see every slot.
-    <aside className="card-elevated pointer-events-auto hidden w-40 flex-shrink-0 flex-col gap-2.5 overflow-y-auto p-3 xl:flex">
-      <p className="sticky top-0 z-10 bg-[color:var(--cream-50)] px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-        Sponsored
-      </p>
+    // A fixed pixel width made the squares a fixed height too (height
+    // follows width via aspect-square), so 4 of them add up to a fixed
+    // total that overflows on any screen shorter than that total — no
+    // amount of picking "one good" width fixes it for every real screen.
+    // Sizing each square in vh instead means the whole stack scales with
+    // the actual viewport, so 4 always fit with no scrolling, ever.
+    <aside className="card-elevated pointer-events-auto hidden flex-shrink-0 flex-col items-center gap-2 overflow-hidden p-2 xl:flex">
+      <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "aspect-square w-full flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
+        const className = "aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -724,7 +722,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex aspect-square w-full flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
         >
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
             <MegaphoneIcon className="h-3.5 w-3.5" />
