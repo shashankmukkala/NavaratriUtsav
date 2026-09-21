@@ -697,11 +697,19 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-hidden p-3 xl:flex">
-      <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
+    // Narrower than before (w-40, not w-56) specifically so true 1:1 squares
+    // — matching the crop tool's actual upload aspect, so what an
+    // advertiser previews is what shows here — still fit all 4 slots
+    // without needing to scroll on a normal laptop screen. overflow-y-auto
+    // stays on as a fallback for unusually short windows, not the primary
+    // way to see every slot.
+    <aside className="card-elevated pointer-events-auto hidden w-40 flex-shrink-0 flex-col gap-2.5 overflow-y-auto p-3 xl:flex">
+      <p className="sticky top-0 z-10 bg-[color:var(--cream-50)] px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
+        Sponsored
+      </p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "min-h-0 flex-1 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
+        const className = "aspect-square w-full flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -716,12 +724,12 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex aspect-square w-full flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
-            <MegaphoneIcon className="h-4 w-4" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+            <MegaphoneIcon className="h-3.5 w-3.5" />
           </span>
-          <span className="text-xs font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
+          <span className="text-[0.6875rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
         </Link>
       ))}
     </aside>
