@@ -10,7 +10,7 @@ import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
-type AdsSubTab = "banners" | "stars" | "card" | "map";
+type AdsSubTab = "banners" | "stars" | "card" | "map" | "crow";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
 type PandalCategoryFilter = "all" | "annadhanams" | "needs_photo_review";
@@ -250,7 +250,8 @@ export default function AdminPage() {
   );
   const pendingCardAdsCount = sponsors.filter((s) => s.placement === "card" && s.status === "pending").length;
   const pendingMapAdsCount = sponsors.filter((s) => s.placement === "map" && s.status === "pending").length;
-  const pendingAdsTotal = pendingBannerCount + pendingStarCount + pendingCardAdsCount + pendingMapAdsCount;
+  const pendingCrowAdsCount = sponsors.filter((s) => s.placement === "crow" && s.status === "pending").length;
+  const pendingAdsTotal = pendingBannerCount + pendingStarCount + pendingCardAdsCount + pendingMapAdsCount + pendingCrowAdsCount;
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden p-4 pb-16">
@@ -379,6 +380,9 @@ export default function AdminPage() {
             </SubTabButton>
             <SubTabButton active={adsSubTab === "map"} onClick={() => setAdsSubTab("map")}>
               Map Ads ({pendingMapAdsCount})
+            </SubTabButton>
+            <SubTabButton active={adsSubTab === "crow"} onClick={() => setAdsSubTab("crow")}>
+              Flying Ads ({pendingCrowAdsCount})
             </SubTabButton>
           </div>
 
@@ -512,6 +516,8 @@ function SettingsPanel({
   const [cardAdPrice, setCardAdPrice] = useState(String(settings?.card_ad_price ?? 200));
   const [bannerPrice, setBannerPrice] = useState(String(settings?.banner_price ?? 200));
   const [starPrice, setStarPrice] = useState(String(settings?.star_price ?? 99));
+  const [crowAdPrice, setCrowAdPrice] = useState(String(settings?.crow_ad_price ?? 300));
+  const [crowInterval, setCrowInterval] = useState(String(settings?.crow_interval_seconds ?? 45));
   const [saved, setSaved] = useState(false);
   const [pricesSaved, setPricesSaved] = useState(false);
   const [qrSaved, setQrSaved] = useState<"saved" | "removed" | null>(null);
@@ -614,6 +620,27 @@ function SettingsPanel({
               className="field-input"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying ad — crow/rocket (per 2 days)</label>
+            <input
+              type="number"
+              min={0}
+              value={crowAdPrice}
+              onChange={(e) => setCrowAdPrice(e.target.value)}
+              className="field-input"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying ad pass interval (seconds)</label>
+            <input
+              type="number"
+              min={10}
+              value={crowInterval}
+              onChange={(e) => setCrowInterval(e.target.value)}
+              className="field-input"
+            />
+            <p className="mt-1 text-xs text-[color:var(--muted-soft)]">How often the crow/rocket flies across the map.</p>
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -622,6 +649,8 @@ function SettingsPanel({
                 card_ad_price: Number(cardAdPrice),
                 banner_price: Number(bannerPrice),
                 star_price: Number(starPrice),
+                crow_ad_price: Number(crowAdPrice),
+                crow_interval_seconds: Number(crowInterval),
               });
               setPricesSaved(true);
               setTimeout(() => setPricesSaved(false), 2000);
@@ -870,6 +899,7 @@ function AdminEditSponsorModal({
   // yyyy-mm-dd for the date input — starts_at only ever needs day
   // granularity ("start on day 4"), not a specific time of day.
   const [startsAt, setStartsAt] = useState(sponsor.starts_at ? sponsor.starts_at.slice(0, 10) : "");
+  const [vehicle, setVehicle] = useState<"crow" | "rocket">(sponsor.vehicle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -882,6 +912,7 @@ function AdminEditSponsorModal({
       link_url: linkUrl.trim() || null,
       banner_image_urls: bannerUrls,
       starts_at: startsAt || null,
+      ...(sponsor.placement === "crow" ? { vehicle } : {}),
     });
     setSaving(false);
     if (!result.ok) setError(result.error);
@@ -900,8 +931,33 @@ function AdminEditSponsorModal({
             max={3}
             value={bannerUrls}
             onChange={setBannerUrls}
-            aspect={sponsor.placement === "card" ? 2.2 : 1}
+            aspect={sponsor.placement === "card" ? 2.2 : sponsor.placement === "crow" ? 3 : 1}
           />
+
+          {sponsor.placement === "crow" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying object</label>
+              <div className="flex gap-2">
+                {(["crow", "rocket"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setVehicle(v)}
+                    className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold capitalize transition-colors ${
+                      vehicle === v
+                        ? "bg-[color:var(--accent)] text-white"
+                        : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
+                The sponsor only supplies the banner — this picks what carries it across the map.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Sponsor / brand name</label>
@@ -1200,7 +1256,12 @@ function SponsorRow({
   settings: PaymentSettings | null;
 }) {
   const images = sponsor.banner_image_urls?.length ? sponsor.banner_image_urls : sponsor.banner_image_url ? [sponsor.banner_image_url] : [];
-  const price = sponsor.placement === "card" ? (settings?.card_ad_price ?? 200) : (settings?.map_ad_price ?? 500);
+  const price =
+    sponsor.placement === "card"
+      ? (settings?.card_ad_price ?? 200)
+      : sponsor.placement === "crow"
+        ? (settings?.crow_ad_price ?? 300)
+        : (settings?.map_ad_price ?? 500);
 
   return (
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
@@ -1220,7 +1281,8 @@ function SponsorRow({
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-semibold text-[color:var(--foreground)]">{sponsor.sponsor_name}</p>
         <p className="text-xs text-[color:var(--muted)]">
-          {sponsor.placement === "card" ? "Mandapam card ad" : "Map-wide ad"} · ₹{price} / 2 days
+          {sponsor.placement === "card" ? "Mandapam card ad" : sponsor.placement === "crow" ? `Flying ad (${sponsor.vehicle})` : "Map-wide ad"} · ₹
+          {price} / 2 days
         </p>
         <p className="text-xs text-[color:var(--muted)]">{sponsor.contact_phone}</p>
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">

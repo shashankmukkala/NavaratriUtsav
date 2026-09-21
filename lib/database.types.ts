@@ -77,7 +77,8 @@ export interface Database {
           expires_at: string | null;
           starts_at: string | null;
           user_id: string | null;
-          placement: "map" | "card";
+          placement: "map" | "card" | "crow";
+          vehicle: "crow" | "rocket";
           edit_requested: boolean;
           edit_unlocked: boolean;
           created_at: string;
@@ -95,7 +96,8 @@ export interface Database {
           expires_at?: string | null;
           starts_at?: string | null;
           user_id?: string | null;
-          placement?: "map" | "card";
+          placement?: "map" | "card" | "crow";
+          vehicle?: "crow" | "rocket";
           edit_requested?: boolean;
           edit_unlocked?: boolean;
           created_at?: string;
@@ -120,6 +122,8 @@ export interface Database {
           card_ad_price: number;
           banner_price: number;
           star_price: number;
+          crow_ad_price: number;
+          crow_interval_seconds: number;
         };
         Insert: {
           id?: boolean;
@@ -129,6 +133,8 @@ export interface Database {
           card_ad_price?: number;
           banner_price?: number;
           star_price?: number;
+          crow_ad_price?: number;
+          crow_interval_seconds?: number;
         };
         Update: Partial<Database["public"]["Tables"]["payment_settings"]["Insert"]>;
         Relationships: [];

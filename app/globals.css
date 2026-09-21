@@ -261,6 +261,105 @@ body {
   }
 }
 
+/* The premium "flying ad" placement — a crow or rocket towing a sponsor's
+   banner across the top band of the map. `left` (not transform) carries
+   the cross-map movement since transform's percentages are relative to the
+   element's own size, not the container — `left` on an absolutely
+   positioned element is relative to the containing block, which is what
+   actually lets this travel the map's full width regardless of its size.
+   The bob is a separate transform layered on top, animated independently. */
+@keyframes flying-ad-ltr {
+  0% {
+    left: -18%;
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-14px);
+  }
+  40% {
+    transform: translateY(8px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+  80% {
+    transform: translateY(6px);
+  }
+  100% {
+    left: 112%;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flying-ad-rtl {
+  0% {
+    left: 112%;
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(8px);
+  }
+  40% {
+    transform: translateY(-12px);
+  }
+  60% {
+    transform: translateY(6px);
+  }
+  80% {
+    transform: translateY(-8px);
+  }
+  100% {
+    left: -18%;
+    transform: translateY(0);
+  }
+}
+
+.flying-ad-ltr {
+  animation: flying-ad-ltr 14s ease-in-out forwards;
+}
+
+.flying-ad-rtl {
+  animation: flying-ad-rtl 14s ease-in-out forwards;
+}
+
+@keyframes crow-wing-flap {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-40deg);
+  }
+}
+
+.crow-wing {
+  animation: crow-wing-flap 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes rocket-flame-flicker {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleX(1.4);
+    opacity: 0.7;
+  }
+}
+
+.rocket-flame {
+  animation: rocket-flame-flicker 0.25s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flying-ad-ltr,
+  .flying-ad-rtl,
+  .crow-wing,
+  .rocket-flame {
+    display: none;
+  }
+}
+
 /* "You are here" — the device's own GPS position, once location is on.
    A solid dot (never clickable/selectable, unlike a pandal pin) with a
    soft pulsing halo, the same visual language as a live-location dot in

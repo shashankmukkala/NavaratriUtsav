@@ -5,10 +5,12 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: approved, not-yet-expired sponsor banners (each payment covers 2
 // days of display from approval). ?placement=card returns ads shown
-// generically inside mandapam detail cards; anything else (the default)
-// returns the map-wide sponsored slots.
+// generically inside mandapam detail cards; ?placement=crow returns the
+// animated flying-banner ads; anything else (the default) returns the
+// map-wide sponsored slots.
 export async function GET(request: NextRequest) {
-  const placement = request.nextUrl.searchParams.get("placement") === "card" ? "card" : "map";
+  const placementParam = request.nextUrl.searchParams.get("placement");
+  const placement = placementParam === "card" || placementParam === "crow" ? placementParam : "map";
 
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin()
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing field: banner_image_urls" }, { status: 400 });
   }
 
-  const placement = body.placement === "card" ? "card" : "map";
+  const placement = body.placement === "card" ? "card" : body.placement === "crow" ? "crow" : "map";
 
   const { data, error } = await supabaseAdmin()
     .from("sponsors")

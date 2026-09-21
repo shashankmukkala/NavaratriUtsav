@@ -76,8 +76,14 @@ export interface Sponsor {
   starts_at: string | null;
   user_id: string | null;
   /** "map" = map-wide sponsored slots. "card" = shown generically inside
-   * mandapam detail cards, not targeted at any one specific mandapam. */
-  placement: "map" | "card";
+   * mandapam detail cards, not targeted at any one specific mandapam.
+   * "crow" = the premium animated crow-towed-banner placement. */
+  placement: "map" | "card" | "crow";
+  /** Which flying object carries the banner — only meaningful when
+   * placement is "crow". Sponsors never pick this; admin sets it per ad
+   * when approving, so a movie-promo ad can get a rocket while another
+   * gets a crow. */
+  vehicle: "crow" | "rocket";
   /** Owner has asked to edit this already-submitted ad's details. */
   edit_requested: boolean;
   /** Admin has approved that request — the owner can now save one edit
@@ -95,6 +101,9 @@ export interface PaymentSettings {
   card_ad_price: number;
   banner_price: number;
   star_price: number;
+  crow_ad_price: number;
+  /** How often (in seconds) the crow ad makes a pass across the map. */
+  crow_interval_seconds: number;
 }
 
 /** A single result from /api/geocode (proxying Nominatim / OpenStreetMap). */

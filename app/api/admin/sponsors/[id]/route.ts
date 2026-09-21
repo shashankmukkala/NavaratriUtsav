@@ -31,8 +31,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     edit_unlocked?: boolean;
     edit_requested?: boolean;
     expires_at?: string | null;
+    vehicle?: "crow" | "rocket";
   } = {};
 
+  if (body.vehicle === "crow" || body.vehicle === "rocket") update.vehicle = body.vehicle;
   if (body.sponsor_name !== undefined) update.sponsor_name = String(body.sponsor_name).slice(0, 200);
   if (body.contact_phone !== undefined) update.contact_phone = String(body.contact_phone).slice(0, 30);
   if (body.link_url !== undefined) update.link_url = body.link_url ? String(body.link_url) : null;

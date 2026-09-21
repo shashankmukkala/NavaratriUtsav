@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export async function GET() {
   const { data, error } = await supabaseAdmin()
     .from("payment_settings")
-    .select("upi_id, qr_image_url, map_ad_price, card_ad_price, banner_price, star_price")
+    .select("upi_id, qr_image_url, map_ad_price, card_ad_price, banner_price, star_price, crow_ad_price, crow_interval_seconds")
     .eq("id", true)
     .single();
 
