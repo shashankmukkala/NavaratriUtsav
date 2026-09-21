@@ -37,17 +37,17 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
       const sponsor = sponsors[Math.floor(Math.random() * sponsors.length)];
       nextKey.current += 1;
       setFlight({ key: nextKey.current, sponsor, reverse: Math.random() < 0.5 });
-      // Flight animation itself is ~14s (see globals.css) — clear the node
-      // afterward so a lone flight doesn't just sit parked off-screen.
-      setTimeout(() => setFlight(null), 14500);
+      // Flight animation itself is ~26s (see globals.css) — slow enough to
+      // actually read the banner, not just notice something flew by.
+      // Clears the node afterward so a lone flight doesn't just sit parked
+      // off-screen.
+      setTimeout(() => setFlight(null), 26500);
     };
-    // First pass shortly after load, then on the configured interval.
-    const firstTimer = setTimeout(flyOnce, 4000);
+    // Right away on entering the map, then on the configured interval —
+    // no reason to make someone wait to see it the first time.
+    flyOnce();
     const interval = setInterval(flyOnce, Math.max(intervalSeconds, 10) * 1000);
-    return () => {
-      clearTimeout(firstTimer);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [sponsors, intervalSeconds]);
 
   if (!flight) return null;
@@ -59,16 +59,33 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
       : [];
   if (images.length === 0) return null;
 
-  const Vehicle = flight.sponsor.vehicle === "rocket" ? RocketIcon : CrowIcon;
-
   return (
     <div className="pointer-events-none absolute inset-0 z-[3] overflow-hidden">
       <div
         key={flight.key}
         className={`absolute top-[12%] ${flight.reverse ? "flying-ad-rtl" : "flying-ad-ltr"}`}
       >
-        <div className={`flex items-center gap-1.5 ${flight.reverse ? "-scale-x-100" : ""}`}>
-          <Vehicle className="h-9 w-9 flex-shrink-0 drop-shadow-md" />
+        {/* The vehicle leads in the direction of travel with the banner
+            trailing behind — flex-row-reverse repositions them for
+            leftward vs. rightward flight, and only the vehicle icon itself
+            (never the banner) gets mirrored to face that direction. Mirroring
+            the banner would flip the sponsor's actual uploaded image —
+            any text or logo in it would render backwards, which is wrong
+            regardless of which way it's flying. */}
+        <div className={`flex items-center gap-1.5 ${flight.reverse ? "flex-row" : "flex-row-reverse"}`}>
+          {flight.sponsor.vehicle === "rocket" ? (
+            <RocketIcon className={`h-9 w-9 flex-shrink-0 drop-shadow-md ${flight.reverse ? "-scale-x-100" : ""}`} />
+          ) : (
+            // A real animated GIF (its own baked-in flap frames, transparent
+            // background) instead of the flat SVG silhouette — much closer
+            // to "a real nice crow" than shape-based CSS animation can get.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/images/crow-flying.gif"
+              alt=""
+              className={`h-20 w-32 flex-shrink-0 object-contain drop-shadow-md ${flight.reverse ? "-scale-x-100" : ""}`}
+            />
+          )}
           <div className="h-px w-6 flex-shrink-0 bg-[rgba(43,22,8,0.45)]" />
           {flight.sponsor.link_url ? (
             <a
@@ -89,24 +106,6 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
         </div>
       </div>
     </div>
-  );
-}
-
-function CrowIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 70" className={className} aria-hidden="true">
-      <path d="M6,44 L26,35 L26,46 Z" fill="#1c1c1c" />
-      <ellipse cx="48" cy="35" rx="24" ry="11" fill="#1c1c1c" />
-      <circle cx="72" cy="28" r="10" fill="#1c1c1c" />
-      <path d="M80,27 L94,23 L81,32 Z" fill="#3a3a3a" />
-      <circle cx="75" cy="25" r="1.6" fill="#fff" />
-      <path
-        d="M42,33 Q18,6 3,16 Q24,28 42,38 Z"
-        fill="#0d0d0d"
-        style={{ transformOrigin: "42px 33px" }}
-        className="crow-wing"
-      />
-    </svg>
   );
 }
 
