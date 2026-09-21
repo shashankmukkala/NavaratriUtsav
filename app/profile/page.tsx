@@ -24,7 +24,6 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState<Pandal | null>(null);
   const [highlightAnnadhanam, setHighlightAnnadhanam] = useState(false);
   const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
-  const [addingStarTo, setAddingStarTo] = useState<Pandal | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
@@ -275,54 +274,6 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-                Highlight your mandapam
-              </h2>
-              <p className="mb-3 text-xs text-[color:var(--muted-soft)]">
-                A one-time ₹{settings?.star_price ?? 99} gets your mandapam a glowing star on the map and its card —
-                stands out among every other pin nearby.
-              </p>
-              {pandals.length === 0 ? (
-                <Empty>Add a mandapam first, then you can highlight it.</Empty>
-              ) : (
-                <div className="space-y-2">
-                  {pandals.map((pandal) => {
-                    const pending = !pandal.featured && !!pandal.star_payment_proof_url;
-                    return (
-                      <div key={pandal.id} className="card-elevated flex items-center gap-3 p-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={pandal.thumbnail_url || pandal.image_url}
-                          alt=""
-                          className="h-14 w-14 flex-shrink-0 rounded-xl object-cover"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
-                          {pandal.featured ? (
-                            <span className="text-xs font-medium text-green-700">✨ Highlighted</span>
-                          ) : pending ? (
-                            <span className="text-xs font-medium text-[color:var(--accent-deep)]">Pending payment review</span>
-                          ) : (
-                            <p className="truncate text-xs text-[color:var(--muted)]">Not highlighted</p>
-                          )}
-                        </div>
-                        {!pandal.featured && !pending && (
-                          <button
-                            type="button"
-                            onClick={() => setAddingStarTo(pandal)}
-                            className="btn-secondary flex-shrink-0 px-3 py-1.5 text-xs"
-                          >
-                            Get star
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
                 My ads ({sponsors.length})
               </h2>
@@ -417,16 +368,6 @@ export default function ProfilePage() {
         />
       )}
 
-      {addingStarTo && (
-        <AddStarModal
-          pandal={addingStarTo}
-          onClose={() => setAddingStarTo(null)}
-          onSaved={() => {
-            setAddingStarTo(null);
-            loadData();
-          }}
-        />
-      )}
 
       {editingSponsor && (
         <EditSponsorModal
@@ -723,108 +664,6 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
           className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saving ? "Saving…" : alreadyPaid ? "Save banner" : "Submit banner"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Same one-time payment-proof pattern as AddBannerModal — submits
- * star_payment_proof_url, and admin approving it just flips `featured` to
- * true, same as the free admin-picked milestone highlight. */
-function AddStarModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
-  const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [upiCopied, setUpiCopied] = useState(false);
-
-  useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
-  }, []);
-
-  const copyUpiId = async () => {
-    try {
-      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
-      setUpiCopied(true);
-      setTimeout(() => setUpiCopied(false), 1500);
-    } catch {
-      // Clipboard access can be blocked — the UPI ID is still right there to select.
-    }
-  };
-
-  const handleSave = async () => {
-    if (!proofUrl) return;
-    setError(null);
-    setSaving(true);
-    const result = await sendJson(`/api/me/pandals/${pandal.id}`, { star_payment_proof_url: proofUrl }, "PATCH");
-    setSaving(false);
-    if (result.ok) {
-      onSaved();
-    } else {
-      setError(result.error);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="card-elevated relative w-full max-w-sm p-6">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(43,22,8,0.06)] text-sm text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.12)]"
-        >
-          ×
-        </button>
-        <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Get a star for {pandal.name}</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          One-time ₹{settings?.star_price ?? 99} — a glowing highlight on the map pin and card, for good.
-        </p>
-
-        <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
-          {settings?.qr_image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={settings.qr_image_url}
-              alt="Payment QR code"
-              className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover"
-            />
-          ) : (
-            <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
-              QR code
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-              {settings?.upi_id ?? "annadhanam@upi"}
-              <button
-                type="button"
-                onClick={copyUpiId}
-                aria-label="Copy UPI ID"
-                className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
-              >
-                <CopyIcon className="h-3.5 w-3.5" />
-              </button>
-              {upiCopied && <span className="text-xs font-medium text-green-700">Copied</span>}
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.star_price ?? 99} to this UPI ID.</p>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <ImageUploadField label="Payment screenshot" folder="payment-proofs" required value={proofUrl} onChange={setProofUrl} />
-        </div>
-
-        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
-
-        <button
-          type="button"
-          disabled={!proofUrl || saving}
-          onClick={handleSave}
-          className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {saving ? "Saving…" : "Submit for review"}
         </button>
       </div>
     </div>

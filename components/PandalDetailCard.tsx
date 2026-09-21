@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AddStarModal from "@/components/AddStarModal";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import { BowlIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
@@ -25,6 +26,8 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   // that happens to be sitting on someone else's card.
   const [viewerId, setViewerId] = useState<string | null>(null);
   const isOwner = !!viewerId && viewerId === pandal.user_id;
+  const [showStarModal, setShowStarModal] = useState(false);
+  const starPending = !pandal.featured && !!pandal.star_payment_proof_url;
 
   useEffect(() => {
     fetchJson<{ user?: { id?: string } }>("/api/auth/session").then((data) => setViewerId(data?.user?.id ?? null));
@@ -169,6 +172,21 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
         </span>
+        {/* Only the owner sees this, and only while there's something to
+            do — already featured (map pin's glow already shows it) or
+            already submitted a proof waiting on admin review both need
+            no action, so the prompt only appears for the plain, unpaid
+            state. */}
+        {isOwner && !pandal.featured && !starPending && (
+          <button
+            type="button"
+            onClick={() => setShowStarModal(true)}
+            className="badge-milestone"
+          >
+            ✨ Get a star
+          </button>
+        )}
+        {isOwner && starPending && <span className="badge-milestone opacity-70">✨ Star pending review</span>}
       </div>
 
       <div className="space-y-1.5 text-[13px] text-[color:var(--muted)]">
@@ -283,6 +301,8 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
         )}
       </div>
       <div className={`flex-shrink-0 space-y-2.5 p-4 pt-2.5 ${fullScreen ? "pb-3" : "pb-4"}`}>{footerBlock}</div>
+
+      {showStarModal && <AddStarModal pandal={pandal} onClose={() => setShowStarModal(false)} onSaved={() => setShowStarModal(false)} />}
     </div>
   );
 }

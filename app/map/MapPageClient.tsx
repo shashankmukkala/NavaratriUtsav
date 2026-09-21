@@ -688,20 +688,11 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const emptySlots = AD_SLOT_COUNT - filled.length;
 
   return (
-    // overflow-y-auto, not overflow-hidden — 4 full-width squares (plus
-    // gaps and the label) can be taller than the panel has room for on a
-    // shorter screen; scrolling keeps every slot fully visible and
-    // reachable instead of silently clipping whichever one doesn't fit.
-    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-y-auto p-3 xl:flex">
-      <p className="sticky top-0 z-10 bg-[color:var(--cream-50)] px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-        Sponsored
-      </p>
+    <aside className="card-elevated pointer-events-auto hidden w-56 flex-shrink-0 flex-col gap-2.5 overflow-hidden p-3 xl:flex">
+      <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        // aspect-square (not flex-1) — these are uploaded as 1:1 squares,
-        // so a flexed height stretched them into whatever tall rectangle
-        // the sidebar had room for instead of the shape they were made for.
-        const className = "aspect-square w-full flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
+        const className = "min-h-0 flex-1 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -716,7 +707,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex aspect-square w-full flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
             <MegaphoneIcon className="h-4 w-4" />
