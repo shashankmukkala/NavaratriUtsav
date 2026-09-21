@@ -1066,7 +1066,7 @@ function PandalList({
               className={`list-row w-full ${selectedId === pandal.id ? "list-row-active" : ""} ${pandal.featured ? "list-row-featured" : ""}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+              <img src={pandal.thumbnail_url || pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
                 {/* Scrolls horizontally instead of being cut off with an

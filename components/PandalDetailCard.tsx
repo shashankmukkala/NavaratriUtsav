@@ -92,6 +92,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   const eventStatus = getEventStatus(pandal.event_date, pandal.event_date_end);
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
+  const galleryImages = [pandal.image_url, ...(pandal.extra_image_urls ?? [])];
 
   // A pandal's own paid banner takes priority; otherwise rotate through the
   // generic sponsor pool. Either way it's shown as a plain rectangle, no
@@ -115,9 +116,20 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     // frame and crops the excess instead of letterboxing, matching what
     // the crop-tool preview would have produced.
     <div className="relative aspect-video w-full min-h-0 flex-shrink-0 overflow-hidden bg-[rgba(43,22,8,0.06)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-cover" />
+      {galleryImages.length > 1 ? (
+        <AdBannerSlideshow images={galleryImages} alt={pandal.name} fit="cover" />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-cover" />
+      )}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/35 to-transparent" />
+      {galleryImages.length > 1 && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1">
+          {galleryImages.map((_, i) => (
+            <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/70 shadow-sm" />
+          ))}
+        </div>
+      )}
       {pandal.featured && pandal.milestone_text && (
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 overflow-hidden">
           <div className="absolute -left-9 top-[18px] w-[150px] rotate-[-45deg] bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 py-1 text-center text-[11px] font-bold text-amber-950 shadow-md">

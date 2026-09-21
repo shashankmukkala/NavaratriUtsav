@@ -3,11 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Public: only approved pandals are visible on the map.
+// Public: only approved pandals are visible on the map. Explicit column
+// list (not "*") — this is an unauthenticated, unrestricted endpoint
+// anyone can scrape, so it must never leak organizer phone numbers,
+// payment proof screenshots, admin notes, or internal review-workflow
+// flags that the public map/list UI never actually reads.
+const PUBLIC_FIELDS =
+  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, nimajjanam_date, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, status, created_at";
+
 export async function GET() {
   const { data, error } = await supabaseAdmin()
     .from("pandals")
-    .select("*")
+    .select(PUBLIC_FIELDS)
     .eq("status", "approved")
     .order("created_at", { ascending: false });
 
@@ -66,6 +73,10 @@ export async function POST(request: NextRequest) {
       nimajjanam_date: body.nimajjanam_date ? String(body.nimajjanam_date) : null,
       description: body.description ? String(body.description).slice(0, 2000) : null,
       image_url: String(body.image_url),
+      thumbnail_url: body.thumbnail_url ? String(body.thumbnail_url) : null,
+      extra_image_urls: Array.isArray(body.extra_image_urls)
+        ? body.extra_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 3)
+        : null,
       banner_image_urls: Array.isArray(body.banner_image_urls)
         ? body.banner_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 2)
         : null,

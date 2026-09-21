@@ -18,6 +18,7 @@ export interface Database {
           nimajjanam_date: string | null;
           description: string | null;
           image_url: string;
+          thumbnail_url: string | null;
           source_image_url: string | null;
           banner_image_urls: string[] | null;
           banner_payment_proof_url: string | null;
@@ -27,6 +28,8 @@ export interface Database {
           admin_note: string | null;
           featured: boolean;
           milestone_text: string | null;
+          star_payment_proof_url: string | null;
+          extra_image_urls: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -43,6 +46,7 @@ export interface Database {
           nimajjanam_date?: string | null;
           description?: string | null;
           image_url: string;
+          thumbnail_url?: string | null;
           source_image_url?: string | null;
           banner_image_urls?: string[] | null;
           banner_payment_proof_url?: string | null;
@@ -52,6 +56,8 @@ export interface Database {
           admin_note?: string | null;
           featured?: boolean;
           milestone_text?: string | null;
+          star_payment_proof_url?: string | null;
+          extra_image_urls?: string[] | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["pandals"]["Insert"]>;
@@ -113,6 +119,7 @@ export interface Database {
           map_ad_price: number;
           card_ad_price: number;
           banner_price: number;
+          star_price: number;
         };
         Insert: {
           id?: boolean;
@@ -121,6 +128,7 @@ export interface Database {
           map_ad_price?: number;
           card_ad_price?: number;
           banner_price?: number;
+          star_price?: number;
         };
         Update: Partial<Database["public"]["Tables"]["payment_settings"]["Insert"]>;
         Relationships: [];

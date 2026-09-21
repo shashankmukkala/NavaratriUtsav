@@ -5,6 +5,7 @@ import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
+import MultiImageUploadField from "@/components/MultiImageUploadField";
 import LocationPicker from "@/components/LocationPicker";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import SignInPrompt from "@/components/SignInPrompt";
@@ -70,6 +71,8 @@ export default function SubmitPage() {
   const [nimajjanamDate, setNimajjanamDate] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [extraImageUrls, setExtraImageUrls] = useState<string[]>([]);
   const [bannerUrls, setBannerUrls] = useState<string[]>([]);
   const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -206,6 +209,8 @@ export default function SubmitPage() {
       nimajjanam_date: nimajjanamDate || null,
       description: description || null,
       image_url: imageUrl,
+      thumbnail_url: thumbnailUrl,
+      extra_image_urls: extraImageUrls,
       banner_image_urls: bannerUrls,
       banner_payment_proof_url: bannerProofUrl,
     });
@@ -373,7 +378,25 @@ export default function SubmitPage() {
 
           <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12">
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
-              <ImageUploadField label="Ganesh Maharaj picture" folder="pandals" required value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+              <ImageUploadField
+                label="Ganesh Maharaj picture"
+                folder="pandals"
+                required
+                value={imageUrl}
+                onChange={setImageUrl}
+                onThumbnailChange={setThumbnailUrl}
+                aspect={16 / 9}
+              />
+
+              <MultiImageUploadField
+                label="More photos (optional)"
+                hint="Up to 3 more, alongside the cover photo above — shown as a gallery on the mandapam's card."
+                folder="pandals"
+                max={3}
+                value={extraImageUrls}
+                onChange={setExtraImageUrls}
+                aspect={16 / 9}
+              />
 
               <Field label="Name" required>
                 <input

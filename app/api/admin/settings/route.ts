@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin()
     .from("payment_settings")
-    .select("upi_id, qr_image_url, map_ad_price, card_ad_price, banner_price")
+    .select("upi_id, qr_image_url, map_ad_price, card_ad_price, banner_price, star_price")
     .eq("id", true)
     .single();
 
@@ -33,6 +33,7 @@ export async function PATCH(request: NextRequest) {
     map_ad_price?: number;
     card_ad_price?: number;
     banner_price?: number;
+    star_price?: number;
   } = {};
   if (typeof body?.upi_id === "string" && body.upi_id.trim()) {
     update.upi_id = body.upi_id.trim().slice(0, 100);
@@ -40,7 +41,7 @@ export async function PATCH(request: NextRequest) {
   if (body?.qr_image_url !== undefined) {
     update.qr_image_url = body.qr_image_url ? String(body.qr_image_url) : null;
   }
-  for (const field of ["map_ad_price", "card_ad_price", "banner_price"] as const) {
+  for (const field of ["map_ad_price", "card_ad_price", "banner_price", "star_price"] as const) {
     if (body?.[field] !== undefined) {
       const price = Number(body[field]);
       if (!Number.isFinite(price) || price < 0) {

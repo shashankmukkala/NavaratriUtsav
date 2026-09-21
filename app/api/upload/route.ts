@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import sharp from "sharp";
 import { requireAdmin } from "@/lib/adminAuth";
 import { supabaseAdmin, UPLOADS_BUCKET } from "@/lib/supabaseAdmin";
+
+// Map markers and list-row thumbnails only ever render a pandal's photo at
+// a few dozen pixels — this is the size that actually gets fetched on
+// every map view, so keeping it tiny is what controls cached-egress cost,
+// not the full photo's size.
+const THUMBNAIL_WIDTH = 160;
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -44,5 +51,27 @@ export async function POST(request: NextRequest) {
   }
 
   const { data } = supabaseAdmin().storage.from(UPLOADS_BUCKET).getPublicUrl(path);
-  return NextResponse.json({ url: data.publicUrl });
+
+  // Only pandal photos get shown as tiny map/list thumbnails elsewhere —
+  // sponsor banners, payment proofs, and settings images are always shown
+  // at a real size, so a second small copy would just be wasted storage.
+  let thumbnailUrl: string | null = null;
+  if (folder === "pandals") {
+    try {
+      const thumbBuffer = await sharp(bytes).resize(THUMBNAIL_WIDTH).jpeg({ quality: 80 }).toBuffer();
+      const thumbPath = `${folder}/thumbs/${randomUUID()}.jpg`;
+      const { error: thumbError } = await supabaseAdmin()
+        .storage.from(UPLOADS_BUCKET)
+        .upload(thumbPath, thumbBuffer, { contentType: "image/jpeg", upsert: false });
+      if (!thumbError) {
+        thumbnailUrl = supabaseAdmin().storage.from(UPLOADS_BUCKET).getPublicUrl(thumbPath).data.publicUrl;
+      }
+    } catch {
+      // A thumbnail failure shouldn't block the actual upload — every
+      // display spot already falls back to the full image_url when
+      // thumbnail_url is null.
+    }
+  }
+
+  return NextResponse.json({ url: data.publicUrl, thumbnail_url: thumbnailUrl });
 }

@@ -16,6 +16,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const bannerPaid = body?.banner_paid;
   const adminNote = body?.admin_note;
   const denyBanner = body?.deny_banner;
+  const approveStar = body?.approve_star;
+  const denyStar = body?.deny_star;
 
   const update: {
     status?: "pending" | "approved" | "rejected";
@@ -28,12 +30,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     contact_phone?: string;
     address?: string;
     image_url?: string;
+    thumbnail_url?: string | null;
+    extra_image_urls?: string[] | null;
     event_date?: string | null;
     event_date_end?: string | null;
     timing_text?: string | null;
     description?: string | null;
     featured?: boolean;
     milestone_text?: string | null;
+    star_payment_proof_url?: null;
   } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -54,6 +59,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     update.banner_image_urls = null;
     update.banner_payment_proof_url = null;
     update.banner_paid = false;
+  }
+  if (approveStar) {
+    update.featured = true;
+    update.star_payment_proof_url = null;
+  }
+  if (denyStar) {
+    // Same as denyBanner — clears the claim outright rather than leaving it
+    // stuck "pending" with no way for the owner to tell it was reviewed.
+    update.star_payment_proof_url = null;
   }
 
   // Admin editing the listing's own content — unlike an owner's edit (see
@@ -76,6 +90,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (body?.description !== undefined) {
     update.description = body.description ? String(body.description).slice(0, 2000) : null;
+  }
+  if (body?.thumbnail_url !== undefined) {
+    update.thumbnail_url = body.thumbnail_url ? String(body.thumbnail_url) : null;
+  }
+  if (body?.extra_image_urls !== undefined) {
+    update.extra_image_urls = Array.isArray(body.extra_image_urls)
+      ? body.extra_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 3)
+      : null;
   }
   if (body?.featured !== undefined) {
     update.featured = Boolean(body.featured);

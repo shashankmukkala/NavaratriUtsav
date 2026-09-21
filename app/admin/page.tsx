@@ -10,7 +10,7 @@ import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
-type AdsSubTab = "banners" | "card" | "map";
+type AdsSubTab = "banners" | "stars" | "card" | "map";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
 type PandalCategoryFilter = "all" | "annadhanams" | "needs_photo_review";
@@ -103,6 +103,17 @@ export default function AdminPage() {
   const denyBanner = async (id: string) => {
     if (!confirm("Deny this banner? It will be cleared and the owner can resubmit.")) return;
     await sendJson(`/api/admin/pandals/${id}`, { deny_banner: true }, "PATCH");
+    loadData();
+  };
+
+  const approveStar = async (id: string) => {
+    await sendJson(`/api/admin/pandals/${id}`, { approve_star: true }, "PATCH");
+    loadData();
+  };
+
+  const denyStar = async (id: string) => {
+    if (!confirm("Deny this star request? The owner can resubmit with correct proof.")) return;
+    await sendJson(`/api/admin/pandals/${id}`, { deny_star: true }, "PATCH");
     loadData();
   };
 
@@ -228,6 +239,9 @@ export default function AdminPage() {
 
   const pandalsWithBanner = pandals.filter((p) => (p.banner_image_urls?.length ?? 0) > 0);
   const pendingBannerCount = pandalsWithBanner.filter((p) => !p.banner_paid).length;
+
+  const pandalsWithStarRequest = pandals.filter((p) => !!p.star_payment_proof_url);
+  const pendingStarCount = pandalsWithStarRequest.length;
   const bannerSearchLower = bannerSearch.trim().toLowerCase();
   const filteredBanners = pandalsWithBanner.filter(
     (p) =>
@@ -236,7 +250,7 @@ export default function AdminPage() {
   );
   const pendingCardAdsCount = sponsors.filter((s) => s.placement === "card" && s.status === "pending").length;
   const pendingMapAdsCount = sponsors.filter((s) => s.placement === "map" && s.status === "pending").length;
-  const pendingAdsTotal = pendingBannerCount + pendingCardAdsCount + pendingMapAdsCount;
+  const pendingAdsTotal = pendingBannerCount + pendingStarCount + pendingCardAdsCount + pendingMapAdsCount;
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden p-4 pb-16">
@@ -357,6 +371,9 @@ export default function AdminPage() {
             <SubTabButton active={adsSubTab === "banners"} onClick={() => setAdsSubTab("banners")}>
               Banners ({pendingBannerCount})
             </SubTabButton>
+            <SubTabButton active={adsSubTab === "stars"} onClick={() => setAdsSubTab("stars")}>
+              Star Requests ({pendingStarCount})
+            </SubTabButton>
             <SubTabButton active={adsSubTab === "card"} onClick={() => setAdsSubTab("card")}>
               Mandapam Card Ads ({pendingCardAdsCount})
             </SubTabButton>
@@ -401,6 +418,13 @@ export default function AdminPage() {
                   <BannerRow key={pandal.id} pandal={pandal} onSetBannerPaid={setBannerPaid} onDeny={denyBanner} settings={settings} />
                 ))}
               </div>
+            </div>
+          ) : adsSubTab === "stars" ? (
+            <div className="space-y-2">
+              {pandalsWithStarRequest.length === 0 && <Empty>No pending star requests.</Empty>}
+              {pandalsWithStarRequest.map((pandal) => (
+                <StarRequestRow key={pandal.id} pandal={pandal} onApprove={approveStar} onDeny={denyStar} />
+              ))}
             </div>
           ) : (
             <>
@@ -487,6 +511,7 @@ function SettingsPanel({
   const [mapAdPrice, setMapAdPrice] = useState(String(settings?.map_ad_price ?? 500));
   const [cardAdPrice, setCardAdPrice] = useState(String(settings?.card_ad_price ?? 200));
   const [bannerPrice, setBannerPrice] = useState(String(settings?.banner_price ?? 200));
+  const [starPrice, setStarPrice] = useState(String(settings?.star_price ?? 99));
   const [saved, setSaved] = useState(false);
   const [pricesSaved, setPricesSaved] = useState(false);
   const [qrSaved, setQrSaved] = useState<"saved" | "removed" | null>(null);
@@ -579,10 +604,25 @@ function SettingsPanel({
               className="field-input"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Star highlight (one-time)</label>
+            <input
+              type="number"
+              min={0}
+              value={starPrice}
+              onChange={(e) => setStarPrice(e.target.value)}
+              className="field-input"
+            />
+          </div>
           <button
             type="button"
             onClick={() => {
-              onSave({ map_ad_price: Number(mapAdPrice), card_ad_price: Number(cardAdPrice), banner_price: Number(bannerPrice) });
+              onSave({
+                map_ad_price: Number(mapAdPrice),
+                card_ad_price: Number(cardAdPrice),
+                banner_price: Number(bannerPrice),
+                star_price: Number(starPrice),
+              });
               setPricesSaved(true);
               setTimeout(() => setPricesSaved(false), 2000);
             }}
@@ -616,6 +656,8 @@ function AdminEditPandalModal({
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
   const [address, setAddress] = useState(pandal.address);
   const [imageUrl, setImageUrl] = useState<string | null>(pandal.image_url);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(pandal.thumbnail_url);
+  const [extraImageUrls, setExtraImageUrls] = useState<string[]>(pandal.extra_image_urls ?? []);
   const [eventDate, setEventDate] = useState(pandal.event_date ?? "");
   const [eventDateEnd, setEventDateEnd] = useState(pandal.event_date_end ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
@@ -638,6 +680,7 @@ function AdminEditPandalModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Upload failed");
       setImageUrl(data.url);
+      setThumbnailUrl(data.thumbnail_url ?? null);
     } catch (err) {
       setRecropError(err instanceof Error ? err.message : "Recrop failed");
     }
@@ -652,6 +695,8 @@ function AdminEditPandalModal({
       contact_phone: contactPhone,
       address,
       image_url: imageUrl,
+      thumbnail_url: thumbnailUrl,
+      extra_image_urls: extraImageUrls,
       event_date: eventDate || null,
       event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
@@ -670,7 +715,24 @@ function AdminEditPandalModal({
         <p className="mt-1 text-xs text-[color:var(--muted)]">Saved immediately — no re-review needed, you&apos;re the reviewer.</p>
 
         <div className="mt-4 space-y-4">
-          <ImageUploadField label="Photo" folder="pandals" value={imageUrl} onChange={setImageUrl} aspect={16 / 9} />
+          <ImageUploadField
+            label="Photo"
+            folder="pandals"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onThumbnailChange={setThumbnailUrl}
+            aspect={16 / 9}
+          />
+
+          <MultiImageUploadField
+            label="More photos (optional)"
+            hint="Up to 3 more, alongside the cover photo above."
+            folder="pandals"
+            max={3}
+            value={extraImageUrls}
+            onChange={setExtraImageUrls}
+            aspect={16 / 9}
+          />
 
           {pandal.source_image_url && (
             // Only pandals bulk-imported from an external source have this —
@@ -1024,7 +1086,7 @@ function PandalRow({
     <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
       <div className="flex gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+        <img src={pandal.thumbnail_url || pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
         <div className="min-w-0 flex-1 space-y-1 sm:hidden">
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
           <span
@@ -1217,6 +1279,46 @@ function SponsorRow({
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:shrink-0">{children}</div>
+    </div>
+  );
+}
+
+/** Reviews a self-serve ₹99 star-highlight request — approving just flips
+ * `featured` to true (the same flag the admin-picked milestone highlight
+ * uses) since there's no need for a separate "paid star" state. */
+function StarRequestRow({
+  pandal,
+  onApprove,
+  onDeny,
+}: {
+  pandal: Pandal;
+  onApprove: (id: string) => void;
+  onDeny: (id: string) => void;
+}) {
+  return (
+    <div className="card-elevated flex flex-col gap-3 p-3 sm:flex-row">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={pandal.thumbnail_url || pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+        <p className="text-xs text-[color:var(--muted)]">Star highlight request</p>
+        <a
+          href={pandal.star_payment_proof_url!}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-[color:var(--accent-deep)] underline"
+        >
+          View payment screenshot
+        </a>
+      </div>
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
+        <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onApprove(pandal.id)}>
+          Approve
+        </ActionButton>
+        <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onDeny(pandal.id)}>
+          Deny
+        </ActionButton>
+      </div>
     </div>
   );
 }
