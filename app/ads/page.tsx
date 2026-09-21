@@ -92,7 +92,7 @@ export default async function AdsChoicePage() {
                 ₹{crowAdPrice} / 2 days
               </span>
             </div>
-            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Flying ad (crow/rocket)</h2>
+            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Flying ad</h2>
             <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
               Your banner trails behind a crow or rocket making a pass across the map every so often — the most
               eye-catching placement, premium priced to match.
