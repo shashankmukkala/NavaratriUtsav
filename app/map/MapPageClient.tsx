@@ -516,7 +516,7 @@ export default function MapPageClient() {
 
         <div className="relative isolate flex-1">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
-          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} topClassName="top-48" />
+          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} topClassName="top-48" durationSeconds={20} />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
