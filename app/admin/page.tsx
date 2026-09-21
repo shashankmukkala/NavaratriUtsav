@@ -517,7 +517,7 @@ function SettingsPanel({
   const [bannerPrice, setBannerPrice] = useState(String(settings?.banner_price ?? 200));
   const [starPrice, setStarPrice] = useState(String(settings?.star_price ?? 99));
   const [crowAdPrice, setCrowAdPrice] = useState(String(settings?.crow_ad_price ?? 300));
-  const [crowInterval, setCrowInterval] = useState(String(settings?.crow_interval_seconds ?? 45));
+  const [crowInterval, setCrowInterval] = useState(String(settings?.crow_interval_seconds ?? 0));
   const [saved, setSaved] = useState(false);
   const [pricesSaved, setPricesSaved] = useState(false);
   const [qrSaved, setQrSaved] = useState<"saved" | "removed" | null>(null);
@@ -631,15 +631,18 @@ function SettingsPanel({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying ad pass interval (seconds)</label>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Gap between flying ad passes (seconds)</label>
             <input
               type="number"
-              min={10}
+              min={0}
               value={crowInterval}
               onChange={(e) => setCrowInterval(e.target.value)}
               className="field-input"
             />
-            <p className="mt-1 text-xs text-[color:var(--muted-soft)]">How often the crow/rocket flies across the map.</p>
+            <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
+              It flies continuously, one pass right after another — this is just a small pause between passes, not
+              how often it appears. Set to 0 for zero gap.
+            </p>
           </div>
           <button
             type="button"

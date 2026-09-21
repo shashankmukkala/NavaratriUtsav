@@ -401,7 +401,7 @@ export default function MapPageClient() {
             z-index inside here from ever leaking past this box. */}
         <div className="absolute inset-4 isolate overflow-hidden rounded-[2rem] border border-[rgba(43,22,8,0.08)] shadow-[0_28px_70px_-30px_rgba(43,22,8,0.35)]">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
-          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 45} />
+          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} />
           <VisitorCountBadge />
         </div>
 
@@ -516,7 +516,7 @@ export default function MapPageClient() {
 
         <div className="relative isolate flex-1">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
-          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 45} topClassName="top-48" />
+          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} topClassName="top-48" />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —

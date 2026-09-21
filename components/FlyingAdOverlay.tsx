@@ -30,6 +30,7 @@ export default function FlyingAdOverlay({
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [flight, setFlight] = useState<Flight | null>(null);
   const nextKey = useRef(0);
+  const lastReverse = useRef<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,21 +44,31 @@ export default function FlyingAdOverlay({
 
   useEffect(() => {
     if (sponsors.length === 0) return;
+    let timer: ReturnType<typeof setTimeout>;
     const flyOnce = () => {
       const sponsor = sponsors[Math.floor(Math.random() * sponsors.length)];
       nextKey.current += 1;
-      setFlight({ key: nextKey.current, sponsor, reverse: Math.random() < 0.5 });
+      // Alternates left/right every pass (not random) — coming back the
+      // opposite way it just left reads as one continuous back-and-forth
+      // instead of occasionally repeating the same direction twice in a row.
+      const reverse = lastReverse.current === null ? Math.random() < 0.5 : !lastReverse.current;
+      lastReverse.current = reverse;
+      setFlight({ key: nextKey.current, sponsor, reverse });
       // Flight animation itself is ~38s (see globals.css) — slow enough to
-      // actually read the banner, not just notice something flew by.
-      // Clears the node afterward so a lone flight doesn't just sit parked
-      // off-screen.
-      setTimeout(() => setFlight(null), 38500);
+      // actually read the banner, not just notice something flew by. The
+      // next flight is scheduled to start the moment this one's animation
+      // finishes (plus `intervalSeconds` as a deliberate small gap, not an
+      // idle wait) — chaining it directly like this, rather than an
+      // independent interval clock, is what keeps it genuinely continuous
+      // instead of racing the flight duration and sometimes leaving a long
+      // empty gap with nothing on screen.
+      timer = setTimeout(() => {
+        setFlight(null);
+        timer = setTimeout(flyOnce, intervalSeconds * 1000);
+      }, 38500);
     };
-    // Right away on entering the map, then on the configured interval —
-    // no reason to make someone wait to see it the first time.
     flyOnce();
-    const interval = setInterval(flyOnce, Math.max(intervalSeconds, 10) * 1000);
-    return () => clearInterval(interval);
+    return () => clearTimeout(timer);
   }, [sponsors, intervalSeconds]);
 
   if (!flight) return null;
