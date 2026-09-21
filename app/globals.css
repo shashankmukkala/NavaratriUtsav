@@ -333,11 +333,11 @@ body {
 }
 
 .flying-ad-ltr {
-  animation: flying-ad-ltr 26s ease-in-out forwards;
+  animation: flying-ad-ltr 38s ease-in-out forwards;
 }
 
 .flying-ad-rtl {
-  animation: flying-ad-rtl 26s ease-in-out forwards;
+  animation: flying-ad-rtl 38s ease-in-out forwards;
 }
 
 @keyframes rocket-flame-flicker {

@@ -16,7 +16,17 @@ interface Flight {
  * itself, which is a real link — and it only ever flies over open map
  * area (a band near the top), never through the densest part of a pin
  * cluster where it'd get in the way of actually browsing. */
-export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: number }) {
+export default function FlyingAdOverlay({
+  intervalSeconds,
+  topClassName = "top-[12%]",
+}: {
+  intervalSeconds: number;
+  /** Vertical position of the flight band, as a Tailwind top-* class. The
+   * mobile layout's header floats absolutely over the map (not in normal
+   * flow), tall enough that the default 12% band sits right behind it —
+   * that instance passes a fixed px offset clearing the header instead. */
+  topClassName?: string;
+}) {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [flight, setFlight] = useState<Flight | null>(null);
   const nextKey = useRef(0);
@@ -37,11 +47,11 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
       const sponsor = sponsors[Math.floor(Math.random() * sponsors.length)];
       nextKey.current += 1;
       setFlight({ key: nextKey.current, sponsor, reverse: Math.random() < 0.5 });
-      // Flight animation itself is ~26s (see globals.css) — slow enough to
+      // Flight animation itself is ~38s (see globals.css) — slow enough to
       // actually read the banner, not just notice something flew by.
       // Clears the node afterward so a lone flight doesn't just sit parked
       // off-screen.
-      setTimeout(() => setFlight(null), 26500);
+      setTimeout(() => setFlight(null), 38500);
     };
     // Right away on entering the map, then on the configured interval —
     // no reason to make someone wait to see it the first time.
@@ -63,7 +73,7 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
     <div className="pointer-events-none absolute inset-0 z-[3] overflow-hidden">
       <div
         key={flight.key}
-        className={`absolute top-[12%] ${flight.reverse ? "flying-ad-rtl" : "flying-ad-ltr"}`}
+        className={`absolute ${topClassName} ${flight.reverse ? "flying-ad-rtl" : "flying-ad-ltr"}`}
       >
         {/* The vehicle leads in the direction of travel with the banner
             trailing behind — flex-row-reverse repositions them for
@@ -82,12 +92,15 @@ export default function FlyingAdOverlay({ intervalSeconds }: { intervalSeconds: 
             // background) instead of the flat SVG silhouette — much closer
             // to "a real nice crow" than shape-based CSS animation can get.
             // Sized down on small screens — the desktop size would dwarf a
-            // phone-width map.
+            // phone-width map. Unlike the rocket (drawn nose-right on
+            // purpose), this GIF's own artwork faces left by default —
+            // checked frame-by-frame — so its flip condition is the
+            // opposite of the rocket's.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src="/images/crow-flying.gif"
               alt=""
-              className={`h-12 w-20 flex-shrink-0 object-contain drop-shadow-md sm:h-14 sm:w-24 xl:h-20 xl:w-32 ${flight.reverse ? "-scale-x-100" : ""}`}
+              className={`h-12 w-20 flex-shrink-0 object-contain drop-shadow-md sm:h-14 sm:w-24 xl:h-20 xl:w-32 ${flight.reverse ? "" : "-scale-x-100"}`}
             />
           )}
           <div className="h-px w-3 flex-shrink-0 bg-[rgba(43,22,8,0.45)] sm:w-4 xl:w-6" />
