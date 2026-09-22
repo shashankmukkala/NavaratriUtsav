@@ -37,6 +37,7 @@ export default function FlyingAdOverlay({
   const [flight, setFlight] = useState<Flight | null>(null);
   const nextKey = useRef(0);
   const lastReverse = useRef<boolean | null>(null);
+  const nextSponsorIndex = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +53,12 @@ export default function FlyingAdOverlay({
     if (sponsors.length === 0) return;
     let timer: ReturnType<typeof setTimeout>;
     const flyOnce = () => {
-      const sponsor = sponsors[Math.floor(Math.random() * sponsors.length)];
+      // Round-robin through every approved flying ad in order (not a
+      // random pick) — with 2 ads running, this is what makes one
+      // consistently follow the other (crow, then rocket, then crow...)
+      // instead of occasionally repeating the same one back to back.
+      const sponsor = sponsors[nextSponsorIndex.current % sponsors.length];
+      nextSponsorIndex.current += 1;
       nextKey.current += 1;
       // Alternates left/right every pass (not random) — coming back the
       // opposite way it just left reads as one continuous back-and-forth
