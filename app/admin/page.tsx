@@ -621,7 +621,7 @@ function SettingsPanel({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying ad — crow/rocket (per 2 days)</label>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying ad — crow/rocket/phoenix (per 2 days)</label>
             <input
               type="number"
               min={0}
@@ -902,7 +902,7 @@ function AdminEditSponsorModal({
   // yyyy-mm-dd for the date input — starts_at only ever needs day
   // granularity ("start on day 4"), not a specific time of day.
   const [startsAt, setStartsAt] = useState(sponsor.starts_at ? sponsor.starts_at.slice(0, 10) : "");
-  const [vehicle, setVehicle] = useState<"crow" | "rocket">(sponsor.vehicle);
+  const [vehicle, setVehicle] = useState<"crow" | "rocket" | "phoenix">(sponsor.vehicle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -941,7 +941,7 @@ function AdminEditSponsorModal({
             <div>
               <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Flying object</label>
               <div className="flex gap-2">
-                {(["crow", "rocket"] as const).map((v) => (
+                {(["crow", "rocket", "phoenix"] as const).map((v) => (
                   <button
                     key={v}
                     type="button"
