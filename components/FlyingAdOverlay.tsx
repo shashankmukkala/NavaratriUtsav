@@ -93,7 +93,17 @@ export default function FlyingAdOverlay({
   return (
     // z-[6]: above a featured mandapam's glowing map pin (z-index: 5, see
     // .map-pin-featured in globals.css) — this was passing underneath it.
-    <div className="pointer-events-none absolute inset-0 z-[6] overflow-hidden">
+    // will-change + translateZ(0): forces this onto its own GPU compositor
+    // layer from first paint. Without it, z-index alone isn't reliable —
+    // in a dense cluster of dozens of `will-change:transform` map-pin
+    // markers, Chromium can squash this overlay into a shared layer and
+    // paint it behind some of them regardless of z-index (confirmed by
+    // forcing z-index to 999999 with !important live and seeing no change;
+    // giving it its own layer up front is what actually fixes it).
+    <div
+      className="pointer-events-none absolute inset-0 z-[6] overflow-hidden"
+      style={{ transform: "translateZ(0)", willChange: "transform" }}
+    >
       <div
         key={flight.key}
         className={`absolute ${topClassName} ${flight.reverse ? "flying-ad-rtl" : "flying-ad-ltr"}`}
