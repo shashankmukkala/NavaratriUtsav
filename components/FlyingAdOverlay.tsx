@@ -111,6 +111,18 @@ export default function FlyingAdOverlay({
             <RocketIcon
               className={`h-6 w-6 flex-shrink-0 drop-shadow-md sm:h-7 sm:w-7 xl:h-9 xl:w-9 ${flight.reverse ? "-scale-x-100" : ""}`}
             />
+          ) : flight.sponsor.vehicle === "phoenix" ? (
+            // Faces right by default, like the rocket artwork (checked
+            // frame-by-frame) — opposite of the crow, so it shares the
+            // rocket's flip condition, not the crow's.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/images/phoenix-flying.webp"
+              alt=""
+              className={`h-10 w-14 flex-shrink-0 object-contain drop-shadow-md sm:h-12 sm:w-16 xl:h-16 xl:w-24 ${
+                flight.reverse ? "-scale-x-100" : ""
+              }`}
+            />
           ) : (
             // A real animated GIF (its own baked-in flap frames, transparent
             // background) instead of the flat SVG silhouette — much closer

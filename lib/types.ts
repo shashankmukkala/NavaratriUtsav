@@ -83,7 +83,7 @@ export interface Sponsor {
    * placement is "crow". Sponsors never pick this; admin sets it per ad
    * when approving, so a movie-promo ad can get a rocket while another
    * gets a crow. */
-  vehicle: "crow" | "rocket";
+  vehicle: "crow" | "rocket" | "phoenix";
   /** Owner has asked to edit this already-submitted ad's details. */
   edit_requested: boolean;
   /** Admin has approved that request — the owner can now save one edit

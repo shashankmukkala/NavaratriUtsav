@@ -78,7 +78,7 @@ export interface Database {
           starts_at: string | null;
           user_id: string | null;
           placement: "map" | "card" | "crow";
-          vehicle: "crow" | "rocket";
+          vehicle: "crow" | "rocket" | "phoenix";
           edit_requested: boolean;
           edit_unlocked: boolean;
           created_at: string;
@@ -97,7 +97,7 @@ export interface Database {
           starts_at?: string | null;
           user_id?: string | null;
           placement?: "map" | "card" | "crow";
-          vehicle?: "crow" | "rocket";
+          vehicle?: "crow" | "rocket" | "phoenix";
           edit_requested?: boolean;
           edit_unlocked?: boolean;
           created_at?: string;
