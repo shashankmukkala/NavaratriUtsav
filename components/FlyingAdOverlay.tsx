@@ -114,10 +114,15 @@ export default function FlyingAdOverlay({
           ) : flight.sponsor.vehicle === "phoenix" ? (
             // Faces right by default, like the rocket artwork (checked
             // frame-by-frame) — opposite of the crow, so it shares the
-            // rocket's flip condition, not the crow's.
+            // rocket's flip condition, not the crow's. GIF, not WebP —
+            // animated WebP with alpha smeared previous frames into the
+            // next instead of clearing between them (confirmed each frame
+            // decodes cleanly on its own, so it was browser playback, not
+            // the source); GIF's disposal-to-background is what the crow
+            // already relies on and doesn't have this problem.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src="/images/phoenix-flying.webp"
+              src="/images/phoenix-flying.gif"
               alt=""
               className={`h-10 w-14 flex-shrink-0 object-contain drop-shadow-md sm:h-12 sm:w-16 xl:h-16 xl:w-24 ${
                 flight.reverse ? "-scale-x-100" : ""
