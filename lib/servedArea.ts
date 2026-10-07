@@ -1,4 +1,4 @@
-// This app currently only serves Ganesh Chaturthi mandapams in Telangana
+// This app currently only serves Navaratri celebrations in Telangana
 // and Andhra Pradesh — Nominatim's `address.state` (English name) is
 // checked against this list wherever a location resolves from a search or
 // from the browser's GPS.

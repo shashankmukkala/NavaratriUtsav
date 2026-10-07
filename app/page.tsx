@@ -1,40 +1,109 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import MapView from "@/components/MapView";
 import {
   ArrowRightIcon,
-  CheckIcon,
+  BowlIcon,
+  CalendarIcon,
+  ChevronDownIcon,
   CloseIcon,
-  CrownIcon,
+  CrosshairIcon,
+  DandiyaIcon,
+  DiyaIcon,
   HeartIcon,
-  LeafIcon,
-  MegaphoneIcon,
+  InstagramIcon,
+  MapIcon,
   PinIcon,
   PlusIcon,
   SearchIcon,
+  SendIcon,
+  SparkleIcon,
+  TempleIcon,
+  UserIcon,
   UsersIcon,
+  VerifiedIcon,
+  XLogoIcon,
+  YoutubeIcon,
 } from "@/components/icons";
+import { formatEventDateRange, getEventStatus } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
-import type { Pandal } from "@/lib/types";
+import { CATEGORIES, categoryInfo } from "@/lib/categories";
+import { FESTIVAL_LABEL } from "@/lib/siteMeta";
+import type { ListingCategory, Pandal } from "@/lib/types";
+
+type CategoryFilter = "all" | ListingCategory;
+
+const FEATURED_SLOT_COUNT = 4;
+const SAVED_KEY = "utsav_saved_listings";
+
+// Placeholder profile URLs — swap for the real handles once they exist.
+const SOCIAL_LINKS = {
+  instagram: "https://www.instagram.com/",
+  youtube: "https://www.youtube.com/",
+  x: "https://x.com/",
+};
+
+const NAV_LINKS = [
+  { href: "/map", label: "Explore" },
+  { href: "/map?category=dandiya", label: "Dandiya" },
+  { href: "/map?category=pandal", label: "Pandal Map" },
+  { href: "/map?category=cultural", label: "Events" },
+  { href: "/#plan", label: "Stories" },
+];
+
+const FILTERS: { value: CategoryFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  ...CATEGORIES.map((c) => ({ value: c.value, label: c.plural })),
+];
+
+function readSaved(): string[] {
+  try {
+    const raw = window.localStorage.getItem(SAVED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function HomePage() {
   const [pandals, setPandals] = useState<Pandal[] | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<CategoryFilter>("all");
   const [selectedPandal, setSelectedPandal] = useState<Pandal | null>(null);
+  const [saved, setSaved] = useState<string[]>([]);
 
   useEffect(() => {
     fetchJson<{ pandals: Pandal[] }>("/api/pandals").then((data) => setPandals(data?.pandals ?? []));
   }, []);
 
-  // Only asked for once the user asks to find the nearest one — not
+  // Saved hearts live in this browser only — read after mount so the
+  // server render and first client render match.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSaved(readSaved());
+  }, []);
+
+  const toggleSaved = (id: string) => {
+    setSaved((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        window.localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+      } catch {
+        // Storage blocked (private mode etc.) — the heart still toggles for this visit.
+      }
+      return next;
+    });
+  };
+
+  // Only asked for once the user taps a locate/distance control — not
   // automatically the moment the page loads.
   const requestLocation = () => {
-    if (coords || !navigator.geolocation) return;
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => setCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
       () => {},
@@ -42,283 +111,457 @@ export default function HomePage() {
     );
   };
 
+  const visiblePandals = useMemo(
+    () => (pandals ?? []).filter((p) => filter === "all" || categoryInfo(p.category).value === filter),
+    [pandals, filter]
+  );
+  const featured = useMemo(() => (pandals ?? []).filter((p) => p.featured).slice(0, FEATURED_SLOT_COUNT), [pandals]);
+  const emptyFeaturedSlots = FEATURED_SLOT_COUNT - featured.length;
+
+  const chooseCategory = (value: CategoryFilter) => {
+    setFilter(value);
+    setSelectedPandal(null);
+    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const selectedKm =
     selectedPandal && coords ? distanceKm(coords.lat, coords.lng, selectedPandal.lat, selectedPandal.lng) : null;
 
   return (
-    <div
-      className="w-full"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 45% at 15% 0%, rgba(244,169,60,0.32), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 8%, rgba(234,108,29,0.22), transparent 55%), linear-gradient(180deg, var(--cream-50), var(--cream-200) 45%, var(--cream-100))",
-      }}
-    >
+    <div className="w-full bg-[color:var(--cream-50)]">
       {/* ===== Hero ===== */}
-      <section className="relative overflow-hidden px-4 pb-4 pt-4 sm:px-6">
+      <section className="relative overflow-hidden bg-[color:var(--utsav-night)] text-[color:var(--utsav-ink-light)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero-left.webp"
+          src="/images/utsav-hero.webp"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
+          className="absolute inset-0 h-full w-full object-cover object-[65%_center]"
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/hero-right.webp"
-          alt=""
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 z-0 w-56 sm:w-72 lg:w-96"
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(21,12,43,0.92) 0%, rgba(21,12,43,0.78) 32%, rgba(21,12,43,0.25) 62%, rgba(21,12,43,0.1) 100%), linear-gradient(180deg, rgba(21,12,43,0.55) 0%, transparent 22%, transparent 70%, rgba(21,12,43,0.85) 100%)",
+          }}
         />
 
-        <div className="relative z-10 mx-auto max-w-6xl">
-          <nav className="nav-shell mt-2 flex items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5">
-            <Brand tagline />
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              <Link href="/ads" className="btn-secondary px-2.5! py-1.5! text-[0.7rem]! sm:px-4! sm:py-2! sm:text-sm!">
-                <MegaphoneIcon className="h-3.5 w-3.5" />
-                Publish Ads
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pb-32">
+          <nav className="flex items-center justify-between gap-3 py-2">
+            <Brand tagline tone="light" />
+            <div className="hidden items-center gap-7 text-sm font-medium text-[color:var(--utsav-ink-light)]/90 lg:flex">
+              {NAV_LINKS.map((link) => (
+                <Link key={link.label} href={link.href} className="transition-colors hover:text-[color:var(--utsav-gold)]">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="hidden items-center gap-1.5 rounded-full border border-white/25 bg-black/20 px-3.5 py-2 text-sm backdrop-blur-sm md:inline-flex">
+                <PinIcon className="h-4 w-4" />
+                Hyderabad
+                <ChevronDownIcon className="h-3.5 w-3.5 opacity-70" />
+              </span>
+              <Link href="/submit" className="btn-gold px-3.5! py-2! text-xs! sm:px-4! sm:text-sm!">
+                <PlusIcon className="h-4 w-4" />
+                Add Event
               </Link>
-              <Link href="/map" className="btn-primary px-2.5! py-1.5! text-[0.7rem]! sm:px-4! sm:py-2! sm:text-sm!">
-                <PinIcon className="h-3.5 w-3.5" />
-                View Map
+              <Link
+                href="/profile"
+                aria-label="Your profile"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/20 backdrop-blur-sm transition-colors hover:border-[color:var(--utsav-gold)]"
+              >
+                <UserIcon className="h-4 w-4" />
               </Link>
             </div>
           </nav>
 
-          <div className="grid gap-10 py-10 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-16">
+          <div className="relative mt-8 grid gap-8 sm:mt-12 lg:grid-cols-[1.15fr_1fr]">
             <div>
-              <h1 className="hero-title mt-3">
-                Where <span className="text-[color:var(--accent-deep)]">Bappa</span> brings us together.
+              <p className="utsav-eyebrow">Durga Puja · Dandiya · Our People</p>
+              <h1 className="utsav-title mt-4 text-[2.6rem] sm:text-6xl lg:text-[4.25rem]">
+                Nine Nights.
+                <br />
+                <span className="text-[color:var(--utsav-gold)]">
+                  A Thousand
+                  <br />
+                  Connections.
+                </span>
               </h1>
-              <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
-                Find the best mandapams and annadhanams being served around you.
+              <p className="mt-5 max-w-md text-base text-[color:var(--utsav-ink-light)]/85 sm:text-lg">
+                Discover Durga Maa pandals, dandiya nights, cultural events and workshops — all on one map.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/annadhanams" className="btn-primary px-5! py-2.5! text-sm!">
-                  <PinIcon className="h-4 w-4" />
-                  Explore Mandapams
+              <div className="mt-7 flex flex-wrap gap-3">
+                <a href="#featured" className="btn-gold">
+                  <TempleIcon className="h-4 w-4" />
+                  Explore Celebrations
                   <ArrowRightIcon className="h-4 w-4" />
-                </Link>
-                <Link href="/submit" className="btn-secondary px-5! py-2.5! text-sm!">
-                  <PlusIcon className="h-4 w-4" />
-                  Add Your Mandapam
+                </a>
+                <Link href="/map" className="btn-ghost-light">
+                  <MapIcon className="h-4 w-4" />
+                  View Festival Map
                 </Link>
               </div>
-              <p className="mt-3 text-sm text-[color:var(--muted-soft)]">
-                Know a mandapam or annadhanam near you? Add its details and make this festival more special for everyone.
-              </p>
 
-              <div className="mt-9 flex flex-wrap gap-x-8 gap-y-4">
-                <Stat icon={<UsersIcon className="h-5 w-5" />} label="Let's celebrate together" />
-                <Stat
-                  icon={<PinIcon className="h-5 w-5" />}
-                  label={pandals ? `${pandals.length}+ Mandapams` : "Mandapams near you"}
+              <div className="mt-9 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+                <HeroStat
+                  icon={<TempleIcon className="h-6 w-6" />}
+                  top={pandals && pandals.length > 0 ? `${pandals.length}+` : "Every"}
+                  bottom="celebrations"
                 />
+                <HeroStat icon={<PinIcon className="h-6 w-6" />} top="Cities across" bottom="India" />
+                <HeroStat icon={<UsersIcon className="h-6 w-6" />} top="Community" bottom="powered" />
+                <HeroStat icon={<VerifiedIcon className="h-6 w-6" />} top="Verified" bottom="events" />
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/bappa.webp" alt="Ganesha blessing the festival" className="relative z-10 w-full" />
-            
-             
+            <div className="pointer-events-none hidden justify-end lg:flex">
+              <div className="mt-6 text-right">
+                <p className="font-script text-5xl leading-[1.05] text-[color:var(--utsav-gold-soft)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+                  Maa
+                  <br />
+                  brings us
+                  <br />
+                  closer
+                </p>
+                <p className="mt-4 text-[0.65rem] font-semibold uppercase leading-relaxed tracking-[0.25em] text-[color:var(--utsav-ink-light)]/85">
+                  Festivals
+                  <br />
+                  Live
+                  <br />
+                  People
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== Mandapams near you ===== */}
-      <section className="mx-auto max-w-6xl px-4 pb-12 pt-2 sm:px-6">
-        <div className="card-elevated overflow-hidden p-5 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_1.3fr] lg:items-start">
-            <div>
-              <p className="eyebrow">Find near you</p>
-              <h2 className="mt-2 text-2xl font-bold text-[color:var(--foreground)] sm:text-3xl">Mandapams near you.</h2>
-              <p className="mt-3 text-sm text-[color:var(--muted)] sm:text-base">
-                Search and discover community mandapams and annadhanams near you.
-              </p>
+      {/* ===== What are you looking for? ===== */}
+      <section className="relative z-20 -mt-16 bg-[linear-gradient(to_bottom,transparent_4rem,var(--utsav-night)_4rem)] px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+        <div className="grid gap-4 rounded-[1.75rem] border border-[rgba(234,108,29,0.15)] bg-[color:var(--cream-50)] p-5 shadow-[0_30px_70px_-30px_rgba(21,12,43,0.55)] sm:p-6 md:grid-cols-3 lg:grid-cols-[0.8fr_1fr_1fr_1fr_0.75fr] lg:items-center lg:gap-3">
+          <div className="md:col-span-3 lg:col-span-1">
+            <h2 className="font-display text-xl font-bold leading-tight text-[color:var(--foreground)] xl:text-2xl">What are you looking for?</h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">Choose what you want to explore</p>
+          </div>
+
+          <ChoiceTile
+            icon={<TempleIcon className="h-6 w-6" />}
+            title="Puja Darshan"
+            text="Explore Durga Maa pandals near you"
+            onClick={() => chooseCategory("pandal")}
+            highlighted
+          />
+          <ChoiceTile
+            icon={<DandiyaIcon className="h-6 w-6" />}
+            title="Dandiya Nights"
+            text="Garba & dandiya events in your city"
+            onClick={() => chooseCategory("dandiya")}
+          />
+          <ChoiceTile
+            icon={<SparkleIcon className="h-6 w-6" />}
+            title="Events & Workshops"
+            text="Cultural shows & garba classes"
+            onClick={() => chooseCategory("cultural")}
+          />
+
+          <div className="space-y-3 border-[rgba(43,22,8,0.08)] md:col-span-3 lg:col-span-1 lg:border-l lg:pl-5">
+            <div className="flex items-start gap-3">
+              <CalendarIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[color:var(--utsav-crimson)]" />
+              <div>
+                <p className="text-sm font-semibold text-[color:var(--foreground)]">Navratri</p>
+                <p className="text-xs text-[color:var(--muted)]">{FESTIVAL_LABEL}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <PinIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[color:var(--utsav-crimson)]" />
+              <div>
+                <p className="text-sm font-semibold text-[color:var(--foreground)]">Hyderabad</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    requestLocation();
+                    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className="text-xs font-medium text-[color:var(--utsav-crimson)] hover:underline"
+                >
+                  Use my location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      {/* ===== Celebrations in your city ===== */}
+      <section id="explore" className="scroll-mt-4 bg-[color:var(--utsav-night)] pt-14 text-[color:var(--utsav-ink-light)]">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-14 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_1.3fr] lg:items-center">
+          <div>
+            <p className="utsav-eyebrow">Explore near you</p>
+            <h2 className="utsav-title mt-3 text-4xl sm:text-5xl">
+              Celebrations
+              <br />
+              <span className="text-[color:var(--utsav-gold)]">in your city.</span>
+            </h2>
+            <p className="mt-4 max-w-sm text-base text-[color:var(--utsav-ink-light)]/80">
+              Pandals, dandiya nights, events and workshops — pick a filter and see them all on one map.
+            </p>
+
+            <div className="mt-6 flex items-center gap-3">
               <form
                 action="/map"
-                className="mt-5 flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.12)] bg-white/70 px-4 py-2.5 text-sm text-[color:var(--muted)]"
+                className="flex flex-1 items-center gap-2 rounded-full bg-white px-4 py-3 text-sm text-[color:var(--muted)]"
               >
                 <SearchIcon className="h-4 w-4 flex-shrink-0" />
                 <input
                   name="q"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search your area or city"
+                  placeholder="Search your area, city or pandal…"
                   className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
                 />
               </form>
-              <p className="mt-4 flex items-center gap-2 text-xs font-medium text-[color:var(--muted)]">
-                <span className="badge-live" />
-                {pandals === null
-                  ? "Loading mandapams…"
-                  : pandals.length > 0
-                    ? "Showing mandapams near you"
-                    : "No mandapams published yet — be the first to add one"}
-              </p>
+              <button
+                type="button"
+                onClick={requestLocation}
+                aria-label="Use my location"
+                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white text-[color:var(--foreground)] transition-colors hover:text-[color:var(--utsav-crimson)]"
+              >
+                <CrosshairIcon className="h-5 w-5" />
+              </button>
             </div>
 
-            <div className="relative h-72 overflow-hidden rounded-[1.5rem] border border-[rgba(43,22,8,0.08)] sm:h-80">
-              <MapView pandals={pandals ?? []} selectedId={selectedPandal?.id ?? null} onSelect={setSelectedPandal} />
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => {
+                    setFilter(f.value);
+                    setSelectedPandal(null);
+                  }}
+                  className={`utsav-chip ${filter === f.value ? "utsav-chip-active" : ""}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-              {selectedPandal && (
-                <div className="card-elevated pointer-events-auto absolute bottom-3 right-3 w-64 max-w-[80%] p-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPandal(null)}
-                    aria-label="Close"
-                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
-                  >
-                    <CloseIcon className="h-3.5 w-3.5" />
-                  </button>
-                  <div className="flex gap-2.5 pr-5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selectedPandal.thumbnail_url || selectedPandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{selectedPandal.name}</p>
-                      <p className="truncate text-xs text-[color:var(--muted)]">
-                        {selectedKm !== null ? `${selectedKm.toFixed(1)} km away · ` : ""}
-                        {selectedPandal.address}
-                      </p>
-                      <p className="mt-0.5 text-xs font-medium text-[color:var(--accent-deep)]">{selectedPandal.timing_text}</p>
-                    </div>
+            <p className="mt-5 flex items-center gap-2 text-xs font-medium text-[color:var(--utsav-ink-light)]/70">
+              <span className="badge-live" />
+              {pandals === null
+                ? "Loading celebrations…"
+                : visiblePandals.length > 0
+                  ? `${visiblePandals.length} on the map`
+                  : "Nothing here yet — be the first to add one"}
+            </p>
+          </div>
+
+          <div className="utsav-map relative h-80 overflow-hidden rounded-[1.75rem] border border-white/10 shadow-[0_30px_70px_-25px_rgba(0,0,0,0.7)] sm:h-[26rem]">
+            <MapView
+              dark
+              pandals={visiblePandals}
+              selectedId={selectedPandal?.id ?? null}
+              onSelect={setSelectedPandal}
+              onDeselect={() => setSelectedPandal(null)}
+              flyTo={coords}
+              userLocation={coords}
+            />
+
+            {selectedPandal && (
+              <div className="pointer-events-auto absolute left-3 top-3 w-64 max-w-[85%] rounded-2xl bg-white p-3 text-[color:var(--foreground)] shadow-xl">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPandal(null)}
+                  aria-label="Close"
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60"
+                >
+                  <CloseIcon className="h-3.5 w-3.5" />
+                </button>
+                <div className="flex gap-2.5 pr-5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedPandal.thumbnail_url || selectedPandal.image_url}
+                    alt=""
+                    className="h-14 w-14 flex-shrink-0 rounded-xl object-cover"
+                  />
+                  <div className="min-w-0">
+                    <span className={`mb-0.5 inline-block rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${categoryInfo(selectedPandal.category).badgeClass}`}>
+                      {categoryInfo(selectedPandal.category).label}
+                    </span>
+                    <p className="truncate text-sm font-semibold">{selectedPandal.name}</p>
+                    <p className="truncate text-xs text-[color:var(--muted)]">{selectedPandal.address}</p>
+                    <p className="mt-0.5 text-xs font-medium">
+                      {selectedKm !== null && <span>{selectedKm.toFixed(1)} km · </span>}
+                      <span className="text-[color:var(--utsav-crimson)]">
+                        {getEventStatus(selectedPandal.event_date, selectedPandal.event_date_end) === "today"
+                          ? "Live now"
+                          : selectedPandal.timing_text}
+                      </span>
+                    </p>
                   </div>
-                  {!coords && (
-                    <button
-                      type="button"
-                      onClick={requestLocation}
-                      className="mt-2 flex items-center gap-1 text-xs font-semibold text-[color:var(--accent-deep)] underline"
-                    >
-                      <PinIcon className="h-3.5 w-3.5" />
-                      Use my location to see distance
-                    </button>
-                  )}
-                  <Link href={`/map?pandal=${selectedPandal.id}`} className="btn-primary mt-3 w-full py-2 text-sm">
-                    View Details
-                    <ArrowRightIcon className="h-3.5 w-3.5" />
-                  </Link>
                 </div>
-              )}
-            </div>
+                <Link href={`/map?pandal=${selectedPandal.id}`} className="btn-crimson mt-3 w-full py-2! text-sm">
+                  View Details
+                  <ArrowRightIcon className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ===== A pandal for Bappa's homecoming ===== */}
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
-          <div
-            className="overflow-hidden rounded-[2rem]"
-            style={{ boxShadow: "0 28px 70px -30px rgba(43,22,8,0.35)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/new_mandap.webp"
-              alt="A decorated Ganesh mandapam pandal with devotees gathered for aarti"
-              className="w-full"
-            />
-          </div>
-          <div>
-            <p className="eyebrow">Mandapam</p>
-            <h2 className="mt-2 text-2xl font-bold leading-snug text-[color:var(--foreground)] sm:text-3xl">
-              A sacred homecoming. Ten days of blessings for the whole neighborhood.
-            </h2>
-            <p className="mt-4 max-w-md text-sm text-[color:var(--muted)] sm:text-base">
-              Every Ganesh Chaturthi, neighborhoods come together to build a mandapam — inviting Bappa home with
-              music, flowers and prayer, and welcoming everyone in for darshan.
-            </p>
-            <div className="mt-6 space-y-3">
-              <Checklist icon={<CrownIcon className="h-5 w-5" />}>Bappa&apos;s sacred stay</Checklist>
-              <Checklist icon={<HeartIcon className="h-5 w-5" />}>Built with devotion</Checklist>
-              <Checklist icon={<UsersIcon className="h-5 w-5" />}>Open to all for darshan</Checklist>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== A meal in Bappa's name ===== */}
-      <section id="meal" className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
-          <div
-            className="overflow-hidden rounded-[2rem]"
-            style={{ boxShadow: "0 28px 70px -30px rgba(43,22,8,0.35)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/place.webp"
-              alt="Volunteers serving food at an Annadhanam Seva stall near a temple"
-              className="w-full"
-            />
-          </div>
-          <div>
-            <p className="eyebrow">Annadhanam</p>
-            <h2 className="mt-2 text-2xl font-bold leading-snug text-[color:var(--foreground)] sm:text-3xl">
-              A meal in Bappa&apos;s name. A smile for someone&apos;s day.
-            </h2>
-            <p className="mt-4 max-w-md text-sm text-[color:var(--muted)] sm:text-base">
-              During Ganesh Chaturthi, communities come together to serve food to everyone — with devotion, kindness
-              and love.
-            </p>
-            <div className="mt-6 space-y-3">
-              <Checklist icon={<UsersIcon className="h-5 w-5" />}>Open to all</Checklist>
-              <Checklist icon={<HeartIcon className="h-5 w-5" />}>Served with devotion</Checklist>
-              <Checklist icon={<LeafIcon className="h-5 w-5" />}>Stronger communities</Checklist>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Be a part of it ===== */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div
-          className="relative overflow-hidden rounded-[2rem] border border-[rgba(234,108,29,0.16)] p-6 sm:p-10"
-          style={{ background: "linear-gradient(135deg, #fff6e8, #ffe3c2)" }}
-        >
-          <div className="grid gap-8 sm:grid-cols-[1.4fr_1.1fr] sm:items-center">
+      {/* ===== Featured Celebrations ===== */}
+      <section
+        id="featured"
+        className="scroll-mt-4 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/utsav-featured-bg.webp)" }}
+      >
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow">Be a part of it</p>
-              <h2 className="mt-2 text-xl font-bold text-[color:var(--foreground)] sm:text-2xl">
-                Anna Daanam is the greatest Seva.
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-[color:var(--muted)]">
-                Know one we&apos;re missing? Help someone find a meal, a blessing, and a little more community.
-              </p>
-              <Link href="/submit" className="btn-primary mt-5">
-                <PlusIcon className="h-4 w-4" />
-                Add an Annadhanam Seva
-              </Link>
+              <p className="utsav-eyebrow utsav-eyebrow-crimson">Handpicked for you</p>
+              <h2 className="utsav-title mt-2 text-4xl text-[color:var(--foreground)] sm:text-5xl">Featured Celebrations</h2>
+              <p className="mt-2 text-sm text-[color:var(--muted)] sm:text-base">Popular pandals and dandiya nights near you</p>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/food.webp"
-              alt="A traditional festival thali served on a banana leaf"
-              className="h-48 w-full object-cover sm:h-full sm:max-h-64"
-              style={{
-                WebkitMaskImage: "radial-gradient(ellipse 85% 78% at center, black 60%, transparent 100%)",
-                maskImage: "radial-gradient(ellipse 85% 78% at center, black 60%, transparent 100%)",
-              }}
-            />
+            <Link
+              href="/map"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--utsav-crimson)] hover:underline"
+            >
+              View all events
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
           </div>
+
+          {/* Swipeable row on phones, grid from tablet up. */}
+          <div className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:px-0 lg:grid-cols-4">
+            {featured.map((pandal) => (
+              <FeaturedCard
+                key={pandal.id}
+                pandal={pandal}
+                coords={coords}
+                saved={saved.includes(pandal.id)}
+                onToggleSaved={() => toggleSaved(pandal.id)}
+              />
+            ))}
+            {Array.from({ length: emptyFeaturedSlots }).map((_, i) => (
+              <Link
+                key={i}
+                href="/submit?featured=1"
+                className="group flex min-h-[19rem] w-[78%] flex-shrink-0 snap-start flex-col sm:w-auto items-center justify-center gap-3 rounded-[1.25rem] border-2 border-dashed border-[rgba(200,23,46,0.35)] bg-white/50 p-6 text-center transition-colors hover:border-[rgba(200,23,46,0.7)] hover:bg-white/80"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(200,23,46,0.1)] text-[color:var(--utsav-crimson)] transition-transform group-hover:scale-110">
+                  <PlusIcon className="h-7 w-7" />
+                </span>
+                <span className="font-display text-lg font-bold text-[color:var(--foreground)]">Feature your celebration</span>
+                <span className="max-w-[14rem] text-xs text-[color:var(--muted)]">
+                  Get your pandal or dandiya night seen by everyone on the homepage.
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Plan your Navratri ===== */}
+      <section
+        id="plan"
+        className="scroll-mt-4 bg-[color:var(--utsav-maroon)] bg-cover bg-center text-[color:var(--utsav-ink-light)]"
+        style={{ backgroundImage: "url(/images/utsav-plan-bg.webp)" }}
+      >
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_1px_1fr] lg:gap-12 lg:pl-40">
+          <div>
+            <p className="utsav-eyebrow">Plan your Navratri</p>
+            <h2 className="utsav-title mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-4xl sm:text-5xl">
+              Discover
+              <ArrowRightIcon className="h-6 w-6 text-[color:var(--utsav-gold)]" />
+              Save
+              <ArrowRightIcon className="h-6 w-6 text-[color:var(--utsav-gold)]" />
+              Go
+            </h2>
+            <p className="mt-3 text-sm text-[color:var(--utsav-ink-light)]/80 sm:text-base">
+              A simple way to make the most of this Navratri.
+            </p>
+
+            <div className="mt-8 grid grid-cols-3 gap-4">
+              <PlanStep icon={<SearchIcon className="h-7 w-7" />} title="Discover" text="Find pandals and dandiya nights near you." />
+              <PlanStep icon={<HeartIcon className="h-7 w-7" />} title="Save" text="Bookmark your favorite events." />
+              <PlanStep icon={<SendIcon className="h-7 w-7" />} title="Go" text="Get directions and join the celebration." />
+            </div>
+          </div>
+
+          <div aria-hidden="true" className="hidden bg-white/15 lg:block" />
+
+          <div className="lg:pr-16">
+            <p className="utsav-eyebrow">A festive evening itinerary</p>
+            <div className="mt-6 space-y-5">
+              <ItineraryRow time="6:30 PM" icon={<TempleIcon className="h-5 w-5" />} title="Visit a Durga Maa Pandal" text="Darshan and soak in the festive vibes." />
+              <ItineraryRow time="8:30 PM" icon={<DiyaIcon className="h-5 w-5" />} title="Join the Aarti" text="Be part of the divine energy." />
+              <ItineraryRow time="9:30 PM" icon={<DandiyaIcon className="h-5 w-5" />} title="Dandiya Night" text="Dance, meet new people, feel the rhythm." />
+              <ItineraryRow time="11:00 PM" icon={<BowlIcon className="h-5 w-5" />} title="Festive Food" text="End the night with local delicacies." />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Know a celebration we missed? ===== */}
+      <section
+        className="bg-[color:var(--cream-100)] bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/utsav-cta-bg.webp)" }}
+      >
+        <div className="flex flex-col gap-6 px-4 py-14 sm:px-6 md:pl-[26%] md:pr-[20%] lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <div className="max-w-xl rounded-2xl bg-[color:var(--cream-50)]/70 p-4 backdrop-blur-[2px] md:bg-transparent md:p-0 md:backdrop-blur-none">
+            <p className="utsav-eyebrow utsav-eyebrow-crimson">Be a part of it</p>
+            <h2 className="utsav-title mt-2 text-3xl text-[color:var(--utsav-crimson-deep)] sm:text-4xl">
+              Know a celebration we missed?
+            </h2>
+            <p className="mt-3 text-sm text-[color:var(--muted)]">
+              Help us make Navaratri Utsav bigger. Add a pandal, dandiya night, cultural event or workshop in your area and help
+              more people be part of the celebration.
+            </p>
+          </div>
+          <Link href="/submit" className="btn-crimson self-start lg:self-center">
+            <PlusIcon className="h-4 w-4" />
+            Add a Celebration
+            <ArrowRightIcon className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="border-t border-[rgba(43,22,8,0.08)] px-4 py-8 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-stretch gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <div className="flex justify-center sm:justify-start">
-            <Brand tagline />
+      <footer className="border-t border-[rgba(43,22,8,0.08)] bg-[color:var(--cream-50)] px-4 py-8 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center lg:flex-row lg:justify-between lg:text-left">
+          <Brand tagline size="lg" />
+          <nav className="flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm text-[color:var(--muted)]">
+            <Link href="/map" className="hover:text-[color:var(--utsav-crimson)]">Explore</Link>
+            <Link href="/map?category=pandal" className="hover:text-[color:var(--utsav-crimson)]">Pandals</Link>
+            <Link href="/map?category=dandiya" className="hover:text-[color:var(--utsav-crimson)]">Dandiya Nights</Link>
+            <Link href="/map?category=cultural" className="hover:text-[color:var(--utsav-crimson)]">Events &amp; Workshops</Link>
+            <a href="#plan" className="hover:text-[color:var(--utsav-crimson)]">Stories</a>
+          </nav>
+          <div className="flex items-center gap-4 text-[color:var(--foreground)]">
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-[color:var(--utsav-crimson)]">
+              <InstagramIcon className="h-6 w-6" />
+            </a>
+            <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-[color:var(--utsav-crimson)]">
+              <YoutubeIcon className="h-6 w-6" />
+            </a>
+            <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" aria-label="X" className="hover:text-[color:var(--utsav-crimson)]">
+              <XLogoIcon className="h-5 w-5" />
+            </a>
           </div>
-          <p className="text-sm text-[color:var(--muted)]">He brings us closer.</p>
-          <p className="text-sm font-semibold text-[color:var(--accent-deep)]">
-            Made with a little extra love for PGs &amp; Hostelers. ❤️
+          <p className="max-w-[14rem] text-sm text-[color:var(--muted)]">
+            Made for the people who keep the celebration alive.{" "}
+            <HeartIcon className="inline h-4 w-4 fill-[color:var(--utsav-crimson)] text-[color:var(--utsav-crimson)]" />
           </p>
         </div>
-        <p className="mx-auto mt-4 max-w-6xl text-center text-xs text-[color:var(--muted)] sm:text-left">
+        <p className="mx-auto mt-6 max-w-6xl text-center text-xs text-[color:var(--muted)] lg:text-left">
           Need help? Write to us at{" "}
-          <a href="mailto:bappaseva2026@gmail.com" className="font-semibold text-[color:var(--accent-deep)] hover:underline">
+          <a href="mailto:bappaseva2026@gmail.com" className="font-semibold text-[color:var(--utsav-crimson)] hover:underline">
             bappaseva2026@gmail.com
           </a>
         </p>
@@ -327,23 +570,153 @@ export default function HomePage() {
   );
 }
 
-function Stat({ icon, label }: { icon: React.ReactNode; label: string }) {
+function HeroStat({ icon, top, bottom }: { icon: React.ReactNode; top: string; bottom: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm font-medium text-[color:var(--foreground)]">
-      <span className="text-[color:var(--accent)]">{icon}</span>
-      {label}
+    <div className="flex items-center gap-2.5">
+      <span className="text-[color:var(--utsav-gold)]">{icon}</span>
+      <p className="text-xs leading-tight text-[color:var(--utsav-ink-light)]/90">
+        <span className="font-semibold">{top}</span>
+        <br />
+        {bottom}
+      </p>
     </div>
   );
 }
 
-function Checklist({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function ChoiceTile({
+  icon,
+  title,
+  text,
+  onClick,
+  highlighted = false,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  onClick: () => void;
+  highlighted?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+        highlighted
+          ? "border-[rgba(200,23,46,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
+          : "border-[rgba(43,22,8,0.08)] bg-white"
+      }`}
+    >
+      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#f5b82e)] text-[color:var(--utsav-crimson-deep)]">
         {icon}
       </span>
-      <span className="text-sm font-semibold text-[color:var(--foreground)]">{children}</span>
-      <CheckIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-[color:var(--utsav-crimson)]">{title}</span>
+        <span className="mt-0.5 block text-xs text-[color:var(--muted)]">{text}</span>
+      </span>
+      <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--muted)] transition-transform group-hover:translate-x-1" />
+    </button>
+  );
+}
+
+/** The little coloured tag on a featured card's photo. */
+function cardTag(pandal: Pandal): { label: string; className: string } {
+  const status = getEventStatus(pandal.event_date, pandal.event_date_end);
+  const isDandiya = pandal.category === "dandiya";
+  if (status === "today") {
+    return isDandiya
+      ? { label: "Tonight", className: "bg-[#fde8b0] text-[#7a4a00]" }
+      : { label: "Live now", className: "bg-[#d6f5dc] text-[#14642a]" };
+  }
+  const info = categoryInfo(pandal.category);
+  return { label: info.label, className: info.badgeClass };
+}
+
+function FeaturedCard({
+  pandal,
+  coords,
+  saved,
+  onToggleSaved,
+}: {
+  pandal: Pandal;
+  coords: { lat: number; lng: number } | null;
+  saved: boolean;
+  onToggleSaved: () => void;
+}) {
+  const tag = cardTag(pandal);
+  const dateLabel = formatEventDateRange(pandal.event_date, pandal.event_date_end);
+  const km = coords ? distanceKm(coords.lat, coords.lng, pandal.lat, pandal.lng) : null;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
+
+  return (
+    <article className="relative flex w-[78%] flex-shrink-0 snap-start flex-col overflow-hidden sm:w-auto rounded-[1.25rem] bg-white shadow-[0_20px_45px_-25px_rgba(43,22,8,0.45)]">
+      <Link href={`/map?pandal=${pandal.id}`} className="relative block aspect-[16/10] overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pandal.image_url} alt={pandal.name} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+        <span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.65rem] font-semibold ${tag.className}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {tag.label}
+        </span>
+      </Link>
+      <button
+        type="button"
+        onClick={onToggleSaved}
+        aria-label={saved ? "Remove from saved" : "Save"}
+        aria-pressed={saved}
+        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+      >
+        <HeartIcon className={`h-4 w-4 ${saved ? "fill-[#ff4d6d] text-[#ff4d6d]" : ""}`} />
+      </button>
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="truncate font-display text-base font-bold text-[color:var(--foreground)]">{pandal.name}</h3>
+        <p className="mt-1.5 flex items-center gap-1.5 truncate text-xs text-[color:var(--muted)]">
+          <PinIcon className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--utsav-crimson)]" />
+          <span className="truncate">{pandal.address}</span>
+        </p>
+        {(dateLabel || pandal.timing_text) && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-[color:var(--muted)]">
+            <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--utsav-crimson)]" />
+            <span className="truncate">{[dateLabel, pandal.timing_text].filter(Boolean).join(" · ")}</span>
+          </p>
+        )}
+        <div className="mt-auto flex items-center justify-between pt-3 text-xs">
+          <span className="flex items-center gap-1.5 text-[color:var(--foreground)]">
+            <PinIcon className="h-3.5 w-3.5 text-[color:var(--utsav-crimson)]" />
+            {km !== null ? `${km.toFixed(1)} km` : "Hyderabad"}
+          </span>
+          <a
+            href={directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-semibold text-[color:var(--utsav-crimson)] hover:underline"
+          >
+            Get directions
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PlanStep({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div>
+      <span className="utsav-step-icon">{icon}</span>
+      <p className="mt-4 text-base font-semibold">{title}</p>
+      <p className="mt-1 text-xs text-[color:var(--utsav-ink-light)]/75">{text}</p>
+    </div>
+  );
+}
+
+function ItineraryRow({ time, icon, title, text }: { time: string; icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="grid grid-cols-[4.5rem_2rem_1fr] items-start gap-3">
+      <span className="pt-0.5 text-sm font-semibold text-[color:var(--utsav-ink-light)]/90">{time}</span>
+      <span className="text-[color:var(--utsav-gold)]">{icon}</span>
+      <div>
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="text-xs text-[color:var(--utsav-ink-light)]/70">{text}</p>
+      </div>
     </div>
   );
 }

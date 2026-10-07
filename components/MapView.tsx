@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Map as MapLibreMap, Marker, NavigationControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "@/lib/mapWorker";
-import { DEFAULT_MAP_CENTER, DEFAULT_ZOOM, OPENFREEMAP_STYLE_URL } from "@/lib/mapStyle";
+import { DEFAULT_MAP_CENTER, DEFAULT_ZOOM, OPENFREEMAP_DARK_STYLE_URL, OPENFREEMAP_STYLE_URL } from "@/lib/mapStyle";
 import { setMirrorSource } from "@/lib/mapMirror";
+import { categoryInfo } from "@/lib/categories";
 import type { Pandal } from "@/lib/types";
 
 interface MapViewProps {
@@ -27,9 +28,11 @@ interface MapViewProps {
    * shown as a small pulsing "you are here" dot, separate from any pandal
    * pin and never clickable. */
   userLocation?: { lat: number; lng: number } | null;
+  /** Dark basemap — read once at creation, not meant to toggle live. */
+  dark?: boolean;
 }
 
-export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger, userLocation }: MapViewProps) {
+export default function MapView({ pandals, selectedId, onSelect, onDeselect, flyTo, resetTrigger, userLocation, dark = false }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, { marker: Marker; el: HTMLButtonElement }>>(new globalThis.Map());
@@ -39,6 +42,7 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   const [showAttribution, setShowAttribution] = useState(false);
+  const darkRef = useRef(dark);
   // Skips the very first time `resetTrigger` becomes usable (map just
   // loaded, already sitting at the default view) — only actual changes to
   // it afterward (the "Map" tab being tapped again) should trigger a fly.
@@ -57,7 +61,7 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
 
     const map = new MapLibreMap({
       container: containerRef.current,
-      style: OPENFREEMAP_STYLE_URL,
+      style: darkRef.current ? OPENFREEMAP_DARK_STYLE_URL : OPENFREEMAP_STYLE_URL,
       center: DEFAULT_MAP_CENTER,
       zoom: DEFAULT_ZOOM,
       attributionControl: false,
@@ -104,7 +108,10 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
       const el = document.createElement("button");
       el.type = "button";
       el.className = "map-pin";
-      el.setAttribute("aria-label", `Open ${pandal.name}`);
+      // Ring colour tells pandals, dandiya nights and cultural events apart
+      // at a glance, since all three share this one map.
+      el.style.setProperty("--pin-color", categoryInfo(pandal.category).color);
+      el.setAttribute("aria-label", `Open ${pandal.name} (${categoryInfo(pandal.category).label})`);
 
       const icon = document.createElement("span");
       icon.className = "map-pin-icon";
@@ -216,7 +223,11 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
   return (
     <div className="relative h-full w-full">
       {!loaded && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[color:var(--cream-200)] text-sm text-[color:var(--muted)]">
+        <div
+          className={`absolute inset-0 z-10 flex items-center justify-center text-sm ${
+            dark ? "bg-[#140c26] text-white/60" : "bg-[color:var(--cream-200)] text-[color:var(--muted)]"
+          }`}
+        >
           Loading map…
         </div>
       )}

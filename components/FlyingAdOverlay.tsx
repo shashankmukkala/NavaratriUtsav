@@ -91,7 +91,7 @@ export default function FlyingAdOverlay({
   if (images.length === 0) return null;
 
   return (
-    // z-[6]: above a featured mandapam's glowing map pin (z-index: 5, see
+    // z-[6]: above a featured listing's glowing map pin (z-index: 5, see
     // .map-pin-featured in globals.css) — this was passing underneath it.
     <div className="pointer-events-none absolute inset-0 z-[6] overflow-hidden">
       <div

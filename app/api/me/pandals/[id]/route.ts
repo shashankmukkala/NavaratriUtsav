@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import type { Database } from "@/lib/database.types";
+import { isListingCategory } from "@/lib/categories";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type PandalUpdate = Database["public"]["Tables"]["pandals"]["Update"];
@@ -19,7 +20,7 @@ async function requireOwner(request: NextRequest, id: string) {
   return { userId };
 }
 
-// Owner-only: edit their own mandapam's details, any time — unlike ads,
+// Owner-only: edit their own listing's details, any time — unlike ads,
 // this doesn't need admin approval first. Re-submitted for review (back to
 // "pending") since the change hasn't been checked yet.
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -59,6 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     body.event_date !== undefined ||
     body.event_date_end !== undefined ||
     body.timing_text !== undefined ||
+    body.category !== undefined ||
     (body.lat !== undefined && body.lng !== undefined);
 
   if (wantsCoreEdit) {
@@ -76,6 +78,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     if (body.timing_text !== undefined) {
       update.timing_text = body.timing_text ? String(body.timing_text).slice(0, 200) : null;
+    }
+    if (body.category !== undefined) {
+      if (!isListingCategory(body.category)) {
+        return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+      }
+      update.category = body.category;
     }
     if (body.lat !== undefined && body.lng !== undefined) {
       const lat = Number(body.lat);
@@ -104,7 +112,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json({ pandal: data });
 }
 
-// Owner-only: permanently remove their own mandapam listing.
+// Owner-only: permanently remove their own listing.
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const owner = await requireOwner(request, id);

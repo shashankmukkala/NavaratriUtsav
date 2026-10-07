@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
+import { isListingCategory } from "@/lib/categories";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import type { ListingCategory } from "@/lib/types";
 
 const VALID_STATUSES = ["pending", "approved", "rejected"];
 
@@ -39,6 +41,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     featured?: boolean;
     milestone_text?: string | null;
     star_payment_proof_url?: null;
+    category?: ListingCategory;
   } = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -87,6 +90,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (body?.timing_text !== undefined) {
     update.timing_text = body.timing_text ? String(body.timing_text).slice(0, 200) : null;
+  }
+  if (body?.category !== undefined) {
+    if (!isListingCategory(body.category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+    update.category = body.category;
   }
   if (body?.description !== undefined) {
     update.description = body.description ? String(body.description).slice(0, 2000) : null;

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// The signed-in user's own mandapam listings, every status — so they can
+// The signed-in user's own listings, every status — so they can
 // see a pending one is still under review, not just the approved ones the
 // public GET /api/pandals returns.
 export async function GET() {

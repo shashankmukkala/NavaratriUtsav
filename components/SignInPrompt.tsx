@@ -11,7 +11,7 @@ interface SignInPromptProps {
   message: string;
 }
 
-/** Shown the first time someone tries to submit a mandapam or an ad — we
+/** Shown the first time someone tries to submit a listing or an ad — we
  * need an account to know who a submission belongs to (so it can be edited
  * later), so this is the one gate before anything gets posted. */
 export default function SignInPrompt({ open, onClose, callbackUrl, message }: SignInPromptProps) {

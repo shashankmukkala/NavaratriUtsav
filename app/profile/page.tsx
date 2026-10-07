@@ -8,8 +8,10 @@ import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import SignInPrompt from "@/components/SignInPrompt";
 import { CalendarIcon, ClockIcon, CopyIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
+import { CATEGORIES, categoryInfo } from "@/lib/categories";
 import { formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { UPI_FALLBACK } from "@/lib/siteMeta";
 import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 
@@ -22,7 +24,7 @@ export default function ProfilePage() {
   const [pandals, setPandals] = useState<Pandal[]>([]);
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [editing, setEditing] = useState<Pandal | null>(null);
-  const [highlightAnnadhanam, setHighlightAnnadhanam] = useState(false);
+  const [highlightDates, setHighlightDates] = useState(false);
   const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export default function ProfilePage() {
     fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => {
       const list = data?.pandals ?? [];
       setPandals(list);
-      // Deep link from a mandapam's own card ("Add your association
+      // Deep link from a listing's own card ("Add your association
       // banner") — only ever opens the modal if that pandal is actually in
       // this signed-in user's own list, so it can't be used to jump to
       // someone else's listing even if the id in the URL isn't theirs.
@@ -59,7 +61,7 @@ export default function ProfilePage() {
   }, [session, loadData]);
 
   const deletePandal = async (id: string) => {
-    if (!confirm("Delete this mandapam listing? This can't be undone.")) return;
+    if (!confirm("Delete this listing? This can't be undone.")) return;
     await sendJson(`/api/me/pandals/${id}`, undefined, "DELETE");
     loadData();
   };
@@ -104,7 +106,7 @@ export default function ProfilePage() {
               <p className="eyebrow">Your profile</p>
               <h1 className="mt-3 text-2xl font-bold text-[color:var(--foreground)]">Sign in to see your uploads</h1>
               <p className="mt-2 text-sm text-[color:var(--muted)]">
-                See every mandapam or ad you&apos;ve submitted, and edit or delete them.
+                See every celebration or ad you&apos;ve submitted, and edit or delete them.
               </p>
             </div>
             <SignInPrompt
@@ -136,10 +138,10 @@ export default function ProfilePage() {
 
             <div>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-                My mandapams ({pandals.length})
+                My celebrations ({pandals.length})
               </h2>
               {pandals.length === 0 ? (
-                <Empty>You haven&apos;t added any mandapams yet.</Empty>
+                <Empty>You haven&apos;t added any celebrations yet.</Empty>
               ) : (
                 <div className="space-y-2">
                   {pandals.map((pandal) => {
@@ -148,7 +150,12 @@ export default function ProfilePage() {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={pandal.thumbnail_url || pandal.image_url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
                         <div className="min-w-0 flex-1 space-y-1">
-                          <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
+                          <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
+                            <span className="truncate">{pandal.name}</span>
+                            <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${categoryInfo(pandal.category).badgeClass}`}>
+                              {categoryInfo(pandal.category).label}
+                            </span>
+                          </p>
                           <p className="truncate text-xs text-[color:var(--muted)]">{pandal.address}</p>
                           <div className="flex items-center gap-3 text-xs text-[color:var(--muted-soft)]">
                             {pandal.event_date ? (
@@ -165,7 +172,7 @@ export default function ProfilePage() {
                                 )}
                               </>
                             ) : (
-                              <span>Mandapam only — no annadhanam date</span>
+                              <span>No date set — shown for the whole festival</span>
                             )}
                           </div>
                           <span className={`status-badge status-${pandal.status} inline-block`}>{pandal.status}</span>
@@ -193,7 +200,7 @@ export default function ProfilePage() {
                             type="button"
                             onClick={() => {
                               setEditing(pandal);
-                              setHighlightAnnadhanam(false);
+                              setHighlightDates(false);
                             }}
                             className="btn-secondary px-3 py-1.5 text-xs"
                           >
@@ -203,11 +210,11 @@ export default function ProfilePage() {
                             type="button"
                             onClick={() => {
                               setEditing(pandal);
-                              setHighlightAnnadhanam(true);
+                              setHighlightDates(true);
                             }}
                             className="btn-secondary px-3 py-1.5 text-xs"
                           >
-                            {pandal.event_date ? "Edit Annadhanam Date" : "Add Annadhanam Date"}
+                            {pandal.event_date ? "Edit Event Date" : "Add Event Date"}
                           </button>
                           <button
                             type="button"
@@ -230,11 +237,11 @@ export default function ProfilePage() {
                 My banners ({pandals.length})
               </h2>
               <p className="mb-3 text-xs text-[color:var(--muted-soft)]">
-                A one-time ₹{settings?.banner_price ?? 200} per mandapam, live for as long as the listing is —
+                A one-time ₹{settings?.banner_price ?? 200} per listing, live for as long as the listing is —
                 unlike the ads below, which run for a limited time.
               </p>
               {pandals.length === 0 ? (
-                <Empty>Add a mandapam first, then you can give it a banner.</Empty>
+                <Empty>Add a celebration first, then you can give it a banner.</Empty>
               ) : (
                 <div className="space-y-2">
                   {pandals.map((pandal) => {
@@ -296,7 +303,7 @@ export default function ProfilePage() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{sponsor.sponsor_name}</p>
                           <p className="truncate text-xs text-[color:var(--muted)]">
-                            {sponsor.placement === "card" ? "Mandapam card ad" : "Map-wide ad"}
+                            {sponsor.placement === "card" ? "Listing card ad" : "Map-wide ad"}
                           </p>
                           <span className={`status-badge status-${sponsor.status} mt-1.5 inline-block`}>{sponsor.status}</span>
                         </div>
@@ -348,7 +355,7 @@ export default function ProfilePage() {
       {editing && (
         <EditPandalModal
           pandal={editing}
-          highlightAnnadhanam={highlightAnnadhanam}
+          highlightDates={highlightDates}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -389,18 +396,19 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function EditPandalModal({
   pandal,
-  highlightAnnadhanam = false,
+  highlightDates = false,
   onClose,
   onSaved,
 }: {
   pandal: Pandal;
   /** Scrolls to and visually highlights the date/time fields — used when
-   * this modal was opened from the dedicated "Add/Edit Annadhanam Date"
+   * this modal was opened from the dedicated "Add/Edit Event Date"
    * button rather than the plain "Edit" one. */
-  highlightAnnadhanam?: boolean;
+  highlightDates?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [category, setCategory] = useState(categoryInfo(pandal.category).value);
   const [name, setName] = useState(pandal.name);
   const [organizerName, setOrganizerName] = useState(pandal.organizer_name);
   const [contactPhone, setContactPhone] = useState(pandal.contact_phone);
@@ -412,13 +420,13 @@ function EditPandalModal({
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(pandal.thumbnail_url);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const annadhanamFieldsRef = useRef<HTMLDivElement>(null);
+  const dateFieldsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (highlightAnnadhanam) {
-      annadhanamFieldsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlightDates) {
+      dateFieldsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [highlightAnnadhanam]);
+  }, [highlightDates]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -427,6 +435,7 @@ function EditPandalModal({
     const result = await sendJson(
       `/api/me/pandals/${pandal.id}`,
       {
+        category,
         name,
         organizer_name: organizerName,
         contact_phone: contactPhone,
@@ -450,14 +459,30 @@ function EditPandalModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form onSubmit={handleSave} className="card-elevated max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
-        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit mandapam</p>
+        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit celebration</p>
         <p className="mt-1 text-xs text-[color:var(--muted)]">
           Saving sends it back for a quick review before it&apos;s live again.
         </p>
 
         <div className="mt-4 space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Type</label>
+            <div className="grid grid-cols-3 gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setCategory(c.value)}
+                  className={`filter-chip justify-center whitespace-normal text-center leading-tight ${category === c.value ? "filter-chip-active" : ""}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <ImageUploadField
-            label="Ganesh Maharaj picture"
+            label={categoryInfo(category).photoLabel}
             folder="pandals"
             value={imageUrl}
             onChange={setImageUrl}
@@ -471,7 +496,7 @@ function EditPandalModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Association name</label>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Organizer / association name</label>
             <input value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} className="field-input" />
           </div>
 
@@ -495,17 +520,17 @@ function EditPandalModal({
           </div>
 
           <div
-            ref={annadhanamFieldsRef}
+            ref={dateFieldsRef}
             className={`grid grid-cols-2 gap-3 rounded-xl transition-shadow ${
-              highlightAnnadhanam ? "-m-2 p-2 ring-2 ring-[color:var(--accent)] ring-offset-2" : ""
+              highlightDates ? "-m-2 p-2 ring-2 ring-[color:var(--accent)] ring-offset-2" : ""
             }`}
           >
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Event date</label>
               <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Timings</label>
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>
@@ -513,7 +538,7 @@ function EditPandalModal({
           {eventDate && (
             <div>
               <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-                Serving until (optional — for multiple days)
+                Ends on (optional — for multiple days)
               </label>
               <input
                 type="date"
@@ -547,7 +572,7 @@ function EditPandalModal({
 }
 
 /** Lets an owner add (or replace) their ₹200 association banner after the
- * mandapam is already live — this never needed edit approval even during
+ * listing is already live — this never needed edit approval even during
  * the original /submit flow, so it doesn't here either; admin still has to
  * confirm the payment (banner_paid) before it actually shows anywhere. */
 function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
@@ -565,7 +590,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
 
   const copyUpiId = async () => {
     try {
-      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
       setUpiCopied(true);
       setTimeout(() => setUpiCopied(false), 1500);
     } catch {
@@ -634,7 +659,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
               )}
               <div className="min-w-0">
                 <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-                  {settings?.upi_id ?? "annadhanam@upi"}
+                  {settings?.upi_id || UPI_FALLBACK}
                   <button
                     type="button"
                     onClick={copyUpiId}
@@ -670,7 +695,7 @@ function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose:
   );
 }
 
-/** Editing an ad needs admin approval first (unlike a mandapam listing) —
+/** Editing an ad needs admin approval first (unlike a celebration listing) —
  * this modal only ever opens once that approval is in, via edit_unlocked. */
 function EditSponsorModal({
   sponsor,

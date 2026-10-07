@@ -31,7 +31,7 @@ function extractCoords(text: string): { lat: number; lng: number } | null {
 }
 
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
-const USER_AGENT = "AnnadhanamMap/1.0 (contact via repo issues)";
+const USER_AGENT = "NavaratriUtsav/1.0 (contact via repo issues)";
 
 async function searchNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
   const url = new URL(NOMINATIM_SEARCH_URL);
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
   try {
     const res = await fetch(input, {
       redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; BappaSeva/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NavaratriUtsav/1.0)" },
     });
     const finalUrl = res.url || input;
     const fromUrl = extractCoords(decodeURIComponent(finalUrl));

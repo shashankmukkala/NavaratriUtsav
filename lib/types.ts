@@ -1,5 +1,9 @@
 export type PandalStatus = "pending" | "approved" | "rejected";
 
+/** What kind of celebration a listing is — drives the Pandals / Dandiya /
+ * Cultural Events filters on the homepage and map. */
+export type ListingCategory = "pandal" | "dandiya" | "cultural";
+
 export interface Pandal {
   id: string;
   name: string;
@@ -8,18 +12,16 @@ export interface Pandal {
   address: string;
   lat: number;
   lng: number;
-  /** ISO date, e.g. "2026-09-14" — when this mandapam serves annadhanam, if
-   * it does. Optional: null means it's a mandapam listing with no food
-   * service date, so it shows under "Mandapams" instead of "Annadhanams". */
+  /** ISO date, e.g. "2026-10-11" — when this celebration happens. Optional:
+   * null means it runs throughout the festival with no specific date. */
   event_date: string | null;
-  /** ISO date, inclusive — when set, annadhanam runs every day from
-   * event_date through this date (e.g. "every day till the last day of
-   * the festival") instead of just a single day. Null means one day only. */
+  /** ISO date, inclusive — when set, the celebration runs every day from
+   * event_date through this date (e.g. all nine nights). Null means one day. */
   event_date_end: string | null;
-  timing_text: string | null; // free-form, e.g. "12:00 PM – 3:00 PM (till food lasts)"
+  timing_text: string | null; // free-form, e.g. "7:00 PM – 11:00 PM"
   /** ISO date — when the idol is immersed (visarjan/nimajjanam). Separate
-   * from event_date since the immersion day doesn't have to match when
-   * annadhanam is served. Optional. */
+   * from event_date since the immersion day doesn't have to match the
+   * event date. Optional. */
   nimajjanam_date: string | null;
   description: string | null;
   image_url: string;
@@ -55,6 +57,7 @@ export interface Pandal {
    * total. Null/empty means just the one cover photo, same as before this
    * existed. */
   extra_image_urls: string[] | null;
+  category: ListingCategory;
   created_at: string;
 }
 
@@ -76,7 +79,7 @@ export interface Sponsor {
   starts_at: string | null;
   user_id: string | null;
   /** "map" = map-wide sponsored slots. "card" = shown generically inside
-   * mandapam detail cards, not targeted at any one specific mandapam.
+   * listing detail cards, not targeted at any one specific listing.
    * "crow" = the premium animated crow-towed-banner placement. */
   placement: "map" | "card" | "crow";
   /** Which flying object carries the banner — only meaningful when

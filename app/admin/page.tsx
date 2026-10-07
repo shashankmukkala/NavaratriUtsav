@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LotusMark } from "@/components/Brand";
 import { CheckIcon, CloseIcon, PencilIcon, RefreshIcon, TrashIcon } from "@/components/icons";
 import ImageCropModal from "@/components/ImageCropModal";
 import ImageUploadField from "@/components/ImageUploadField";
 import MultiImageUploadField from "@/components/MultiImageUploadField";
+import { CATEGORIES, categoryInfo } from "@/lib/categories";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
-import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
+import type { ListingCategory, Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type AdsSubTab = "banners" | "stars" | "card" | "map" | "crow";
 type Analytics = { users: number; totalViews: number; views24h: number; views7d: number; uniqueVisitors: number };
 type AdminUser = { id: string; email: string | null; name: string | null; image: string | null; created_at: string; last_seen_at: string };
-type PandalCategoryFilter = "all" | "annadhanams" | "needs_photo_review";
+type PandalCategoryFilter = "all" | ListingCategory | "needs_photo_review";
 
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
@@ -123,7 +125,7 @@ export default function AdminPage() {
   };
 
   const deletePandal = async (id: string) => {
-    if (!confirm("Permanently delete this mandapam listing?")) return;
+    if (!confirm("Permanently delete this listing?")) return;
     await sendJson(`/api/admin/pandals/${id}`, undefined, "DELETE");
     loadData();
   };
@@ -165,8 +167,7 @@ export default function AdminPage() {
       <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
         <div className="card-elevated p-6">
           <span className="icon-tile icon-tile-circle mb-4 h-12 w-12" style={{ background: "#ffffff" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/bappa-logo.webp" alt="" className="h-7 w-7 object-contain" />
+            <LotusMark className="h-8 w-8" />
           </span>
           <h1 className="mb-4 text-xl font-bold text-[color:var(--foreground)]">Admin sign in</h1>
           <form onSubmit={handleLogin} className="space-y-3">
@@ -195,19 +196,26 @@ export default function AdminPage() {
     (p) =>
       (pandalFilter === "all" || p.status === pandalFilter) &&
       (pandalCategoryFilter === "all" ||
-        (pandalCategoryFilter === "annadhanams" && !!p.event_date) ||
-        (pandalCategoryFilter === "needs_photo_review" && !!p.source_image_url)) &&
+        (pandalCategoryFilter === "needs_photo_review" ? !!p.source_image_url : categoryInfo(p.category).value === pandalCategoryFilter)) &&
       (pandalSearchLower === "" ||
         p.name.toLowerCase().includes(pandalSearchLower) ||
         p.organizer_name.toLowerCase().includes(pandalSearchLower) ||
         p.contact_phone.includes(pandalSearchLower) ||
         p.address.toLowerCase().includes(pandalSearchLower))
   );
-  const annadhanamPandalsCount = pandals.filter((p) => !!p.event_date).length;
   // Bulk-imported pandals whose photo was auto-cropped with no manual
   // review — kept as its own filter so admin can work through just these
   // instead of hunting for them in the full list.
   const needsPhotoReviewCount = pandals.filter((p) => !!p.source_image_url).length;
+  const pandalTypeFilters: { value: PandalCategoryFilter; label: string; count: number }[] = [
+    { value: "all", label: "All", count: pandals.length },
+    ...CATEGORIES.map((c) => ({
+      value: c.value,
+      label: c.plural,
+      count: pandals.filter((p) => categoryInfo(p.category).value === c.value).length,
+    })),
+    { value: "needs_photo_review", label: "Needs photo review", count: needsPhotoReviewCount },
+  ];
   const usersById = new Map(users.map((u) => [u.id, u]));
   // A submission's user_id predates our users table for anyone who signed
   // in before that table existed, so this can legitimately come up empty.
@@ -258,8 +266,7 @@ export default function AdminPage() {
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="icon-tile icon-tile-circle h-9 w-9 flex-shrink-0" style={{ background: "#ffffff" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/bappa-logo.webp" alt="" className="h-6 w-6 object-contain" />
+            <LotusMark className="h-6 w-6" />
           </span>
           <h1 className="truncate text-xl font-bold text-[color:var(--foreground)]">Admin</h1>
         </div>
@@ -290,7 +297,7 @@ export default function AdminPage() {
 
       <div className="mb-4 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <TabButton active={tab === "pandals"} onClick={() => setTab("pandals")}>
-          Mandapams ({pendingPandalsCount} pending)
+          Listings ({pendingPandalsCount} pending)
         </TabButton>
         <TabButton active={tab === "sponsors"} onClick={() => setTab("sponsors")}>
           Ads ({pendingAdsTotal} pending)
@@ -305,23 +312,19 @@ export default function AdminPage() {
 
       {tab === "pandals" && (
         <div className="space-y-4">
-          {/* "All" already includes annadhanam-serving mandapams — this is a
-              narrowing filter to just that subset, not a separate category
-              (an annadhanam-serving listing is still a mandapam). */}
           <div className="flex flex-wrap gap-1.5">
-            {(["all", "annadhanams", "needs_photo_review"] as const).map((f) => (
+            {pandalTypeFilters.map(({ value, label, count }) => (
               <button
-                key={f}
+                key={value}
                 type="button"
-                onClick={() => setPandalCategoryFilter(f)}
+                onClick={() => setPandalCategoryFilter(value)}
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  pandalCategoryFilter === f
+                  pandalCategoryFilter === value
                     ? "bg-[color:var(--accent)] text-white"
                     : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
                 }`}
               >
-                {f === "all" ? "All" : f === "annadhanams" ? "Annadhanams" : "Needs photo review"} (
-                {f === "all" ? pandals.length : f === "annadhanams" ? annadhanamPandalsCount : needsPhotoReviewCount})
+                {label} ({count})
               </button>
             ))}
           </div>
@@ -340,7 +343,7 @@ export default function AdminPage() {
           />
 
           <div className="space-y-2">
-            {filteredPandals.length === 0 && <Empty>No mandapams match this filter.</Empty>}
+            {filteredPandals.length === 0 && <Empty>No listings match this filter.</Empty>}
             {filteredPandals.map((pandal) => (
               <PandalRow key={pandal.id} pandal={pandal} onSendNote={sendAdminNote} submittedBy={submitterLabel(pandal.user_id)}>
                 <StatusBadge status={pandal.status} />
@@ -376,7 +379,7 @@ export default function AdminPage() {
               Star Requests ({pendingStarCount})
             </SubTabButton>
             <SubTabButton active={adsSubTab === "card"} onClick={() => setAdsSubTab("card")}>
-              Mandapam Card Ads ({pendingCardAdsCount})
+              Listing Card Ads ({pendingCardAdsCount})
             </SubTabButton>
             <SubTabButton active={adsSubTab === "map"} onClick={() => setAdsSubTab("map")}>
               Map Ads ({pendingMapAdsCount})
@@ -412,7 +415,7 @@ export default function AdminPage() {
                 <input
                   value={bannerSearch}
                   onChange={(e) => setBannerSearch(e.target.value)}
-                  placeholder="Search by mandapam name…"
+                  placeholder="Search by listing name…"
                   className="field-input text-sm"
                 />
               </div>
@@ -443,7 +446,7 @@ export default function AdminPage() {
                 }}
                 search={sponsorSearch}
                 onSearchChange={setSponsorSearch}
-                searchPlaceholder="Search by sponsor, phone, mandapam…"
+                searchPlaceholder="Search by sponsor, phone, listing…"
               />
 
               <div className="space-y-2">
@@ -541,7 +544,7 @@ function SettingsPanel({
           <input
             value={upiId}
             onChange={(e) => setUpiId(e.target.value)}
-            placeholder="annadhanam@upi"
+            placeholder="yourname@upi"
             className="field-input"
           />
           <button
@@ -591,7 +594,7 @@ function SettingsPanel({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Mandapam card ad (per 2 days)</label>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Listing card ad (per 2 days)</label>
             <input
               type="number"
               min={0}
@@ -670,7 +673,7 @@ function SettingsPanel({
 }
 
 /** Lets admin fix up a listing's own content directly — name, contact,
- * address text, photo, annadhanam date/timing, description — rather than
+ * address text, photo, event date/timing, description — rather than
  * only being able to approve/reject/delete it. Unlike an owner's edit (see
  * profile's EditPandalModal), this never resets status back to "pending":
  * admin is the one who'd have to re-review it anyway. */
@@ -694,6 +697,7 @@ function AdminEditPandalModal({
   const [eventDateEnd, setEventDateEnd] = useState(pandal.event_date_end ?? "");
   const [timingText, setTimingText] = useState(pandal.timing_text ?? "");
   const [description, setDescription] = useState(pandal.description ?? "");
+  const [category, setCategory] = useState(categoryInfo(pandal.category).value);
   const [featured, setFeatured] = useState(pandal.featured);
   const [milestoneText, setMilestoneText] = useState(pandal.milestone_text ?? "");
   const [saving, setSaving] = useState(false);
@@ -722,6 +726,7 @@ function AdminEditPandalModal({
     setError(null);
     setSaving(true);
     const result = await onSave(pandal.id, {
+      category,
       name,
       organizer_name: organizerName,
       contact_phone: contactPhone,
@@ -743,10 +748,26 @@ function AdminEditPandalModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="card-elevated max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
-        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit mandapam</p>
+        <p className="text-lg font-bold text-[color:var(--foreground)]">Edit listing</p>
         <p className="mt-1 text-xs text-[color:var(--muted)]">Saved immediately — no re-review needed, you&apos;re the reviewer.</p>
 
         <div className="mt-4 space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Type</label>
+            <div className="grid grid-cols-3 gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setCategory(c.value)}
+                  className={`filter-chip justify-center whitespace-normal text-center leading-tight ${category === c.value ? "filter-chip-active" : ""}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <ImageUploadField
             label="Photo"
             folder="pandals"
@@ -802,11 +823,11 @@ function AdminEditPandalModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Annadhanam date</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Event date</label>
               <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Serving time</label>
+              <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">Timings</label>
               <input value={timingText} onChange={(e) => setTimingText(e.target.value)} className="field-input" />
             </div>
           </div>
@@ -814,7 +835,7 @@ function AdminEditPandalModal({
           {eventDate && (
             <div>
               <label className="mb-1 block text-sm font-medium text-[color:var(--foreground)]">
-                Serving until (optional — for multiple days)
+                Ends on (optional — for multiple days)
               </label>
               <input
                 type="date"
@@ -1150,12 +1171,10 @@ function PandalRow({
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
           <span
             className={`inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
-              pandal.event_date
-                ? "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
-                : "bg-[rgba(43,22,8,0.08)] text-[color:var(--muted)]"
+              "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
             }`}
           >
-            {pandal.event_date ? "Annadhanam" : "Mandapam only"}
+            {categoryInfo(pandal.category).label}
           </span>
           {pandal.source_image_url && (
             <span className="flex-shrink-0 rounded-full bg-[rgba(220,38,38,0.1)] px-2 py-0.5 text-[0.625rem] font-semibold text-red-700">
@@ -1170,12 +1189,10 @@ function PandalRow({
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
           <span
             className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
-              pandal.event_date
-                ? "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
-                : "bg-[rgba(43,22,8,0.08)] text-[color:var(--muted)]"
+              "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
             }`}
           >
-            {pandal.event_date ? "Annadhanam" : "Mandapam only"}
+            {categoryInfo(pandal.category).label}
           </span>
           {pandal.source_image_url && (
             <span className="flex-shrink-0 rounded-full bg-[rgba(220,38,38,0.1)] px-2 py-0.5 text-[0.625rem] font-semibold text-red-700">
@@ -1188,7 +1205,7 @@ function PandalRow({
           {pandal.organizer_name} · {pandal.contact_phone}
           {pandal.event_date
             ? ` · ${pandal.event_date}${pandal.event_date_end ? ` to ${pandal.event_date_end}` : ""} · ${pandal.timing_text}`
-            : " · Mandapam only — no annadhanam date"}
+            : " · No date set"}
         </p>
         {pandal.description && <p className="text-xs text-[color:var(--muted-soft)]">{pandal.description}</p>}
         <p className="text-[0.6875rem] text-[color:var(--muted-soft)]">
@@ -1284,7 +1301,7 @@ function SponsorRow({
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-semibold text-[color:var(--foreground)]">{sponsor.sponsor_name}</p>
         <p className="text-xs text-[color:var(--muted)]">
-          {sponsor.placement === "card" ? "Mandapam card ad" : sponsor.placement === "crow" ? `Flying ad (${sponsor.vehicle})` : "Map-wide ad"} · ₹
+          {sponsor.placement === "card" ? "Listing card ad" : sponsor.placement === "crow" ? `Flying ad (${sponsor.vehicle})` : "Map-wide ad"} · ₹
           {price} / 2 days
         </p>
         <p className="text-xs text-[color:var(--muted)]">{sponsor.contact_phone}</p>
@@ -1388,8 +1405,8 @@ function StarRequestRow({
   );
 }
 
-/** Confirms/revokes payment for a mandapam's own association banner — a
- * dedicated Ads > Banners row instead of being buried in the Mandapams
+/** Confirms/revokes payment for a listing's own organizer banner — a
+ * dedicated Ads > Banners row instead of being buried in the Listings
  * tab, and using the same polished ActionButton treatment as every other
  * approve/reject action instead of a plain text pill. */
 function BannerRow({

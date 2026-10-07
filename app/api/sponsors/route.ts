@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: approved, not-yet-expired sponsor banners (each payment covers 2
 // days of display from approval). ?placement=card returns ads shown
-// generically inside mandapam detail cards; ?placement=crow returns the
+// generically inside listing detail cards; ?placement=crow returns the
 // animated flying-banner ads; anything else (the default) returns the
 // map-wide sponsored slots.
 export async function GET(request: NextRequest) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 // Requires a signed-in Google account (see lib/authOptions.ts). Starts as
 // "pending" and only appears once an admin verifies payment and approves it
 // in /admin. placement picks the tier: "card" (shown generically inside
-// mandapam detail cards) or "map" (the map-wide sponsored slots, default).
+// listing detail cards) or "map" (the map-wide sponsored slots, default).
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;

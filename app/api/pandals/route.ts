@@ -9,7 +9,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 // payment proof screenshots, admin notes, or internal review-workflow
 // flags that the public map/list UI never actually reads.
 const PUBLIC_FIELDS =
-  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, nimajjanam_date, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, status, created_at";
+  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, nimajjanam_date, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, category, status, created_at";
 
 export async function GET() {
   const { data, error } = await supabaseAdmin()
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       lng,
       event_date: body.event_date ? String(body.event_date) : null,
       // Only meaningful alongside event_date — ignored otherwise so a
-      // stray end date can't turn into an "annadhanam" with no start day.
+      // stray end date can't create a range with no start day.
       event_date_end: body.event_date && body.event_date_end ? String(body.event_date_end) : null,
       timing_text: body.timing_text ? String(body.timing_text).slice(0, 200) : null,
       nimajjanam_date: body.nimajjanam_date ? String(body.nimajjanam_date) : null,
@@ -81,6 +81,10 @@ export async function POST(request: NextRequest) {
         ? body.banner_image_urls.filter((u: unknown) => typeof u === "string").slice(0, 2)
         : null,
       banner_payment_proof_url: body.banner_payment_proof_url ? String(body.banner_payment_proof_url) : null,
+      category: ["pandal", "dandiya", "cultural"].includes(body.category) ? body.category : "pandal",
+      // Set when submitted from a homepage "Feature your celebration" slot —
+      // admin reviews it exactly like a star bought later from the detail card.
+      star_payment_proof_url: body.star_payment_proof_url ? String(body.star_payment_proof_url) : null,
       user_id: userId,
       status: "pending",
     })

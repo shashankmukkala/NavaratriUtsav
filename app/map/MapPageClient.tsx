@@ -10,24 +10,15 @@ import PandalDetailCard from "@/components/PandalDetailCard";
 import ProfileNavLink from "@/components/ProfileNavLink";
 import StarHighlightCTA from "@/components/StarHighlightCTA";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
-import { BowlIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
 import { distanceKm } from "@/lib/geo";
 import { isServedState } from "@/lib/servedArea";
+import { CATEGORIES, categoryInfo, parseMapFilter, type MapFilter } from "@/lib/categories";
 import type { GeocodeResult, Pandal, PaymentSettings, Sponsor } from "@/lib/types";
 
-type Filter = "all" | "today" | "open";
 type LocationStatus = "idle" | "pending" | "granted" | "denied" | "unsupported" | "outside-area";
-// "mandapams" = every listing (a mandapam serving annadhanam is still a
-// mandapam); "annadhanams" narrows that down to just the ones with a food
-// service date set; "star" narrows to the paid/admin-picked highlighted
-// ones. All subsets of "mandapams", not separate partitions.
-type Category = "annadhanams" | "mandapams" | "star";
-
-function isServingToday(startDate: string | null, endDate: string | null) {
-  return getEventStatus(startDate, endDate) === "today";
-}
 
 export default function MapPageClient() {
   const [pandals, setPandals] = useState<Pandal[]>([]);
@@ -87,21 +78,21 @@ export default function MapPageClient() {
     }
   };
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Picks up ?q= from the homepage's "Annadhanam near you" search box.
+  // Picks up ?q= from the homepage's "Celebrations in your city" search box.
   const [query, setQuery] = useState(() =>
     typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
   );
-  const [filter, setFilter] = useState<Filter>("all");
-  // "Mandapams" is the full directory — every listing is a mandapam, an
-  // annadhanam-serving one included — so it's the safer default (never
-  // empty just because nothing nearby happens to serve food today).
-  const [category, setCategory] = useState<Category>("mandapams");
-  // "Today"/"Open Now" are meaningless once a listing has no annadhanam
-  // date at all, so switching to Mandapams also resets back to "All".
-  const changeCategory = (c: Category) => {
-    setCategory(c);
-    setFilter("all");
-  };
+  // One map for every kind of celebration — the filter narrows it to
+  // pandals, dandiya nights, cultural events/workshops, or starred ones.
+  // Seeded from ?category= so homepage links can open it pre-filtered.
+  const [category, setCategory] = useState<MapFilter>("all");
+  // Read after mount, not in a lazy initializer — the server render has no
+  // URL to read, and hydration would keep its "all" over the client's value.
+  useEffect(() => {
+    const fromUrl = parseMapFilter(new URLSearchParams(window.location.search).get("category"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fromUrl !== "all") setCategory(fromUrl);
+  }, []);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   useEffect(() => {
     fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
@@ -128,7 +119,7 @@ export default function MapPageClient() {
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   // Set once a searched area name resolves — while active, this (not the
   // user's own coords) is what "near you" is centered on, so searching
-  // Mumbai shows mandapams near Mumbai even if the user is really in Pune.
+  // Mumbai shows listings near Mumbai even if the user is really in Pune.
   const [areaCenter, setAreaCenter] = useState<{ lat: number; lng: number } | null>(null);
   // Mirrors areaCenter for the async geolocation callback below, which
   // closes over stale state otherwise — without this, a slow GPS fix that
@@ -148,7 +139,7 @@ export default function MapPageClient() {
         const list = data?.pandals ?? [];
         setPandals(list);
         // Picks up ?pandal= from the homepage's "View Details" link, so
-        // clicking it actually opens that mandapam's card here instead of
+        // clicking it actually opens that listing's card here instead of
         // just landing on a bare map.
         const pandalId = new URLSearchParams(window.location.search).get("pandal");
         const match = pandalId ? list.find((p) => p.id === pandalId) : null;
@@ -253,7 +244,7 @@ export default function MapPageClient() {
   };
 
   useEffect(() => {
-    // A shared mandapam link or a homepage search already has a specific,
+    // A shared listing link or a homepage search already has a specific,
     // intentional destination — don't interrupt either with a permission
     // prompt that would then fly the camera away from it.
     const params = new URLSearchParams(window.location.search);
@@ -286,7 +277,7 @@ export default function MapPageClient() {
   // Searching an area name (not just filtering the pandal list by text)
   // geocodes it, flies the map there, and re-centers the "near you" list on
   // that area instead of the user's real location — so searching "Mumbai"
-  // shows mandapams near Mumbai even if they're actually somewhere else.
+  // shows listings near Mumbai even if they're actually somewhere else.
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     const q = query.trim();
@@ -331,7 +322,7 @@ export default function MapPageClient() {
     };
   }, [query]);
 
-  // Drops the searched area and goes back to showing mandapams around the
+  // Drops the searched area and goes back to showing listings around the
   // user's real location — without this, once someone searches an area
   // there was no way back to "near me" short of clearing the search box.
   const useMyLocation = () => {
@@ -357,12 +348,9 @@ export default function MapPageClient() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pandals
-      // "Annadhanams" narrows to the subset that serves food on a specific
-      // date; "Mandapams" is everyone — an annadhanam-serving mandapam is
-      // still a mandapam, so it shouldn't disappear from that view.
-      .filter((p) => (category === "annadhanams" ? !!p.event_date : true))
-      .filter((p) => (category === "star" ? !!p.featured : true))
-      .filter((p) => (filter === "today" ? isServingToday(p.event_date, p.event_date_end) : true))
+      .filter((p) =>
+        category === "all" ? true : category === "star" ? !!p.featured : categoryInfo(p.category).value === category
+      )
       // "Open Now" can't be computed precisely from a free-text timing string,
       // so it currently behaves like "All" — a real open/closed check would
       // need structured start/end times on the pandal record.
@@ -372,7 +360,7 @@ export default function MapPageClient() {
       // name/address here too would wrongly hide every pandal that doesn't
       // literally mention "sainikpuri" in its address, even ones right there.
       .filter((p) => (q && !areaCenter ? p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q) : true));
-  }, [pandals, category, filter, query, areaCenter]);
+  }, [pandals, category, query, areaCenter]);
 
   const withDistance = (p: Pandal) => (effectiveCenter ? distanceKm(effectiveCenter.lat, effectiveCenter.lng, p.lat, p.lng) : null);
 
@@ -435,10 +423,14 @@ export default function MapPageClient() {
             </Link>
             <Link href="/submit" className="btn-primary flex-shrink-0">
               <PlusIcon className="h-4 w-4" />
-              Add Your Mandapam
+              Add a Celebration
             </Link>
             <ProfileNavLink />
           </header>
+
+          <div className="pointer-events-auto -mt-1 flex-shrink-0 self-start">
+            <CategoryFilterBar value={category} onChange={setCategory} />
+          </div>
 
           <div className="flex min-h-0 flex-1 gap-4">
             {sidebarOpen && (
@@ -452,9 +444,6 @@ export default function MapPageClient() {
                     onClose={() => setSidebarOpen(false)}
                     onUseMyLocation={useMyLocation}
                     category={category}
-                    onCategoryChange={changeCategory}
-                    filter={filter}
-                    onFilterChange={setFilter}
                     searchOutOfArea={searchOutOfArea}
                     starPrice={settings?.star_price ?? 99}
                   />
@@ -511,12 +500,13 @@ export default function MapPageClient() {
                 className="w-full bg-transparent text-[color:var(--foreground)] outline-none placeholder:text-[color:var(--muted-soft)]"
               />
             </label>
+            <CategoryFilterBar value={category} onChange={setCategory} />
           </div>
         </header>
 
         <div className="relative isolate flex-1">
           <MapView pandals={filtered} selectedId={selected?.id ?? null} onSelect={toggleSelected} onDeselect={() => setSelected(null)} flyTo={flyTarget} resetTrigger={mapResetTrigger} userLocation={locationOn ? coords : null} />
-          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} topClassName="top-48" durationSeconds={20} />
+          <FlyingAdOverlay intervalSeconds={settings?.crow_interval_seconds ?? 0} topClassName="top-60" durationSeconds={20} />
           <VisitorCountBadge />
 
           {/* Half-screen bottom sheet, over the map (not a separate page) —
@@ -549,10 +539,6 @@ export default function MapPageClient() {
                   onClose={() => setShowList(false)}
                   onUseMyLocation={useMyLocation}
                   category={category}
-                  onCategoryChange={changeCategory}
-                  filter={filter}
-                  onFilterChange={setFilter}
-                  scrollableFilters
                   searchOutOfArea={searchOutOfArea}
                   starPrice={settings?.star_price ?? 99}
                 />
@@ -642,7 +628,7 @@ export default function MapPageClient() {
             </span>
             <p className="mt-4 text-lg font-bold text-[color:var(--foreground)]">Not available in your area yet</p>
             <p className="mt-1.5 text-sm text-[color:var(--muted)]">
-              Sorry, we&apos;re not servicing {outOfAreaName ?? "your location"} right now — BappaSeva currently
+              Sorry, we&apos;re not servicing {outOfAreaName ?? "your location"} right now — Navaratri Utsav currently
               covers Telangana and Andhra Pradesh only. Try searching a place there instead, like Hyderabad.
             </p>
             <button
@@ -774,6 +760,41 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
 }
 
 
+function filterNoun(filter: MapFilter): string {
+  if (filter === "all") return "Celebrations";
+  if (filter === "star") return "Featured Celebrations";
+  return categoryInfo(filter).plural;
+}
+
+function CategoryBadge({ pandal }: { pandal: Pandal }) {
+  const info = categoryInfo(pandal.category);
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${info.badgeClass}`}>{info.label}</span>
+  );
+}
+
+/** The one filter for the one map — every kind of celebration, a single
+ * kind (each with its pin colour), or just the starred ones. Scrolls
+ * sideways on narrow screens rather than wrapping onto a second row. */
+function CategoryFilterBar({ value, onChange }: { value: MapFilter; onChange: (f: MapFilter) => void }) {
+  return (
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5">
+      <FilterChip active={value === "all"} onClick={() => onChange("all")}>
+        All
+      </FilterChip>
+      {CATEGORIES.map((c) => (
+        <FilterChip key={c.value} active={value === c.value} onClick={() => onChange(c.value)}>
+          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: c.color }} />
+          {c.plural}
+        </FilterChip>
+      ))}
+      <FilterChip active={value === "star"} onClick={() => onChange("star")}>
+        ★ Featured
+      </FilterChip>
+    </div>
+  );
+}
+
 function FilterChip({
   active,
   onClick,
@@ -859,10 +880,6 @@ function NearbyListHeader({
   onClose,
   onUseMyLocation,
   category,
-  onCategoryChange,
-  filter,
-  onFilterChange,
-  scrollableFilters = false,
   searchOutOfArea = null,
   starPrice,
 }: {
@@ -872,25 +889,23 @@ function NearbyListHeader({
   nearbyCount: number;
   onClose: () => void;
   onUseMyLocation: () => void;
-  category: Category;
-  onCategoryChange: (c: Category) => void;
-  filter: Filter;
-  onFilterChange: (f: Filter) => void;
-  scrollableFilters?: boolean;
+  category: MapFilter;
   searchOutOfArea?: string | null;
   starPrice: number;
 }) {
   const searchedPlace = query.trim();
-  const noun = category === "annadhanams" ? "Annadhanam" : category === "star" ? "Starred Mandapam" : "Mandapam";
+  const noun = filterNoun(category);
   // "Near You" is only honest once we're actually centered on the user's
   // real location — otherwise (no location, or a searched area) it's a
   // claim about proximity we can't back up.
   const title =
     areaCenter && searchedPlace
-      ? `${noun}s near "${searchedPlace}"`
+      ? `${noun} near "${searchedPlace}"`
       : effectiveCenter
         ? `${noun} Near You`
-        : `All ${noun}s`;
+        : category === "all"
+          ? "All Celebrations"
+          : noun;
 
   return (
     <>
@@ -913,8 +928,8 @@ function NearbyListHeader({
       )}
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         {effectiveCenter
-          ? `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"}, nearest first`
-          : `${nearbyCount} ${noun.toLowerCase()}${nearbyCount === 1 ? "" : "s"}`}
+          ? `${nearbyCount} found, nearest first`
+          : `${nearbyCount} found`}
       </p>
       {areaCenter && (
         <button
@@ -927,37 +942,8 @@ function NearbyListHeader({
         </button>
       )}
 
-      {/* Mandapams is every listing — an annadhanam-serving one is still a
-          mandapam. Annadhanams narrows down to just the ones that also
-          serve food on a specific date. Not a partition: it's all vs. a
-          subset of it. */}
-      <div className="mt-3 flex gap-2">
-        <FilterChip active={category === "mandapams"} onClick={() => onCategoryChange("mandapams")}>
-          Mandapams
-        </FilterChip>
-        <FilterChip active={category === "star"} onClick={() => onCategoryChange("star")}>
-          ★ Star
-        </FilterChip>
-        <FilterChip active={category === "annadhanams"} onClick={() => onCategoryChange("annadhanams")}>
-          Annadhanams
-        </FilterChip>
-      </div>
-
       {category === "star" && <StarHighlightCTA starPrice={starPrice} />}
 
-      {category === "annadhanams" && (
-        <div className={`mt-2 flex gap-2 ${scrollableFilters ? "overflow-x-auto" : ""}`}>
-          <FilterChip active={filter === "all"} onClick={() => onFilterChange("all")}>
-            All
-          </FilterChip>
-          <FilterChip active={filter === "today"} onClick={() => onFilterChange("today")}>
-            Today
-          </FilterChip>
-          <FilterChip active={filter === "open"} onClick={() => onFilterChange("open")}>
-            Open Now
-          </FilterChip>
-        </div>
-      )}
     </>
   );
 }
@@ -1036,7 +1022,7 @@ function PandalList({
   selectedId: string | null;
   distanceFor: (p: Pandal) => number | null;
   onSelect: (p: Pandal) => void;
-  category: Category;
+  category: MapFilter;
   /** True once the list has been narrowed to a location (GPS or a searched
    * area), so the empty state can say "none nearby" instead of implying
    * nothing has been published anywhere. */
@@ -1046,15 +1032,15 @@ function PandalList({
   query?: string;
   onQueryChange?: (q: string) => void;
 }) {
-  const noun = category === "annadhanams" ? "annadhanam" : "mandapam";
+  const noun = filterNoun(category).toLowerCase();
   if (loading) {
-    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading {noun}s…</p>;
+    return <p className="p-6 text-center text-sm text-[color:var(--muted)]">Loading {noun}…</p>;
   }
   if (pandals.length === 0) {
     return (
       <div className="space-y-3 p-6 text-center">
         <p className="text-sm text-[color:var(--muted)]">
-          {nearbyScoped ? `No ${noun}s found.` : `No ${noun}s published yet. Be the first to add one!`}
+          {nearbyScoped ? `No ${noun} found.` : `No ${noun} published yet. Be the first to add one!`}
         </p>
         {nearbyScoped && onQueryChange && (
           <label className="flex items-center gap-2 rounded-full border border-[rgba(43,22,8,0.14)] bg-white px-4 py-2 text-left text-sm text-[color:var(--muted)]">
@@ -1094,7 +1080,7 @@ function PandalList({
                 {pandal.event_date && (
                   <p className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-[color:var(--accent-deep)]">
                     <span className="flex min-w-0 items-center gap-1 truncate">
-                      <BowlIcon className="h-3 w-3 flex-shrink-0" />
+                      <CalendarIcon className="h-3 w-3 flex-shrink-0" />
                       {formatEventDateRange(pandal.event_date, pandal.event_date_end)}
                       {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
                     </span>
@@ -1106,6 +1092,7 @@ function PandalList({
                   </p>
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <CategoryBadge pandal={pandal} />
                   <span className="badge-verified">
                     <VerifiedIcon className="h-3.5 w-3.5" />
                     Verified

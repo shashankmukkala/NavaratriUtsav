@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Lightweight check the profile nav link polls on every page: is there an
-// admin note waiting on any of this user's mandapams? There's no email or
+// admin note waiting on any of this user's listings? There's no email or
 // push setup in this app, so an in-app badge visible from anywhere (not
 // just after already opening /profile) is the actual notification.
 export async function GET() {

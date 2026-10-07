@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ImageUploadField from "@/components/ImageUploadField";
 import { CopyIcon } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { UPI_FALLBACK } from "@/lib/siteMeta";
 import type { Pandal, PaymentSettings } from "@/lib/types";
 
 /** Same one-time payment-proof pattern as the association-banner add-on —
@@ -25,7 +26,7 @@ export default function AddStarModal({ pandal, onClose, onSaved }: { pandal: Pan
 
   const copyUpiId = async () => {
     try {
-      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
       setUpiCopied(true);
       setTimeout(() => setUpiCopied(false), 1500);
     } catch {
@@ -77,7 +78,7 @@ export default function AddStarModal({ pandal, onClose, onSaved }: { pandal: Pan
           )}
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-              {settings?.upi_id ?? "annadhanam@upi"}
+              {settings?.upi_id || UPI_FALLBACK}
               <button
                 type="button"
                 onClick={copyUpiId}

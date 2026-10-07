@@ -23,7 +23,7 @@ async function requireOwner(request: NextRequest, id: string) {
   return { userId, editUnlocked: sponsor.edit_unlocked };
 }
 
-// Owner-only: edit their own ad — unlike a mandapam listing, this needs
+// Owner-only: edit their own ad — unlike a listing, this needs
 // admin approval first (POST .../request-edit), since an ad is something
 // someone paid to run and its content shouldn't change unreviewed mid-flight.
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
