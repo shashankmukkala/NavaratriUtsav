@@ -22,12 +22,15 @@ import {
   VerifiedIcon,
 } from "@/components/icons";
 import { formatEventDateRange } from "@/lib/eventStatus";
+import { UPI_FALLBACK } from "@/lib/siteMeta";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
-import type { PaymentSettings } from "@/lib/types";
+import { CATEGORIES, categoryInfo, isListingCategory } from "@/lib/categories";
+import type { ListingCategory, PaymentSettings } from "@/lib/types";
 
-const DRAFT_KEY = "bappaseva_submit_draft";
+const DRAFT_KEY = "utsav_submit_draft";
 
 interface SubmitDraft {
+  category: ListingCategory;
   name: string;
   organizerName: string;
   contactPhone: string;
@@ -69,6 +72,11 @@ export default function SubmitPage() {
   const [eventDateEnd, setEventDateEnd] = useState("");
   const [timingText, setTimingText] = useState("");
   const [nimajjanamDate, setNimajjanamDate] = useState("");
+  const [category, setCategory] = useState<ListingCategory>("pandal");
+  // Opened from a homepage "Feature your celebration" slot (?featured=1) —
+  // the star highlight is paid alongside the listing instead of later.
+  const [wantsFeatured, setWantsFeatured] = useState(false);
+  const [starProofUrl, setStarProofUrl] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
@@ -95,12 +103,24 @@ export default function SubmitPage() {
   };
 
   useEffect(() => {
+    // Read once on mount rather than via useSearchParams, which would force
+    // the whole page into a Suspense boundary just for this one flag.
+    const params = new URLSearchParams(window.location.search);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (params.get("featured") === "1") setWantsFeatured(true);
+    const cat = params.get("category");
+    if (isListingCategory(cat)) setCategory(cat);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  useEffect(() => {
     const draft = readSubmitDraft();
     if (!draft) return;
     // Restoring a draft from sessionStorage (an external system) after the
     // sign-in redirect — exactly the case this lint rule allows an effect
     // to opt out of.
     /* eslint-disable react-hooks/set-state-in-effect */
+    if (draft.category) setCategory(draft.category);
     setName(draft.name);
     setOrganizerName(draft.organizerName);
     setContactPhone(draft.contactPhone);
@@ -134,7 +154,7 @@ export default function SubmitPage() {
 
   const copyUpiId = async () => {
     try {
-      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
       setUpiCopied(true);
       setTimeout(() => setUpiCopied(false), 1500);
     } catch {
@@ -148,15 +168,15 @@ export default function SubmitPage() {
     setError(null);
 
     if (!name.trim()) {
-      setError("Please fill in the mandapam's name.");
+      setError("Please fill in the name.");
       return;
     }
     if (!location) {
-      setError("Please set the mandapam's location on the map.");
+      setError("Please set the location on the map.");
       return;
     }
     if (!imageUrl) {
-      setError("Please upload a picture of Ganesh Maharaj.");
+      setError("Please upload a cover photo.");
       return;
     }
     if (!address.trim()) {
@@ -168,9 +188,14 @@ export default function SubmitPage() {
       setShowPaymentModal(true);
       return;
     }
+    if (wantsFeatured && !starProofUrl) {
+      setError("Please upload the featured-listing payment screenshot, or untick \"Feature this celebration\".");
+      return;
+    }
 
     if (!session?.user) {
       const draft: SubmitDraft = {
+        category,
         name,
         organizerName,
         contactPhone,
@@ -206,13 +231,15 @@ export default function SubmitPage() {
       event_date: eventDate || null,
       event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
-      nimajjanam_date: nimajjanamDate || null,
+      nimajjanam_date: category === "pandal" ? nimajjanamDate || null : null,
       description: description || null,
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl,
       extra_image_urls: extraImageUrls,
       banner_image_urls: bannerUrls,
       banner_payment_proof_url: bannerProofUrl,
+      category,
+      star_payment_proof_url: wantsFeatured ? starProofUrl : null,
     });
     setSubmitting(false);
     if (result.ok) {
@@ -255,11 +282,11 @@ export default function SubmitPage() {
                 <CheckCircleIcon className="h-8 w-8" />
               </span>
               <h1 className="text-xl font-bold text-[color:var(--foreground)]">
-                Your Mandapam has been added to the map!
+                Your {categoryInfo(category).label} has been added to the map!
               </h1>
               <p className="text-sm text-[color:var(--muted)]">
-                We&apos;ll review it and it&apos;ll go live shortly. Together, we can help more people find food and
-                feel the blessings of Bappa.
+                We&apos;ll review it and it&apos;ll go live shortly. Together, we can help more people find the
+                celebrations happening around them this Navaratri.
               </p>
 
               <button
@@ -309,7 +336,7 @@ export default function SubmitPage() {
                 )}
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-                    {settings?.upi_id ?? "annadhanam@upi"}
+                    {settings?.upi_id || UPI_FALLBACK}
                     <button
                       type="button"
                       onClick={copyUpiId}
@@ -356,9 +383,9 @@ export default function SubmitPage() {
         {!done && (
           <div className="pt-8 lg:pt-16">
             <div className="mb-8 max-w-2xl">
-              <p className="eyebrow">Add Your Mandapam</p>
+              <p className="eyebrow">Add a Celebration</p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
-                Let the people know. Let the seva grow.
+                Pandal, dandiya night or workshop — put it on the map.
               </h1>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[color:var(--muted)]">
                 <span className="inline-flex items-center gap-1.5">
@@ -378,8 +405,23 @@ export default function SubmitPage() {
 
           <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-12">
             <form onSubmit={handleSubmit} className="card-elevated space-y-5 p-5 sm:p-7 lg:order-1">
+              <Field label="What are you adding?" required>
+                <div className="grid grid-cols-3 gap-2">
+                  {CATEGORIES.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setCategory(opt.value)}
+                      className={`filter-chip justify-center whitespace-normal text-center leading-tight ${category === opt.value ? "filter-chip-active" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
               <ImageUploadField
-                label="Ganesh Maharaj picture"
+                label={categoryInfo(category).photoLabel}
                 folder="pandals"
                 required
                 value={imageUrl}
@@ -390,7 +432,7 @@ export default function SubmitPage() {
 
               <MultiImageUploadField
                 label="More photos (optional)"
-                hint="Up to 3 more, alongside the cover photo above — shown as a gallery on the mandapam's card."
+                hint="Up to 3 more, alongside the cover photo above — shown as a gallery on the listing's card."
                 folder="pandals"
                 max={3}
                 value={extraImageUrls}
@@ -403,17 +445,17 @@ export default function SubmitPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Secunderabad Ka Raja"
+                  placeholder={categoryInfo(category).namePlaceholder}
                   className="field-input"
                 />
               </Field>
 
-              <Field label="Association name" required>
+              <Field label="Organizer / association name" required>
                 <input
                   required
                   value={organizerName}
                   onChange={(e) => setOrganizerName(e.target.value)}
-                  placeholder="e.g. Balapur Youth Ganesh Mandal"
+                  placeholder={categoryInfo(category).organizerPlaceholder}
                   className="field-input"
                 />
               </Field>
@@ -457,25 +499,24 @@ export default function SubmitPage() {
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Annadhanam date">
+                <Field label="Event date">
                   <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="field-input" />
                 </Field>
-                <Field label="Serving time">
+                <Field label="Timings">
                   <input
                     value={timingText}
                     onChange={(e) => setTimingText(e.target.value)}
-                    placeholder="12 PM – 3 PM"
+                    placeholder="7 PM – 11 PM"
                     className="field-input"
                   />
                 </Field>
               </div>
               <p className="-mt-2 text-xs text-[color:var(--muted-soft)]">
-                Only serving free meals (annadhanam)? Fill this in and it&apos;ll be listed under Annadhanams.
-                Otherwise leave it blank and it&apos;ll show under Mandapams.
+                When does it happen? Leave blank if it runs throughout the festival.
               </p>
 
               {eventDate && (
-                <Field label="Serving until (optional — for multiple days)">
+                <Field label="Ends on (optional — for multiple days)">
                   <input
                     type="date"
                     min={eventDate}
@@ -484,42 +525,39 @@ export default function SubmitPage() {
                     className="field-input"
                   />
                   <p className="mt-1 text-xs text-[color:var(--muted-soft)]">
-                    Serving every day through the festival? Set the last day here — leave blank for just the one day
-                    above.
-                    {nimajjanamDate && !eventDateEnd && (
-                      <>
-                        {" "}
-                        <button
-                          type="button"
-                          onClick={() => setEventDateEnd(nimajjanamDate)}
-                          className="font-semibold text-[color:var(--accent-deep)] underline"
-                        >
-                          Use nimajjanam date ({nimajjanamDate})
-                        </button>
-                      </>
-                    )}
+                    Running across several nights? Set the last day here — leave blank for just the one day above.
                   </p>
                 </Field>
               )}
 
-              <Field label="Nimajjanam date (optional)">
-                <input
-                  type="date"
-                  value={nimajjanamDate}
-                  onChange={(e) => setNimajjanamDate(e.target.value)}
-                  className="field-input"
-                />
-              </Field>
+              {category === "pandal" && (
+                <Field label="Visarjan date (optional)">
+                  <input
+                    type="date"
+                    value={nimajjanamDate}
+                    onChange={(e) => setNimajjanamDate(e.target.value)}
+                    className="field-input"
+                  />
+                </Field>
+              )}
 
               <Field label="Additional details (optional)">
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  placeholder="Menu, special notes, seating capacity, etc."
+                  placeholder="Entry fee, dress code, DJ / live band, special notes, etc."
                   className="field-input"
                 />
               </Field>
+
+              <FeatureOption
+                checked={wantsFeatured}
+                onCheckedChange={setWantsFeatured}
+                proofUrl={starProofUrl}
+                onProofChange={setStarProofUrl}
+                settings={settings}
+              />
 
               {error && <p className="text-sm text-[color:var(--coral-deep)]">{error}</p>}
 
@@ -527,7 +565,7 @@ export default function SubmitPage() {
                 {submitting ? "Submitting…" : "Submit — it's free"}
               </button>
               <p className="text-center text-xs text-[color:var(--muted-soft)]">
-                Listing your Annadhanam costs nothing. The ₹{settings?.banner_price ?? 200} banner on the right is a separate, optional add-on.
+                Listing your celebration costs nothing. The ₹{settings?.banner_price ?? 200} banner on the right is a separate, optional add-on.
               </p>
             </form>
 
@@ -539,6 +577,7 @@ export default function SubmitPage() {
                 imageUrl={imageUrl}
                 name={name}
                 organizerName={organizerName}
+                category={category}
                 address={address}
                 dateLabel={previewDateLabel}
                 timingText={timingText}
@@ -553,6 +592,71 @@ export default function SubmitPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Optional paid "featured" add-on — the same star highlight an owner can
+ * buy later from the map's detail card (AddStarModal), offered up front here
+ * so the homepage's Featured Celebrations slots link straight into it. */
+function FeatureOption({
+  checked,
+  onCheckedChange,
+  proofUrl,
+  onProofChange,
+  settings,
+}: {
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+  proofUrl: string | null;
+  onProofChange: (url: string | null) => void;
+  settings: PaymentSettings | null;
+}) {
+  const price = settings?.star_price ?? 99;
+  const upiId = settings?.upi_id || UPI_FALLBACK;
+
+  return (
+    <div className="rounded-2xl border-2 border-dashed border-[rgba(234,108,29,0.4)] bg-[rgba(234,108,29,0.04)] p-4">
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onCheckedChange(e.target.checked)}
+          className="mt-1 h-4 w-4 accent-[color:var(--accent-deep)]"
+        />
+        <span>
+          <span className="block text-sm font-semibold text-[color:var(--foreground)]">
+            Feature this celebration — ₹{price}
+          </span>
+          <span className="mt-0.5 block text-xs text-[color:var(--muted)]">
+            Shows it in Featured Celebrations on the homepage, with a glowing pin on the map. Optional.
+          </span>
+        </span>
+      </label>
+
+      {checked && (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3 rounded-xl border border-[rgba(43,22,8,0.12)] bg-white/60 p-3">
+            {settings?.qr_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settings.qr_image_url}
+                alt="Payment QR code"
+                className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
+                QR code
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-mono text-sm font-semibold text-[color:var(--foreground)]">{upiId}</p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{price} to this UPI ID, then upload the screenshot.</p>
+            </div>
+          </div>
+          <ImageUploadField label="Payment screenshot" folder="payment-proofs" required value={proofUrl} onChange={onProofChange} />
+        </div>
+      )}
     </div>
   );
 }
@@ -577,6 +681,7 @@ function LivePreviewCard({
   imageUrl,
   name,
   organizerName,
+  category,
   address,
   dateLabel,
   timingText,
@@ -589,6 +694,7 @@ function LivePreviewCard({
   imageUrl: string | null;
   name: string;
   organizerName: string;
+  category: ListingCategory;
   address: string;
   dateLabel: string;
   timingText: string;
@@ -609,7 +715,9 @@ function LivePreviewCard({
             <CameraIcon className="h-9 w-9 text-[color:var(--muted-soft)]" />
           </div>
         )}
-        <span className="badge-live absolute left-3 top-3">Serving Now</span>
+        <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold ${categoryInfo(category).badgeClass}`}>
+          {categoryInfo(category).label}
+        </span>
       </div>
 
       <div className="space-y-2.5 p-5">
@@ -649,7 +757,7 @@ function LivePreviewCard({
             </span>
           )}
           {!dateLabel && !timingText && (
-            <span className="text-sm font-normal text-[color:var(--muted)]">Mandapam only — no annadhanam date</span>
+            <span className="text-sm font-normal text-[color:var(--muted)]">No date set — shown for the whole festival</span>
           )}
         </div>
       </div>

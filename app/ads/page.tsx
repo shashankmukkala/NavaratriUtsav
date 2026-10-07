@@ -57,7 +57,7 @@ export default async function AdsChoicePage() {
             <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on the map</h2>
             <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
               Your banner shows in the sponsored slots on the map screen — seen by everyone browsing, even before
-              they click on a mandapam.
+              they open a pandal, dandiya night or event.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-deep)]">
               Advertise now
@@ -74,9 +74,9 @@ export default async function AdsChoicePage() {
                 ₹{cardAdPrice} / 2 days
               </span>
             </div>
-            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on mandapam cards</h2>
+            <h2 className="mt-5 text-xl font-bold text-[color:var(--foreground)]">Advertise on listing cards</h2>
             <p className="mt-2 flex-1 text-sm text-[color:var(--muted)]">
-              Your banner shows inside mandapam detail cards — seen by people who open one to check details. Less
+              Your banner shows inside pandal, dandiya and event detail cards — seen by people who open one to check details. Less
               reach than the map, so it costs less.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-deep)]">

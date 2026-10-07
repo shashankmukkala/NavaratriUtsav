@@ -28,6 +28,7 @@ export interface Database {
           admin_note: string | null;
           featured: boolean;
           milestone_text: string | null;
+          category: "pandal" | "dandiya" | "cultural";
           star_payment_proof_url: string | null;
           extra_image_urls: string[] | null;
           created_at: string;
@@ -56,6 +57,7 @@ export interface Database {
           admin_note?: string | null;
           featured?: boolean;
           milestone_text?: string | null;
+          category?: "pandal" | "dandiya" | "cultural";
           star_payment_proof_url?: string | null;
           extra_image_urls?: string[] | null;
           created_at?: string;

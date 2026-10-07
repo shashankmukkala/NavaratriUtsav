@@ -7,7 +7,7 @@ const SLIDE_INTERVAL_MS = 4000;
 /** Cycles through a list of ad banner images with a soft crossfade — used
  * both for a single sponsor's own multiple banner images, and for rotating
  * through several different sponsors sharing one slot (e.g. the generic
- * "card"-placement pool shown inside a mandapam's detail card), so no ad
+ * "card"-placement pool shown inside a listing's detail card), so no ad
  * placement is permanently fixed to one advertiser. */
 export default function AdBannerSlideshow({
   images,
@@ -17,7 +17,7 @@ export default function AdBannerSlideshow({
   images: string[];
   alt: string;
   /** "contain" only where the box is guaranteed to match the upload's own
-   * aspect ratio (the mandapam-card banner slot, cropped to that exact
+   * aspect ratio (the listing-card banner slot, cropped to that exact
    * shape at upload) — showing the complete image there is free, since it
    * already fills the box either way. Everywhere else (the map ad slots)
    * the box's actual shape isn't guaranteed to match a square upload, so

@@ -17,7 +17,7 @@ interface ImageUploadFieldProps {
   onThumbnailChange?: (url: string | null) => void;
   /** When given, a selected photo goes through a drag/zoom crop step at this
    * aspect ratio before uploading — for photos shown in a fixed-shape frame
-   * (mandapam photos, banners), where object-cover would otherwise silently
+   * (listing photos, banners), where object-cover would otherwise silently
    * chop off whatever didn't fit. Omit for images that should stay exactly
    * as uploaded (payment screenshots, QR codes). */
   aspect?: number;

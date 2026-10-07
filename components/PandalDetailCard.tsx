@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AddStarModal from "@/components/AddStarModal";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { BowlIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
+import { categoryInfo } from "@/lib/categories";
 import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal, Sponsor } from "@/lib/types";
 
@@ -20,7 +21,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [addressCopied, setAddressCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  // Sponsorship is money changing hands for a specific mandapam — the
+  // Sponsorship is money changing hands for a specific listing — the
   // "add a banner" prompt below must only ever be a real, actionable offer
   // to the person who actually owns this listing, never a generic link
   // that happens to be sitting on someone else's card.
@@ -51,7 +52,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     // available; a plain clipboard copy elsewhere (most desktop browsers).
     if (navigator.share) {
       try {
-        await navigator.share({ title: pandal.name, text: `${pandal.name} on BappaSeva`, url });
+        await navigator.share({ title: pandal.name, text: `${pandal.name} on Navaratri Utsav`, url });
       } catch {
         // User cancelled the share sheet, or the OS rejected it — nothing to
         // recover from, and definitely not an error worth surfacing.
@@ -70,9 +71,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
 
   useEffect(() => {
     let cancelled = false;
-    // "card"-placement ads aren't targeted at any one mandapam — they're a
+    // "card"-placement ads aren't targeted at any one listing — they're a
     // shared pool shown generically inside detail cards. With few
-    // mandapams having a free (unbannered) slot and potentially many more
+    // listings having a free (unbannered) slot and potentially many more
     // sponsors than that, cycling every sponsor through every slot meant
     // sponsors later in rotation order could go largely unseen — most
     // people don't keep a card open long enough to reach ad #8 of 10. So
@@ -162,12 +163,15 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     </div>
   );
 
-  // Location/annadhanam info/organizer — always fully visible, never
+  // Location/event dates/organizer — always fully visible, never
   // part of anything that scrolls.
   const essentialInfo = (
     <>
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-base font-bold text-[color:var(--foreground)]">{pandal.name}</h2>
+        <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${categoryInfo(pandal.category).badgeClass}`}>
+          {categoryInfo(pandal.category).label}
+        </span>
         <span className="badge-verified">
           <VerifiedIcon className="h-3.5 w-3.5" />
           Verified
@@ -204,11 +208,12 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             {addressCopied && <span className="mt-0.5 text-xs font-medium text-green-700">Copied</span>}
           </span>
         </MetaRow>
-        <MetaRow icon={<BowlIcon className="h-4 w-4" />}>
-          {pandal.event_date && pandal.timing_text ? (
+        <MetaRow icon={<CalendarIcon className="h-4 w-4" />}>
+          {pandal.event_date ? (
             <span className="flex flex-wrap items-center gap-1.5">
               <span>
-                {formatEventDateRange(pandal.event_date, pandal.event_date_end)} · {pandal.timing_text}
+                {formatEventDateRange(pandal.event_date, pandal.event_date_end)}
+                {pandal.timing_text ? ` · ${pandal.timing_text}` : ""}
               </span>
               {eventStatus && (
                 <span className={`flex-shrink-0 ${eventStatus === "today" ? "badge-live" : "badge-live opacity-70"}`}>
@@ -217,7 +222,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
               )}
             </span>
           ) : (
-            "No annadhanam info available"
+            pandal.timing_text || "Dates to be announced"
           )}
         </MetaRow>
         <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
@@ -251,7 +256,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             <AdBannerSlideshow images={bannerImages} alt="" fit="contain" />
           </div>
         ) : isOwner ? (
-          // Only the person who actually submitted this mandapam ever sees
+          // Only the person who actually submitted this listing ever sees
           // this as a clickable offer — deep-links straight to this
           // listing's own banner flow, which is itself still gated by an
           // ownership check server-side.
@@ -260,16 +265,16 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "h-40" : "h-28"}`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your association banner</span>
+            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your organizer banner</span>
           </Link>
         ) : (
           // Anyone else just sees an inert placeholder — no link, and
           // wording that makes clear this isn't an offer to sponsor
-          // someone else's mandapam.
+          // someone else's listing.
           <div className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "h-40" : "h-28"}`}>
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
             <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
-            <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only this mandapam&apos;s organizer can add one</span>
+            <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only the organizer can add one</span>
           </div>
         )}
       </div>

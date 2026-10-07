@@ -20,9 +20,10 @@ import {
   VerifiedIcon,
 } from "@/components/icons";
 import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { UPI_FALLBACK } from "@/lib/siteMeta";
 import type { PaymentSettings } from "@/lib/types";
 
-const DRAFT_KEY = "bappaseva_sponsor_draft";
+const DRAFT_KEY = "utsav_sponsor_draft";
 
 interface SponsorDraft {
   sponsorName: string;
@@ -56,8 +57,8 @@ function readSponsorDraft(): SponsorDraft | null {
 }
 
 function SponsorPageInner() {
-  // ?target=pandal → the cheaper tier shown generically inside mandapam
-  // detail cards (not targeted at any one specific mandapam). ?target=crow
+  // ?target=pandal → the cheaper tier shown generically inside listing
+  // detail cards (not targeted at any one specific listing). ?target=crow
   // → the premium animated flying-banner placement. Anything else → the
   // map-wide sponsored slots. useSearchParams (not a raw window.location
   // check) resolves correctly during SSR, so the server and client render
@@ -97,7 +98,7 @@ function SponsorPageInner() {
 
   const copyUpiId = async () => {
     try {
-      await navigator.clipboard.writeText(settings?.upi_id ?? "annadhanam@upi");
+      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
       setUpiCopied(true);
       setTimeout(() => setUpiCopied(false), 1500);
     } catch {
@@ -188,30 +189,30 @@ function SponsorPageInner() {
           <div className="grid gap-10 pt-8 lg:grid-cols-[1fr_1.2fr] lg:items-start lg:gap-16 lg:pt-16">
             <div className="lg:sticky lg:top-8">
               <p className="eyebrow">
-                {isPandalTarget ? "Advertise on Mandapam Cards" : isCrowTarget ? "Advertise with a Flying Ad" : "Advertise on the Map"}
+                {isPandalTarget ? "Advertise on Listing Cards" : isCrowTarget ? "Advertise with a Flying Ad" : "Advertise on the Map"}
               </p>
               <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
                 {isPandalTarget
-                  ? "Put your ad on mandapam cards."
+                  ? "Put your ad on listing cards."
                   : isCrowTarget
                     ? "Send your banner flying across the map."
                     : "Put your ad in front of everyone."}
               </h1>
               <p className="mt-5 max-w-md text-base text-[color:var(--muted)] sm:text-lg">
                 {isPandalTarget
-                  ? "Your ad banner shows inside mandapam detail cards — seen by anyone who opens one."
+                  ? "Your ad banner shows inside pandal, dandiya and event detail cards — seen by anyone who opens one."
                   : isCrowTarget
                     ? "A crow (or rocket) tows your banner across the map every so often — the most eye-catching placement we have."
-                    : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for an Annadhanam nearby."}
+                    : "Your ad banner is displayed directly on the map screen — seen by everyone browsing for celebrations nearby."}
               </p>
 
               <div className="mt-8 space-y-4">
                 <InfoRow
                   icon={<MegaphoneIcon className="h-5 w-5" />}
-                  title={isPandalTarget ? "Shown on mandapam cards" : isCrowTarget ? "Flies across the map" : "Shown on the map"}
+                  title={isPandalTarget ? "Shown on listing cards" : isCrowTarget ? "Flies across the map" : "Shown on the map"}
                 >
                   {isPandalTarget
-                    ? "Your banner appears when someone opens any mandapam's card."
+                    ? "Your banner appears when someone opens any pandal, dandiya night or event card."
                     : isCrowTarget
                       ? "Your banner trails behind a crow or rocket making a pass over the map, on a loop everyone browsing can see."
                       : "Your banner appears in the sponsored slots everyone sees while browsing."}
@@ -220,7 +221,7 @@ function SponsorPageInner() {
                   An admin verifies your payment before your ad goes live.
                 </InfoRow>
                 <InfoRow icon={<HeartIcon className="h-5 w-5" />} title="Supports the community">
-                  Every ad helps keep annadhanams easy to find for everyone.
+                  Every ad helps keep pandals and dandiya nights easy to find for everyone.
                 </InfoRow>
               </div>
 
@@ -245,9 +246,9 @@ function SponsorPageInner() {
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
                     Where this shows up
                   </p>
-                  <MandapamCardSkeleton />
+                  <ListingCardSkeleton />
                   <p className="mt-2 text-xs text-[color:var(--muted-soft)]">
-                    Not tied to a specific mandapam — your ad rotates through mandapam cards generally, wherever
+                    Not tied to a specific listing — your ad rotates through pandal, dandiya and event cards, wherever
                     someone opens one.
                   </p>
                 </div>
@@ -303,7 +304,7 @@ function SponsorPageInner() {
                 max={3}
                 hint={
                   isPandalTarget
-                    ? "A wide rectangle works best — that's the shape of the banner slot inside mandapam cards. Upload up to 3 and they'll rotate like a slideshow."
+                    ? "A wide rectangle works best — that's the shape of the banner slot inside listing cards. Upload up to 3 and they'll rotate like a slideshow."
                     : isCrowTarget
                       ? "A long, thin banner (3:1) works best — that's the shape trailing behind the crow/rocket. Upload up to 3 and they'll rotate like a slideshow."
                       : "Square (1:1) works best — that's the shape of the ad slot on the map. Upload up to 3 and they'll rotate like a slideshow."
@@ -346,7 +347,7 @@ function SponsorPageInner() {
                       className="flex items-center justify-center gap-1.5 text-center text-sm font-mono font-semibold text-[color:var(--foreground)] transition-[filter] duration-300"
                       style={{ filter: detailsFilled ? "none" : "blur(6px)" }}
                     >
-                      {settings?.upi_id ?? "annadhanam@upi"}
+                      {settings?.upi_id || UPI_FALLBACK}
                       {detailsFilled && (
                         <button
                           type="button"
@@ -404,10 +405,10 @@ function InfoRow({ icon, title, children }: { icon: React.ReactNode; title: stri
   );
 }
 
-/** A miniature, non-interactive mockup of a real mandapam detail card, with
- * the ad slot highlighted — since there's no specific mandapam to select
+/** A miniature, non-interactive mockup of a real listing detail card, with
+ * the ad slot highlighted — since there's no specific listing to select
  * anymore, this is how someone sees exactly where their banner will land. */
-function MandapamCardSkeleton() {
+function ListingCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-[rgba(43,22,8,0.1)] bg-white/60">
       <div className="h-24 w-full bg-[rgba(43,22,8,0.08)]" />

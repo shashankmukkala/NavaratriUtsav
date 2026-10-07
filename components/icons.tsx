@@ -192,8 +192,7 @@ export function ShareIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 export function BowlIcon(props: SVGProps<SVGSVGElement>) {
-  // Brand mark: a steaming bowl of food, standing in for the annadhanam
-  // (food-offering) theme without leaning on a religious glyph/emoji.
+  // A steaming bowl — the "Festive Food" stop on the homepage itinerary.
   return (
     <Icon {...props}>
       <path d="M4 12.5h16a8 8 0 0 1-16 0Z" strokeLinejoin="round" />
@@ -281,7 +280,7 @@ export function LockIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 export function CrownIcon(props: SVGProps<SVGSVGElement>) {
-  // Brand mark for BappaSeva — a modaka/crown silhouette, kept simple so it
+  // Brand mark for Navaratri Utsav — a crown silhouette, kept simple so it
   // reads clearly at small sizes next to the wordmark.
   return (
     <Icon strokeWidth={1.7} {...props}>
@@ -314,5 +313,92 @@ export function GoogleIcon(props: SVGProps<SVGSVGElement>) {
         d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
       />
     </svg>
+  );
+}
+
+export function TempleIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 2.5v2M8.5 9 12 4.5 15.5 9" />
+      <path d="M6.5 13 8.5 9h7l2 4" />
+      <path d="M4 21h16M5.5 21v-8h13v8" />
+      <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+    </Icon>
+  );
+}
+
+/** A pair of crossed dandiya sticks. */
+export function DandiyaIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 4l14 16M19 4 5 20" />
+      <path d="M4 6.5 6.5 4M17.5 4 20 6.5" />
+      <path d="M8 9.5l1.5-1.5M16 9.5 14.5 8M8 14.5 9.5 16M16 14.5 14.5 16" />
+    </Icon>
+  );
+}
+
+/** Aarti diya with a flame. */
+export function DiyaIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3c1.6 1.8 2 3.3 0 5-2-1.7-1.6-3.2 0-5Z" />
+      <path d="M3.5 12h17c-.6 4.2-4 7-8.5 7s-7.9-2.8-8.5-7Z" />
+      <path d="M8 21h8" />
+    </Icon>
+  );
+}
+
+export function SendIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M21 3 10 14" />
+      <path d="M21 3 14.5 21l-4.5-7-7-4.5L21 3Z" />
+    </Icon>
+  );
+}
+
+export function ChevronDownIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="m6 9 6 6 6-6" />
+    </Icon>
+  );
+}
+
+export function InstagramIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" />
+    </Icon>
+  );
+}
+
+export function YoutubeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="2.5" y="5.5" width="19" height="13" rx="4" />
+      <path d="m10 9.5 5 2.5-5 2.5v-5Z" fill="currentColor" />
+    </Icon>
+  );
+}
+
+export function XLogoIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M4 4l16 16M20 4l-6.6 6.9M10.6 13.1 4 20" />
+    </Icon>
+  );
+}
+
+/** Four-point sparkle — cultural events & workshops. */
+export function SparkleIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7Z" />
+      <path d="M19 15.5c.2 1.4.9 2.1 2.3 2.3-1.4.2-2.1.9-2.3 2.3-.2-1.4-.9-2.1-2.3-2.3 1.4-.2 2.1-.9 2.3-2.3Z" />
+    </Icon>
   );
 }

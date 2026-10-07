@@ -1,10 +1,10 @@
 /** ISO date strings compare correctly with plain string comparison. */
 export type EventStatus = "today" | "upcoming" | "past";
 
-/** null when there's no date to judge — a mandapam-only listing with no
- * annadhanam date set. A listing can serve across a range of days (e.g.
- * "every day till the last day of the festival") instead of just one —
- * pass endDate for that; omitted or equal to startDate means a single day. */
+/** null when there's no date to judge — a listing with no event date set
+ * (runs throughout the festival). A listing can span a range of days (e.g.
+ * all nine nights) instead of just one — pass endDate for that; omitted or
+ * equal to startDate means a single day. */
 export function getEventStatus(startDate: string | null, endDate?: string | null): EventStatus | null {
   if (!startDate) return null;
   const today = new Date().toISOString().slice(0, 10);
@@ -17,12 +17,12 @@ export function getEventStatus(startDate: string | null, endDate?: string | null
 /** "Open" was misleading for a future-dated listing — it reads as "open
  * right now", not "scheduled". */
 export function eventStatusLabel(status: EventStatus): string {
-  if (status === "today") return "Serving Now";
+  if (status === "today") return "Live Now";
   if (status === "upcoming") return "Upcoming";
   return "Past";
 }
 
-/** "21 Sept", for showing a single annadhanam date alongside its serving time. */
+/** "21 Sept", for showing a single event date alongside its timings. */
 export function formatEventDate(dateStr: string | null): string {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");

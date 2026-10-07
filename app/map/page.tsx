@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import MapPageClient from "./MapPageClient";
 
 // Server component wrapper purely so a shared /map?pandal=<id> link gets a
-// proper per-mandapam preview (name, description, photo) when pasted into
+// proper per-listing preview (name, description, photo) when pasted into
 // Instagram/WhatsApp/etc — the actual map UI is entirely client-side (see
 // MapPageClient) and can't generate per-request metadata on its own.
 export async function generateMetadata({
@@ -13,18 +13,18 @@ export async function generateMetadata({
   searchParams: Promise<{ pandal?: string }>;
 }): Promise<Metadata> {
   const fallback: Metadata = {
-    title: "Map — BappaSeva",
-    description: "Explore mandapams and annadhanams near you this Ganesh Chaturthi.",
+    title: "Festival Map — Navaratri Utsav",
+    description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
     openGraph: {
-      title: "Map — BappaSeva",
-      description: "Explore mandapams and annadhanams near you this Ganesh Chaturthi.",
+      title: "Festival Map — Navaratri Utsav",
+      description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
       images: [DEFAULT_OG_IMAGE],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Map — BappaSeva",
-      description: "Explore mandapams and annadhanams near you this Ganesh Chaturthi.",
+      title: "Festival Map — Navaratri Utsav",
+      description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
       images: [DEFAULT_OG_IMAGE],
     },
   };
@@ -41,8 +41,8 @@ export async function generateMetadata({
 
   if (!pandal) return fallback;
 
-  const title = `${pandal.name} — BappaSeva`;
-  const description = pandal.description?.trim() || `${pandal.name} — ${pandal.address}. Find directions, timings and more on BappaSeva.`;
+  const title = `${pandal.name} — Navaratri Utsav`;
+  const description = pandal.description?.trim() || `${pandal.name} — ${pandal.address}. Find directions, timings and more on Navaratri Utsav.`;
 
   return {
     title,

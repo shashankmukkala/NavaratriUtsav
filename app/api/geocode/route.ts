@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 // rate-limit/block and silently returns nothing.
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse";
-const USER_AGENT = "AnnadhanamMap/1.0 (contact via repo issues)";
+const USER_AGENT = "NavaratriUtsav/1.0 (contact via repo issues)";
 
 export async function GET(request: NextRequest) {
   const lat = request.nextUrl.searchParams.get("lat");
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   url.searchParams.set("q", q);
   url.searchParams.set("format", "json");
   url.searchParams.set("limit", "5");
-  // Biased toward India (where Ganesh Chaturthi annadhanams happen) without
+  // Biased toward India (where these festival listings are) without
   // hard-restricting results the way the reference project's Hyderabad-only
   // viewbox does — a pandal could be pinned anywhere in the country.
   url.searchParams.set("countrycodes", "in");

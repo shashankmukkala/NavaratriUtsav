@@ -14,7 +14,7 @@ interface ImageCropModalProps {
 
 /** Lets someone drag/pan and zoom to choose exactly what part of their photo
  * gets kept, instead of a fixed object-cover box silently chopping off
- * whatever didn't fit — that was cutting the top off Ganesh idol photos in
+ * whatever didn't fit — that was cutting the top off idol photos in
  * particular, since a tall statue photo rarely matches the card's wide
  * aspect ratio. */
 export default function ImageCropModal({ imageSrc, aspect, onCancel, onCropped }: ImageCropModalProps) {

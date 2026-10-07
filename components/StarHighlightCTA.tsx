@@ -7,7 +7,7 @@ import { fetchJson } from "@/lib/fetchJson";
 import type { Pandal } from "@/lib/types";
 
 /** The actual payment entry point for the Star category tab — not just
- * text pointing people at their own mandapam's card, but a real button
+ * text pointing people at their own listing's card, but a real button
  * that fetches the signed-in user's own listings and opens the payment
  * flow directly (picking one first if they have more than one eligible). */
 export default function StarHighlightCTA({ starPrice }: { starPrice: number }) {
@@ -32,8 +32,8 @@ export default function StarHighlightCTA({ starPrice }: { starPrice: number }) {
     if (candidates.length === 0) {
       setError(
         result.pandals.length === 0
-          ? "Add a mandapam first, then you can highlight it."
-          : "None of your mandapams are eligible right now (already starred, pending review, or not yet approved)."
+          ? "Add a celebration first, then you can highlight it."
+          : "None of your celebrations are eligible right now (already starred, pending review, or not yet approved)."
       );
       return;
     }
@@ -47,7 +47,7 @@ export default function StarHighlightCTA({ starPrice }: { starPrice: number }) {
   return (
     <div className="mt-2 rounded-xl bg-[rgba(250,204,21,0.12)] p-3">
       <p className="text-xs text-[color:var(--muted)]">
-        ★ Highlight your own mandapam here — one-time ₹{starPrice}, a glowing pin and card for good.
+        ★ Feature your own celebration here — one-time ₹{starPrice}, a glowing pin and card for good.
       </p>
 
       {eligible ? (
@@ -82,7 +82,7 @@ export default function StarHighlightCTA({ starPrice }: { starPrice: number }) {
         open={showSignIn}
         onClose={() => setShowSignIn(false)}
         callbackUrl="/map"
-        message="Sign in to highlight one of your mandapams."
+        message="Sign in to feature one of your celebrations."
       />
 
       {target && <AddStarModal pandal={target} onClose={() => setTarget(null)} onSaved={() => setTarget(null)} />}

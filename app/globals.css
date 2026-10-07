@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* BappaSeva — warm cream theme with a single saffron→marigold→rust orange
+/* Navaratri Utsav — warm cream theme with a single saffron→marigold→rust orange
    accent family for every trust/primary/commercial action, coral for
    reject/error states, and a warm brown ink scale for text (never pure
    black, to keep the festive/handmade paper feel). */
@@ -66,7 +66,7 @@ body {
    the sidebar list, mobile sheets, etc.) — this only hides the visible
    track/thumb chrome so it doesn't compete with the festive imagery.
    -webkit-overflow-scrolling: touch also goes here — iOS Safari has a real
-   quirk where a nested overflow-y-auto div (like the mandapam card's
+   quirk where a nested overflow-y-auto div (like the listing card's
    description area) can otherwise just not respond to touch-drag at all. */
 * {
   scrollbar-width: none;
@@ -123,7 +123,7 @@ body {
   padding: 4px;
   border-radius: 9999px;
   background: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.85);
+  border: 2.5px solid var(--pin-color, rgba(255, 255, 255, 0.85));
   box-shadow: 0 4px 14px rgba(20, 12, 4, 0.28), 0 0 0 1px rgba(120, 53, 15, 0.16);
   cursor: pointer;
   font: inherit;
@@ -185,7 +185,7 @@ body {
   display: inline;
 }
 
-/* A milestone-highlighted mandapam (e.g. a 114th year of celebrations) —
+/* A milestone-highlighted listing (e.g. a 114th year of celebrations) —
    the whole ring goes solid gold (not just an outline), sits above every
    other pin even in a dense overlapping cluster, and pulses a bright halo
    plus a small star badge so it reads as a highlight at a glance, not
@@ -773,7 +773,7 @@ body {
   color: var(--foreground);
 }
 
-/* Small caps label above a heading ("GANESH CHATURTHI", "ADD ANNADHANAM"). */
+/* Small caps label above a heading ("EXPLORE NEAR YOU", "BE A PART OF IT"). */
 .eyebrow {
   font-size: 0.75rem;
   font-weight: 700;
@@ -846,7 +846,7 @@ body {
   background: rgba(234, 108, 29, 0.12);
 }
 
-/* Small pill badges: "Serving Now" / "Open" / "Verified". */
+/* Small pill badges: "Live Now" / "Upcoming" / "Verified". */
 .badge-live {
   display: inline-flex;
   align-items: center;
@@ -907,4 +907,163 @@ body {
   .badge-milestone {
     animation: none;
   }
+}
+
+/* ===== Navaratri Utsav homepage ===================================== */
+/* Night-sky navy, festival maroon, marigold gold and kumkum crimson — the
+   homepage alternates dark night sections with the cream paper ones. */
+:root {
+  --utsav-night: #150c2b;
+  --utsav-night-2: #1f1238;
+  --utsav-maroon: #3d0a1a;
+  --utsav-gold: #f5b82e;
+  --utsav-gold-soft: #ffd36b;
+  --utsav-crimson: #c8172e;
+  --utsav-crimson-deep: #9a0f22;
+  --utsav-ink-light: #fff6e6;
+}
+
+.font-display {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
+.font-script {
+  font-family: var(--font-dancing), "Brush Script MT", cursive;
+}
+
+.utsav-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--utsav-gold);
+}
+
+.utsav-eyebrow-crimson {
+  color: var(--utsav-crimson);
+}
+
+.utsav-title {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+/* Gold pill — the hero's main call to action and "+ Add Event". */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--utsav-gold-soft), var(--utsav-gold) 55%, #e39a17);
+  color: #2b1608;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.7rem 1.3rem;
+  white-space: nowrap;
+  box-shadow: 0 10px 28px -10px rgba(245, 184, 46, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
+}
+
+.btn-gold:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+/* Outlined pill on dark backgrounds — "View Festival Map". */
+.btn-ghost-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 246, 230, 0.55);
+  color: var(--utsav-ink-light);
+  font-weight: 650;
+  font-size: 0.875rem;
+  padding: 0.65rem 1.3rem;
+  white-space: nowrap;
+  background: rgba(21, 12, 43, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.btn-ghost-light:hover {
+  border-color: var(--utsav-gold);
+  background: rgba(245, 184, 46, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Crimson pill — "Add a Pandal or Dandiya Night". */
+.btn-crimson {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #e0283f, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
+  color: #fff6e6;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.8rem 1.5rem;
+  box-shadow: 0 14px 30px -12px rgba(154, 15, 34, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
+}
+
+.btn-crimson:hover {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+/* Filter pills on the dark map section. */
+.utsav-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 246, 230, 0.28);
+  color: rgba(255, 246, 230, 0.88);
+  white-space: nowrap;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.utsav-chip:hover {
+  border-color: var(--utsav-gold);
+}
+
+.utsav-chip-active {
+  background: linear-gradient(135deg, var(--utsav-gold-soft), var(--utsav-gold));
+  border-color: transparent;
+  color: #2b1608;
+}
+
+/* Gold-ringed pins on the dark homepage map. */
+.utsav-map .map-pin {
+  background: #2a1745;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.utsav-map .map-pin-label {
+  color: var(--utsav-ink-light);
+}
+
+/* Round red "Discover / Save / Go" step badges. */
+.utsav-step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 9999px;
+  color: #fff6e6;
+  background: radial-gradient(circle at 35% 30%, #f0474f, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
+  box-shadow: 0 0 0 5px rgba(200, 23, 46, 0.18), 0 14px 30px -10px rgba(0, 0, 0, 0.6);
 }
