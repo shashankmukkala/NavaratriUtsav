@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { fetchJson } from "@/lib/fetchJson";
 
-const REFRESH_MS = 60_000;
+// Matches the endpoint's 5-minute CDN cache — polling faster would only
+// re-download the same cached number.
+const REFRESH_MS = 5 * 60_000;
 
 /** Tiny "N visits" badge — total page loads, not deduped by visitor — purely
  * a showcase number, refreshed on an interval so it stays current without
@@ -23,7 +25,10 @@ export default function VisitorCountBadge() {
       });
     };
     load();
-    const interval = setInterval(load, REFRESH_MS);
+    // Skip refreshes while the tab is in the background.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, REFRESH_MS);
     return () => {
       cancelled = true;
       clearInterval(interval);

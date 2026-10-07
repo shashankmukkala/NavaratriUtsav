@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicCache } from "@/lib/cacheHeaders";
+import { NOMINATIM_REVERSE_URL, NOMINATIM_SEARCH_URL, NOMINATIM_USER_AGENT } from "@/lib/nominatim";
 
-// Proxied server-side per Nominatim's usage policy
-// (nominatim.org/release-docs/latest/api/Search/), which requires a valid
+// Proxied server-side per Nominatim's usage policy, which requires a valid
 // identifying User-Agent — a bare browser fetch from the client is easy to
-// rate-limit/block and silently returns nothing.
-const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
-const NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse";
-const USER_AGENT = "NavaratriUtsav/1.0 (contact via repo issues)";
+// rate-limit/block and silently returns nothing. Addresses don't change, so
+// identical lookups are served from the CDN for a day.
+const GEOCODE_CACHE = publicCache(86_400, 604_800);
 
 export async function GET(request: NextRequest) {
   const lat = request.nextUrl.searchParams.get("lat");
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const res = await fetch(url.toString(), {
-      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+      headers: { "User-Agent": NOMINATIM_USER_AGENT, Accept: "application/json" },
     });
 
     if (!res.ok) {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: GEOCODE_CACHE });
   } catch {
     return NextResponse.json({ error: "Geocoding service unreachable" }, { status: 502 });
   }
@@ -59,7 +59,7 @@ async function reverseGeocode(lat: string, lon: string) {
 
   try {
     const res = await fetch(url.toString(), {
-      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+      headers: { "User-Agent": NOMINATIM_USER_AGENT, Accept: "application/json" },
     });
 
     if (!res.ok) {
@@ -67,7 +67,7 @@ async function reverseGeocode(lat: string, lon: string) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: GEOCODE_CACHE });
   } catch {
     return NextResponse.json({ error: "Geocoding service unreachable" }, { status: 502 });
   }

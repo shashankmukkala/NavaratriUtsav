@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserIcon } from "@/components/icons";
-import { fetchJson } from "@/lib/fetchJson";
+import { fetchJson, fetchJsonCached } from "@/lib/fetchJson";
 
 type SessionUser = { name?: string; image?: string };
 
@@ -15,7 +15,7 @@ export default function ProfileNavLink({ className = "btn-secondary flex-shrink-
   const [hasNote, setHasNote] = useState(false);
 
   useEffect(() => {
-    fetchJson<{ user?: SessionUser }>("/api/auth/session").then((data) => setUser(data?.user ?? null));
+    fetchJsonCached<{ user?: SessionUser }>("/api/auth/session").then((data) => setUser(data?.user ?? null));
   }, []);
 
   useEffect(() => {

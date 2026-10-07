@@ -23,7 +23,7 @@ export const CATEGORIES: CategoryInfo[] = [
     value: "pandal",
     label: "Pandal",
     plural: "Pandals",
-    color: "#f5b82e",
+    color: "#e8a93a",
     badgeClass: "bg-[#fde8b0] text-[#7a4a00]",
     photoLabel: "Durga Maa / pandal photo",
     namePlaceholder: "e.g. Khairatabad Durga Pandal",

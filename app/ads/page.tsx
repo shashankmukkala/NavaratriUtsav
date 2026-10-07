@@ -8,23 +8,25 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 export default async function AdsChoicePage() {
   // Server component, so this reads the live prices directly rather than
   // adding a client-side fetch waterfall for two numbers.
-  const { data: settings } = await supabaseAdmin()
-    .from("payment_settings")
-    .select("map_ad_price, card_ad_price, crow_ad_price")
-    .eq("id", true)
-    .single();
+  // Falls back to the default prices if the database is unreachable or not
+  // configured, so the page still opens instead of erroring.
+  let settings: { map_ad_price: number | null; card_ad_price: number | null; crow_ad_price: number | null } | null = null;
+  try {
+    const { data } = await supabaseAdmin()
+      .from("payment_settings")
+      .select("map_ad_price, card_ad_price, crow_ad_price")
+      .eq("id", true)
+      .single();
+    settings = data;
+  } catch (error) {
+    console.warn("Could not load ad prices, using defaults:", error);
+  }
   const mapAdPrice = settings?.map_ad_price ?? 500;
   const cardAdPrice = settings?.card_ad_price ?? 200;
   const crowAdPrice = settings?.crow_ad_price ?? 300;
 
   return (
-    <div
-      className="min-h-dvh w-full"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 45% at 15% 0%, rgba(244,169,60,0.28), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 8%, rgba(234,108,29,0.18), transparent 55%), linear-gradient(180deg, var(--cream-50), var(--cream-200) 45%, var(--cream-100))",
-      }}
-    >
+    <div className="theme-wine w-full">
       <div className="mx-auto max-w-4xl px-4 pb-16 pt-4 sm:px-6">
         <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
           <div className="flex items-center gap-4">
@@ -50,7 +52,7 @@ export default async function AdsChoicePage() {
               <span className="icon-tile icon-tile-circle h-12 w-12">
                 <MapIcon className="h-6 w-6" />
               </span>
-              <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
+              <span className="rounded-full bg-[rgba(184,50,31,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
                 ₹{mapAdPrice} / 2 days
               </span>
             </div>
@@ -70,7 +72,7 @@ export default async function AdsChoicePage() {
               <span className="icon-tile icon-tile-circle h-12 w-12">
                 <MegaphoneIcon className="h-6 w-6" />
               </span>
-              <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
+              <span className="rounded-full bg-[rgba(184,50,31,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
                 ₹{cardAdPrice} / 2 days
               </span>
             </div>
@@ -88,7 +90,7 @@ export default async function AdsChoicePage() {
           <Link href="/sponsor?target=crow" className="card-elevated group flex flex-col p-6 transition-transform hover:-translate-y-1 sm:p-8">
             <div className="flex items-center justify-between">
               <span className="icon-tile icon-tile-circle h-12 w-12 text-xl">★</span>
-              <span className="rounded-full bg-[rgba(234,108,29,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
+              <span className="rounded-full bg-[rgba(184,50,31,0.14)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
                 ₹{crowAdPrice} / 2 days
               </span>
             </div>

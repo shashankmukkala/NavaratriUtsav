@@ -133,17 +133,19 @@ export default function HomePage() {
       <section className="relative overflow-hidden bg-[color:var(--utsav-night)] text-[color:var(--utsav-ink-light)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/utsav-hero.webp"
+          src="/images/utsav-hero-night.webp"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-[65%_center]"
+          className="absolute inset-0 h-full w-full object-cover object-[60%_center]"
         />
+        {/* A light, even navy veil so the centred text reads without hiding
+            the artwork — only the bottom deepens to blend into the next section. */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, rgba(21,12,43,0.92) 0%, rgba(21,12,43,0.78) 32%, rgba(21,12,43,0.25) 62%, rgba(21,12,43,0.1) 100%), linear-gradient(180deg, rgba(21,12,43,0.55) 0%, transparent 22%, transparent 70%, rgba(21,12,43,0.85) 100%)",
+              "linear-gradient(180deg, rgba(12,24,48,0.5) 0%, rgba(12,24,48,0.45) 45%, rgba(40,10,8,0.6) 85%, rgba(58,14,11,0.85) 100%)",
           }}
         />
 
@@ -177,7 +179,7 @@ export default function HomePage() {
             </div>
           </nav>
 
-          <div className="relative mt-8 grid gap-8 sm:mt-12 lg:grid-cols-[1.15fr_1fr]">
+          <div className="relative mx-auto mt-8 max-w-3xl text-center [text-shadow:0_2px_12px_rgba(0,0,0,0.5)] sm:mt-12">
             <div>
               <p className="utsav-eyebrow">Durga Puja · Dandiya · Our People</p>
               <h1 className="utsav-title mt-4 text-[2.6rem] sm:text-6xl lg:text-[4.25rem]">
@@ -189,11 +191,11 @@ export default function HomePage() {
                   Connections.
                 </span>
               </h1>
-              <p className="mt-5 max-w-md text-base text-[color:var(--utsav-ink-light)]/85 sm:text-lg">
+              <p className="mx-auto mt-5 max-w-lg text-base font-medium text-[color:var(--utsav-ink-light)] [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_16px_rgba(0,0,0,0.6)] sm:text-lg">
                 Discover Durga Maa pandals, dandiya nights, cultural events and workshops — all on one map.
               </p>
 
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-wrap justify-center gap-3 [text-shadow:none]">
                 <a href="#featured" className="btn-gold">
                   <TempleIcon className="h-4 w-4" />
                   Explore Celebrations
@@ -205,7 +207,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              <div className="mt-9 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+              <div className="mx-auto mt-9 grid max-w-xl grid-cols-2 gap-x-6 gap-y-4 text-left sm:grid-cols-4">
                 <HeroStat
                   icon={<TempleIcon className="h-6 w-6" />}
                   top={pandals && pandals.length > 0 ? `${pandals.length}+` : "Every"}
@@ -216,33 +218,14 @@ export default function HomePage() {
                 <HeroStat icon={<VerifiedIcon className="h-6 w-6" />} top="Verified" bottom="events" />
               </div>
             </div>
-
-            <div className="pointer-events-none hidden justify-end lg:flex">
-              <div className="mt-6 text-right">
-                <p className="font-script text-5xl leading-[1.05] text-[color:var(--utsav-gold-soft)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                  Maa
-                  <br />
-                  brings us
-                  <br />
-                  closer
-                </p>
-                <p className="mt-4 text-[0.65rem] font-semibold uppercase leading-relaxed tracking-[0.25em] text-[color:var(--utsav-ink-light)]/85">
-                  Festivals
-                  <br />
-                  Live
-                  <br />
-                  People
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* ===== What are you looking for? ===== */}
-      <section className="relative z-20 -mt-16 bg-[linear-gradient(to_bottom,transparent_4rem,var(--utsav-night)_4rem)] px-4 sm:px-6">
+      <section className="relative z-20 -mt-16 bg-[linear-gradient(to_bottom,transparent_4rem,var(--utsav-wine)_4rem)] px-4 sm:px-6">
         <div className="mx-auto max-w-6xl">
-        <div className="grid gap-4 rounded-[1.75rem] border border-[rgba(234,108,29,0.15)] bg-[color:var(--cream-50)] p-5 shadow-[0_30px_70px_-30px_rgba(21,12,43,0.55)] sm:p-6 md:grid-cols-3 lg:grid-cols-[0.8fr_1fr_1fr_1fr_0.75fr] lg:items-center lg:gap-3">
+        <div className="grid gap-4 rounded-[1.75rem] border border-[rgba(184,50,31,0.15)] bg-[color:var(--cream-50)] p-5 shadow-[0_30px_70px_-30px_rgba(12,24,48,0.55)] sm:p-6 md:grid-cols-3 lg:grid-cols-[0.8fr_1fr_1fr_1fr_0.75fr] lg:items-center lg:gap-3">
           <div className="md:col-span-3 lg:col-span-1">
             <h2 className="font-display text-xl font-bold leading-tight text-[color:var(--foreground)] xl:text-2xl">What are you looking for?</h2>
             <p className="mt-1 text-sm text-[color:var(--muted)]">Choose what you want to explore</p>
@@ -298,7 +281,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== Celebrations in your city ===== */}
-      <section id="explore" className="scroll-mt-4 bg-[color:var(--utsav-night)] pt-14 text-[color:var(--utsav-ink-light)]">
+      <section id="explore" className="scroll-mt-4 bg-[linear-gradient(180deg,var(--utsav-wine)_0%,var(--utsav-wine-2)_100%)] pt-14 text-[color:var(--utsav-ink-light)]">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-14 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_1.3fr] lg:items-center">
           <div>
             <p className="utsav-eyebrow">Explore near you</p>
@@ -361,9 +344,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="utsav-map relative h-80 overflow-hidden rounded-[1.75rem] border border-white/10 shadow-[0_30px_70px_-25px_rgba(0,0,0,0.7)] sm:h-[26rem]">
+          <div className="relative h-80 overflow-hidden rounded-[1.75rem] border border-[rgba(232,169,58,0.3)] shadow-[0_30px_70px_-25px_rgba(0,0,0,0.7)] sm:h-[26rem]">
             <MapView
-              dark
               pandals={visiblePandals}
               selectedId={selectedPandal?.id ?? null}
               onSelect={setSelectedPandal}
@@ -452,9 +434,9 @@ export default function HomePage() {
               <Link
                 key={i}
                 href="/submit?featured=1"
-                className="group flex min-h-[19rem] w-[78%] flex-shrink-0 snap-start flex-col sm:w-auto items-center justify-center gap-3 rounded-[1.25rem] border-2 border-dashed border-[rgba(200,23,46,0.35)] bg-white/50 p-6 text-center transition-colors hover:border-[rgba(200,23,46,0.7)] hover:bg-white/80"
+                className="group flex min-h-[19rem] w-[78%] flex-shrink-0 snap-start flex-col sm:w-auto items-center justify-center gap-3 rounded-[1.25rem] border-2 border-dashed border-[rgba(184,50,31,0.35)] bg-white/50 p-6 text-center transition-colors hover:border-[rgba(184,50,31,0.7)] hover:bg-white/80"
               >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(200,23,46,0.1)] text-[color:var(--utsav-crimson)] transition-transform group-hover:scale-110">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(184,50,31,0.1)] text-[color:var(--utsav-crimson)] transition-transform group-hover:scale-110">
                   <PlusIcon className="h-7 w-7" />
                 </span>
                 <span className="font-display text-lg font-bold text-[color:var(--foreground)]">Feature your celebration</span>
@@ -499,10 +481,10 @@ export default function HomePage() {
           <div className="lg:pr-16">
             <p className="utsav-eyebrow">A festive evening itinerary</p>
             <div className="mt-6 space-y-5">
-              <ItineraryRow time="6:30 PM" icon={<TempleIcon className="h-5 w-5" />} title="Visit a Durga Maa Pandal" text="Darshan and soak in the festive vibes." />
-              <ItineraryRow time="8:30 PM" icon={<DiyaIcon className="h-5 w-5" />} title="Join the Aarti" text="Be part of the divine energy." />
-              <ItineraryRow time="9:30 PM" icon={<DandiyaIcon className="h-5 w-5" />} title="Dandiya Night" text="Dance, meet new people, feel the rhythm." />
-              <ItineraryRow time="11:00 PM" icon={<BowlIcon className="h-5 w-5" />} title="Festive Food" text="End the night with local delicacies." />
+              <ItineraryRow icon={<TempleIcon className="h-5 w-5" />} title="Visit a Durga Maa Pandal" text="Darshan and soak in the festive vibes." />
+              <ItineraryRow icon={<DiyaIcon className="h-5 w-5" />} title="Join the Aarti" text="Be part of the divine energy." />
+              <ItineraryRow icon={<DandiyaIcon className="h-5 w-5" />} title="Dandiya Night" text="Dance, meet new people, feel the rhythm." />
+              <ItineraryRow icon={<BowlIcon className="h-5 w-5" />} title="Festive Food" text="End the night with local delicacies." />
             </div>
           </div>
         </div>
@@ -602,11 +584,11 @@ function ChoiceTile({
       onClick={onClick}
       className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${
         highlighted
-          ? "border-[rgba(200,23,46,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
+          ? "border-[rgba(184,50,31,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
           : "border-[rgba(43,22,8,0.08)] bg-white"
       }`}
     >
-      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#f5b82e)] text-[color:var(--utsav-crimson-deep)]">
+      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -708,10 +690,9 @@ function PlanStep({ icon, title, text }: { icon: React.ReactNode; title: string;
   );
 }
 
-function ItineraryRow({ time, icon, title, text }: { time: string; icon: React.ReactNode; title: string; text: string }) {
+function ItineraryRow({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="grid grid-cols-[4.5rem_2rem_1fr] items-start gap-3">
-      <span className="pt-0.5 text-sm font-semibold text-[color:var(--utsav-ink-light)]/90">{time}</span>
+    <div className="grid grid-cols-[2rem_1fr] items-start gap-3">
       <span className="text-[color:var(--utsav-gold)]">{icon}</span>
       <div>
         <p className="text-sm font-semibold">{title}</p>

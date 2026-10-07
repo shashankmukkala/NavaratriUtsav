@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
-/* Navaratri Utsav — warm cream theme with a single saffron→marigold→rust orange
-   accent family for every trust/primary/commercial action, coral for
-   reject/error states, and a warm brown ink scale for text (never pure
-   black, to keep the festive/handmade paper feel). */
+/* Navaratri Utsav — cream paper pages with the homepage's festival palette:
+   sindoor red for every primary/commercial action, marigold gold for
+   highlights and active states, night-sky navy for strong surfaces, and a
+   warm brown ink scale for text (never pure black, to keep the festive
+   paper feel). */
 :root {
   color-scheme: light;
   --cream-50: #fffbf3;
@@ -13,20 +14,20 @@
   --foreground: #2b1608;
   --muted: rgba(43, 22, 8, 0.62);
   --muted-soft: rgba(43, 22, 8, 0.4);
-  --accent: #ea6c1d;
-  --accent-soft: #f4a93c;
-  --accent-deep: #b8460c;
+  --accent: #b8321f;
+  --accent-soft: #e8a93a;
+  --accent-deep: #8a2114;
   --coral: #e8543f;
   --coral-deep: #c22b1f;
   --gradient-accent: linear-gradient(135deg, var(--accent-soft), var(--accent) 60%, var(--accent-deep));
   --gradient-panel: linear-gradient(145deg, #fffdf8, #fdf3e0);
-  --gradient-tint: linear-gradient(160deg, rgba(234, 108, 29, 0.14), rgba(234, 108, 29, 0.04));
+  --gradient-tint: linear-gradient(160deg, rgba(184, 50, 31, 0.14), rgba(184, 50, 31, 0.04));
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -81,35 +82,14 @@ body {
 /* Soft warm wash behind every page. */
 body {
   background:
-    radial-gradient(ellipse 55% 40% at 10% -5%, rgba(234, 108, 29, 0.10), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 10% -5%, rgba(184, 50, 31, 0.10), transparent 55%),
     radial-gradient(ellipse 50% 40% at 100% 10%, rgba(232, 84, 63, 0.06), transparent 55%),
-    radial-gradient(ellipse 60% 45% at 50% 120%, rgba(234, 108, 29, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 50% 120%, rgba(184, 50, 31, 0.08), transparent 60%),
     var(--background);
 }
 
 ::selection {
-  background: rgba(234, 108, 29, 0.22);
-}
-
-/* The frosted cream-glass material for every floating panel over the map —
-   top bar, detail card, list sheet. One definition so the whole app reads
-   as one consistent surface instead of each panel picking its own opacity. */
-.panel-elevated {
-  background-color: rgba(255, 253, 248, 0.86);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 1px 2px rgba(43, 22, 8, 0.06),
-    0 20px 48px -16px rgba(43, 22, 8, 0.22),
-    0 0 0 1px rgba(43, 22, 8, 0.05);
-}
-
-@media (pointer: coarse) {
-  .panel-elevated {
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
+  background: rgba(184, 50, 31, 0.22);
 }
 
 /* Map pin: icon-only by default, name only appears once selected — keeps a
@@ -173,7 +153,7 @@ body {
   padding: 4px 12px 4px 5px;
   background: var(--gradient-accent);
   border-color: transparent;
-  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.48), 0 0 0 4px rgba(255, 209, 102, 0.35);
+  box-shadow: 0 8px 22px rgba(138, 33, 20, 0.48), 0 0 0 4px rgba(255, 209, 102, 0.35);
 }
 
 .map-pin-selected .map-pin-icon {
@@ -241,7 +221,7 @@ body {
 
 .map-pin-featured.map-pin-selected {
   background: var(--gradient-accent);
-  box-shadow: 0 8px 22px rgba(194, 65, 12, 0.5), 0 0 0 3px rgba(250, 204, 21, 0.95), 0 0 26px 7px rgba(250, 204, 21, 0.9);
+  box-shadow: 0 8px 22px rgba(138, 33, 20, 0.5), 0 0 0 3px rgba(250, 204, 21, 0.95), 0 0 26px 7px rgba(250, 204, 21, 0.9);
 }
 
 @keyframes featured-pin-pulse {
@@ -405,33 +385,14 @@ body {
   }
 }
 
-/* Floating top bar / bottom sheet material used across the public map,
-   submit, sponsor, and admin pages. */
-.topbar-shell {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
 /* One shared card surface for the pandal detail card, list sheet, and form
    panels — warm cream gradient, generous rounding, a soft shadow so it
    reads as floating rather than flat. */
 .card-elevated {
   border-radius: 1.75rem;
-  border: 1px solid rgba(234, 108, 29, 0.14);
+  border: 1px solid rgba(184, 50, 31, 0.14);
   background: var(--gradient-panel);
   box-shadow: 0 32px 80px -22px rgba(43, 22, 8, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-/* A translucent, blurred variant of the card surface — used for the list
-   sheet, which sits directly over the map and should read as a frosted
-   overlay rather than an opaque card. */
-.card-glass {
-  border-radius: 1.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background-color: rgba(255, 253, 248, 0.7);
-  backdrop-filter: blur(26px) saturate(160%);
-  -webkit-backdrop-filter: blur(26px) saturate(160%);
-  box-shadow: 0 32px 80px -22px rgba(43, 22, 8, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -448,7 +409,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .card-elevated,
-  .card-glass,
   .map-panel,
   .map-card {
     animation: none;
@@ -565,21 +525,6 @@ body {
   }
 }
 
-.map-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  border-radius: 0.9rem;
-  background: #fff3e8;
-  padding: 0.45rem 0.8rem;
-}
-
-.map-chip strong {
-  font-size: 0.8125rem;
-  font-weight: 650;
-  color: var(--accent-deep);
-}
-
 /* A gradient icon tile — used for the brand mark and small feature icons. */
 .icon-tile {
   display: inline-flex;
@@ -588,14 +533,8 @@ body {
   flex-shrink: 0;
   border-radius: 0.85rem;
   background: var(--gradient-accent);
-  color: #2a1200;
-  box-shadow: 0 8px 20px -6px rgba(194, 65, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.icon-tile-saffron {
-  background: var(--gradient-accent);
-  color: #2a1200;
-  box-shadow: 0 8px 20px -6px rgba(194, 65, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #fff6e6;
+  box-shadow: 0 8px 20px -6px rgba(138, 33, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .icon-tile-circle {
@@ -603,84 +542,70 @@ body {
 }
 
 /* One field style for every text input, textarea, and select across the
-   submit, sponsor, and admin-login forms. */
-.field-input {
-  width: 100%;
-  border-radius: 0.9rem;
-  border: 1px solid rgba(43, 22, 8, 0.14);
-  background: rgba(255, 255, 255, 0.7);
-  padding: 0.6rem 0.85rem;
-  font: inherit;
-  font-size: 0.875rem;
-  color: var(--foreground);
-  outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+   submit, sponsor, and admin-login forms.
+   Lives in the components layer so Tailwind utilities (e.g. pl-9 for an
+   inset icon) can still override its padding. */
+@layer components {
+  .field-input {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(43, 22, 8, 0.14);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0.6rem 0.85rem;
+    font: inherit;
+    font-size: 0.875rem;
+    color: var(--foreground);
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+
+  .field-input::placeholder {
+    color: var(--muted-soft);
+  }
+
+  .field-input:focus {
+    border-color: rgba(184, 50, 31, 0.6);
+    background: #fffdf8;
+    box-shadow: 0 0 0 4px rgba(184, 50, 31, 0.14);
+  }
 }
 
-.field-input::placeholder {
-  color: var(--muted-soft);
-}
-
-.field-input:focus {
-  border-color: rgba(234, 108, 29, 0.6);
-  background: #fffdf8;
-  box-shadow: 0 0 0 4px rgba(234, 108, 29, 0.14);
-}
-
-/* One button system: a single orange gradient for every primary/commercial
+/* One button system: a single red gradient for every primary/commercial
    action, outline/ghost for secondary/tertiary. */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  gap: 0.45rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
-  color: #fff8f0;
-  font-weight: 700;
-  font-size: 0.875rem;
-  padding: 0.65rem 1.15rem;
-  white-space: nowrap;
-  box-shadow: 0 10px 24px -8px rgba(184, 70, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease, filter 0.16s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+.btn-primary,
 .btn-commercial {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   gap: 0.45rem;
-  border-radius: 0.9rem;
+  border-radius: 9999px;
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   color: #fff8f0;
   font-weight: 700;
   font-size: 0.875rem;
   padding: 0.65rem 1.15rem;
   white-space: nowrap;
-  box-shadow: 0 10px 24px -8px rgba(184, 70, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
+  box-shadow: 0 10px 24px -8px rgba(138, 33, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease, filter 0.16s ease;
 }
 
+.btn-primary,
 .btn-commercial:hover:not(:disabled) {
   filter: brightness(1.08);
   transform: translateY(-1px);
+}
+
+.btn-primary,
+.btn-commercial:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary,
+.btn-commercial:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-secondary {
@@ -689,7 +614,7 @@ body {
   justify-content: center;
   flex-shrink: 0;
   gap: 0.45rem;
-  border-radius: 0.9rem;
+  border-radius: 9999px;
   border: 1px solid rgba(43, 22, 8, 0.14);
   background: rgba(255, 255, 255, 0.6);
   color: var(--foreground);
@@ -701,8 +626,8 @@ body {
 }
 
 .btn-secondary:hover {
-  background: rgba(234, 108, 29, 0.1);
-  border-color: rgba(234, 108, 29, 0.4);
+  background: rgba(184, 50, 31, 0.1);
+  border-color: rgba(184, 50, 31, 0.4);
   color: var(--accent-deep);
   transform: translateY(-1px);
 }
@@ -712,7 +637,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 0.9rem;
+  border-radius: 9999px;
   color: var(--muted);
   font-weight: 650;
   font-size: 0.875rem;
@@ -726,26 +651,9 @@ body {
   color: var(--foreground);
 }
 
-/* Sponsor-banner chip, the digital stand-in for a physical event banner. */
-.sponsor-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(160deg, rgba(234, 108, 29, 0.16), rgba(234, 108, 29, 0.05));
-  box-shadow: inset 0 0 0 1px rgba(234, 108, 29, 0.2);
-  padding: 0.45rem 0.8rem;
-}
-
-.sponsor-chip strong {
-  font-size: 0.8125rem;
-  font-weight: 650;
-  color: var(--accent-deep);
-}
-
 .status-pending {
-  background: rgba(234, 108, 29, 0.16);
-  color: var(--accent-deep);
+  background: rgba(232, 169, 58, 0.24);
+  color: #7a4a00;
 }
 .status-approved {
   background: rgba(43, 22, 8, 0.08);
@@ -762,15 +670,6 @@ body {
   font-size: 0.6875rem;
   font-weight: 650;
   text-transform: capitalize;
-}
-
-/* Big-type hero landing page. */
-.hero-title {
-  font-size: clamp(2.25rem, 6.5vw, 4.5rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: var(--foreground);
 }
 
 /* Small caps label above a heading ("EXPLORE NEAR YOU", "BE A PART OF IT"). */
@@ -792,35 +691,54 @@ body {
   box-shadow: 0 12px 30px -18px rgba(43, 22, 8, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Filter pills (All / Today / Open Now) above the sidebar list. */
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border-radius: 9999px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  border: 1px solid rgba(43, 22, 8, 0.12);
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--muted);
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
-  white-space: nowrap;
-}
+/* Filter pills (All / Today / Open Now) above the sidebar list.
+   In the components layer so utilities (e.g. whitespace-normal for a
+   wrapping label) can override it. */
+@layer components {
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    border: 1px solid rgba(43, 22, 8, 0.12);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--muted);
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+    white-space: nowrap;
+  }
 
-.filter-chip:hover {
-  border-color: rgba(234, 108, 29, 0.35);
-  color: var(--accent-deep);
-}
+  .filter-chip:hover {
+    border-color: rgba(184, 50, 31, 0.35);
+    color: var(--accent-deep);
+  }
 
-.filter-chip-active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
-  border-color: transparent;
-  color: #fff8f0;
-}
+  /* Chips floating directly over the map — solid wine so they don't blend
+     into the busy map underneath. Declared before -active so the gold
+     selected state still wins. */
+  .filter-chip-on-map {
+    border-color: rgba(232, 169, 58, 0.35);
+    background: linear-gradient(160deg, var(--utsav-wine-2), var(--utsav-wine));
+    color: var(--utsav-ink-light);
+    box-shadow: 0 8px 20px -10px rgba(38, 8, 7, 0.7);
+  }
 
-.filter-chip-active:hover {
-  color: #fff8f0;
+  .filter-chip-on-map:hover {
+    border-color: var(--utsav-gold);
+    color: var(--utsav-gold-soft);
+  }
+
+  .filter-chip-active {
+    background: linear-gradient(135deg, var(--utsav-gold-soft), var(--utsav-gold));
+    border-color: transparent;
+    color: #2b1608;
+  }
+
+  .filter-chip-active:hover {
+    color: #2b1608;
+  }
 }
 
 /* A sidebar/list row card — pandal thumbnail + name + meta. */
@@ -835,7 +753,7 @@ body {
 }
 
 .list-row:hover {
-  background: rgba(234, 108, 29, 0.08);
+  background: rgba(184, 50, 31, 0.08);
 }
 
 .list-row-featured {
@@ -843,7 +761,7 @@ body {
 }
 
 .list-row-active {
-  background: rgba(234, 108, 29, 0.12);
+  background: rgba(184, 50, 31, 0.12);
 }
 
 /* Small pill badges: "Live Now" / "Upcoming" / "Verified". */
@@ -913,22 +831,21 @@ body {
 /* Night-sky navy, festival maroon, marigold gold and kumkum crimson — the
    homepage alternates dark night sections with the cream paper ones. */
 :root {
-  --utsav-night: #150c2b;
-  --utsav-night-2: #1f1238;
-  --utsav-maroon: #3d0a1a;
-  --utsav-gold: #f5b82e;
-  --utsav-gold-soft: #ffd36b;
-  --utsav-crimson: #c8172e;
-  --utsav-crimson-deep: #9a0f22;
+  --utsav-night: #0c1830;
+  --utsav-night-2: #13264a;
+  /* Dussehra wine — the homepage's dark "explore" band. */
+  --utsav-wine: #3a0e0b;
+  --utsav-wine-2: #5a1711;
+  --utsav-maroon: #4a1410;
+  --utsav-gold: #e8a93a;
+  --utsav-gold-soft: #f5cd78;
+  --utsav-crimson: #b8321f;
+  --utsav-crimson-deep: #8a2114;
   --utsav-ink-light: #fff6e6;
 }
 
 .font-display {
-  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
-}
-
-.font-script {
-  font-family: var(--font-dancing), "Brush Script MT", cursive;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 }
 
 .utsav-eyebrow {
@@ -944,9 +861,9 @@ body {
 }
 
 .utsav-title {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
-  line-height: 1.02;
+  line-height: 1.08;
   letter-spacing: -0.02em;
 }
 
@@ -958,13 +875,13 @@ body {
   gap: 0.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  background: linear-gradient(135deg, var(--utsav-gold-soft), var(--utsav-gold) 55%, #e39a17);
+  background: linear-gradient(135deg, var(--utsav-gold-soft), var(--utsav-gold) 55%, #c9851f);
   color: #2b1608;
   font-weight: 700;
   font-size: 0.875rem;
   padding: 0.7rem 1.3rem;
   white-space: nowrap;
-  box-shadow: 0 10px 28px -10px rgba(245, 184, 46, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 10px 28px -10px rgba(232, 169, 58, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
 }
 
@@ -987,7 +904,7 @@ body {
   font-size: 0.875rem;
   padding: 0.65rem 1.3rem;
   white-space: nowrap;
-  background: rgba(21, 12, 43, 0.25);
+  background: rgba(12, 24, 48, 0.25);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
@@ -995,7 +912,7 @@ body {
 
 .btn-ghost-light:hover {
   border-color: var(--utsav-gold);
-  background: rgba(245, 184, 46, 0.12);
+  background: rgba(232, 169, 58, 0.12);
   transform: translateY(-1px);
 }
 
@@ -1007,12 +924,12 @@ body {
   gap: 0.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  background: linear-gradient(135deg, #e0283f, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
+  background: linear-gradient(135deg, #d4402c, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
   color: #fff6e6;
   font-weight: 700;
   font-size: 0.875rem;
   padding: 0.8rem 1.5rem;
-  box-shadow: 0 14px 30px -12px rgba(154, 15, 34, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 14px 30px -12px rgba(138, 33, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.16s ease;
 }
 
@@ -1045,16 +962,6 @@ body {
   color: #2b1608;
 }
 
-/* Gold-ringed pins on the dark homepage map. */
-.utsav-map .map-pin {
-  background: #2a1745;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 6px 18px rgba(0, 0, 0, 0.5);
-}
-
-.utsav-map .map-pin-label {
-  color: var(--utsav-ink-light);
-}
-
 /* Round red "Discover / Save / Go" step badges. */
 .utsav-step-icon {
   display: flex;
@@ -1064,6 +971,45 @@ body {
   height: 4.25rem;
   border-radius: 9999px;
   color: #fff6e6;
-  background: radial-gradient(circle at 35% 30%, #f0474f, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
-  box-shadow: 0 0 0 5px rgba(200, 23, 46, 0.18), 0 14px 30px -10px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at 35% 30%, #e05a3f, var(--utsav-crimson) 55%, var(--utsav-crimson-deep));
+  box-shadow: 0 0 0 5px rgba(184, 50, 31, 0.18), 0 14px 30px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* ===== Inner pages: Dussehra wine backdrop =========================== */
+/* Same deep maroon as the homepage's explore band and the map screen, so
+   every page reads as one palette. Text sitting directly on the backdrop
+   flips to light ink; every light surface floating on it (cards, nav bar,
+   white tiles) resets back to the normal dark ink so forms stay readable. */
+.theme-wine {
+  flex-shrink: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 70% 45% at 15% 0%, rgba(232, 169, 58, 0.16), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 8%, rgba(184, 50, 31, 0.28), transparent 55%),
+    linear-gradient(160deg, var(--utsav-wine-2) 0%, var(--utsav-wine) 60%, #260807 100%);
+  --foreground: #fff6e6;
+  --muted: rgba(255, 246, 230, 0.78);
+  --muted-soft: rgba(255, 246, 230, 0.55);
+  color: var(--foreground);
+}
+
+.theme-wine .eyebrow {
+  color: var(--utsav-gold);
+}
+
+.theme-wine :is(.card-elevated, .nav-shell, .map-card, .bg-white, [class*="bg-white/"], [class*="bg-[color:var(--cream"]) {
+  --foreground: #2b1608;
+  --muted: rgba(43, 22, 8, 0.62);
+  --muted-soft: rgba(43, 22, 8, 0.4);
+  color: var(--foreground);
+}
+
+/* Deep-red accent text/icons would vanish on the wine backdrop — gold there,
+   normal deep red again inside the light surfaces. */
+.theme-wine [class*="text-[color:var(--accent-deep)]"] {
+  color: var(--utsav-gold);
+}
+
+.theme-wine :is(.card-elevated, .nav-shell, .map-card, .bg-white, [class*="bg-white/"], [class*="bg-[color:var(--cream"]) [class*="text-[color:var(--accent-deep)]"] {
+  color: var(--accent-deep);
 }

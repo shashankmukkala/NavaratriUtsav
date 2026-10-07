@@ -23,7 +23,7 @@ import {
 } from "@/components/icons";
 import { formatEventDateRange } from "@/lib/eventStatus";
 import { UPI_FALLBACK } from "@/lib/siteMeta";
-import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { fetchJsonCached, sendJson } from "@/lib/fetchJson";
 import { CATEGORIES, categoryInfo, isListingCategory } from "@/lib/categories";
 import type { ListingCategory, PaymentSettings } from "@/lib/types";
 
@@ -37,7 +37,6 @@ interface SubmitDraft {
   eventDate: string;
   eventDateEnd: string;
   timingText: string;
-  nimajjanamDate: string;
   description: string;
   imageUrl: string | null;
   bannerUrls: string[];
@@ -71,7 +70,6 @@ export default function SubmitPage() {
   const [eventDate, setEventDate] = useState("");
   const [eventDateEnd, setEventDateEnd] = useState("");
   const [timingText, setTimingText] = useState("");
-  const [nimajjanamDate, setNimajjanamDate] = useState("");
   const [category, setCategory] = useState<ListingCategory>("pandal");
   // Opened from a homepage "Feature your celebration" slot (?featured=1) —
   // the star highlight is paid alongside the listing instead of later.
@@ -127,7 +125,6 @@ export default function SubmitPage() {
     setEventDate(draft.eventDate);
     setEventDateEnd(draft.eventDateEnd);
     setTimingText(draft.timingText);
-    setNimajjanamDate(draft.nimajjanamDate);
     setDescription(draft.description);
     setImageUrl(draft.imageUrl);
     setBannerUrls(draft.bannerUrls);
@@ -140,11 +137,11 @@ export default function SubmitPage() {
   const previewDateLabel = formatEventDateRange(eventDate || null, eventDateEnd || null);
 
   useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+    fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
   useEffect(() => {
-    fetchJson<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
+    fetchJsonCached<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
   }, []);
 
   const handleBannerChange = (urls: string[]) => {
@@ -202,7 +199,6 @@ export default function SubmitPage() {
         eventDate,
         eventDateEnd,
         timingText,
-        nimajjanamDate,
         description,
         imageUrl,
         bannerUrls,
@@ -231,7 +227,6 @@ export default function SubmitPage() {
       event_date: eventDate || null,
       event_date_end: eventDateEnd || null,
       timing_text: timingText || null,
-      nimajjanam_date: category === "pandal" ? nimajjanamDate || null : null,
       description: description || null,
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl,
@@ -259,13 +254,7 @@ export default function SubmitPage() {
   }, [done]);
 
   return (
-    <div
-      className="min-h-dvh w-full"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 45% at 15% 0%, rgba(244,169,60,0.28), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 8%, rgba(234,108,29,0.18), transparent 55%), linear-gradient(180deg, var(--cream-50), var(--cream-200) 45%, var(--cream-100))",
-      }}
-    >
+    <div className="theme-wine w-full">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
         <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
           <div className="flex items-center gap-4">
@@ -292,7 +281,7 @@ export default function SubmitPage() {
               <button
                 type="button"
                 onClick={goToBannerSection}
-                className="mt-2 w-full rounded-2xl border-2 border-dashed border-[rgba(234,108,29,0.3)] bg-white/50 p-4 text-left transition-colors hover:border-[rgba(234,108,29,0.5)] hover:bg-[rgba(234,108,29,0.06)]"
+                className="mt-2 w-full rounded-2xl border-2 border-dashed border-[rgba(184,50,31,0.3)] bg-white/50 p-4 text-left transition-colors hover:border-[rgba(184,50,31,0.5)] hover:bg-[rgba(184,50,31,0.06)]"
               >
                 <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
                   <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
@@ -530,17 +519,6 @@ export default function SubmitPage() {
                 </Field>
               )}
 
-              {category === "pandal" && (
-                <Field label="Visarjan date (optional)">
-                  <input
-                    type="date"
-                    value={nimajjanamDate}
-                    onChange={(e) => setNimajjanamDate(e.target.value)}
-                    className="field-input"
-                  />
-                </Field>
-              )}
-
               <Field label="Additional details (optional)">
                 <textarea
                   value={description}
@@ -616,7 +594,7 @@ function FeatureOption({
   const upiId = settings?.upi_id || UPI_FALLBACK;
 
   return (
-    <div className="rounded-2xl border-2 border-dashed border-[rgba(234,108,29,0.4)] bg-[rgba(234,108,29,0.04)] p-4">
+    <div className="rounded-2xl border-2 border-dashed border-[rgba(184,50,31,0.4)] bg-[rgba(184,50,31,0.04)] p-4">
       <label className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
@@ -840,7 +818,7 @@ function BannerUploader({ value, onChange }: { value: string[]; onChange: (urls:
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 text-xs font-medium text-[color:var(--muted)] hover:border-[rgba(234,108,29,0.5)]"
+          className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 text-xs font-medium text-[color:var(--muted)] hover:border-[rgba(184,50,31,0.5)]"
         >
           <CameraIcon className="h-4 w-4" />
           {uploading ? "Uploading…" : "Add your association banner"}

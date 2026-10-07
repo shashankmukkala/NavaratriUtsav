@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { publicCache } from "@/lib/cacheHeaders";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: approved, not-yet-expired sponsor banners (each payment covers 2
@@ -15,7 +16,9 @@ export async function GET(request: NextRequest) {
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin()
     .from("sponsors")
-    .select("*")
+    // Only what the public ad slots render — never contact phones or
+    // payment-proof screenshots on this unauthenticated endpoint.
+    .select("id, sponsor_name, banner_image_url, banner_image_urls, link_url, placement, vehicle")
     .eq("status", "approved")
     .eq("placement", placement)
     .or(`expires_at.is.null,expires_at.gt.${now}`)
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ sponsors: data });
+  return NextResponse.json({ sponsors: data }, { headers: publicCache(60) });
 }
 
 // Requires a signed-in Google account (see lib/authOptions.ts). Starts as

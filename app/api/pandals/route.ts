@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { publicCache } from "@/lib/cacheHeaders";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: only approved pandals are visible on the map. Explicit column
@@ -9,7 +10,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 // payment proof screenshots, admin notes, or internal review-workflow
 // flags that the public map/list UI never actually reads.
 const PUBLIC_FIELDS =
-  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, nimajjanam_date, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, category, status, created_at";
+  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, category, status, created_at";
 
 export async function GET() {
   const { data, error } = await supabaseAdmin()
@@ -21,7 +22,10 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ pandals: data });
+  // Shared CDN copy for a minute — a newly approved listing can take up to
+  // that long to appear, in exchange for one database read per minute
+  // instead of one per visitor.
+  return NextResponse.json({ pandals: data }, { headers: publicCache(60) });
 }
 
 const REQUIRED_FIELDS = ["name", "organizer_name", "contact_phone", "address", "lat", "lng", "image_url"] as const;

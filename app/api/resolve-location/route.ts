@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicCache } from "@/lib/cacheHeaders";
+import { NOMINATIM_SEARCH_URL, NOMINATIM_USER_AGENT } from "@/lib/nominatim";
 
 // Lets someone paste a Google Maps link (or a bare "lat, lng") instead of
 // having to precisely drag a pin or trust a text search — Google Maps
@@ -30,8 +32,8 @@ function extractCoords(text: string): { lat: number; lng: number } | null {
   return null;
 }
 
-const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
-const USER_AGENT = "NavaratriUtsav/1.0 (contact via repo issues)";
+// The same link always resolves to the same place — cache successes for a day.
+const RESOLVED_CACHE = publicCache(86_400, 604_800);
 
 async function searchNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
   const url = new URL(NOMINATIM_SEARCH_URL);
@@ -41,7 +43,7 @@ async function searchNominatim(query: string): Promise<{ lat: number; lng: numbe
   url.searchParams.set("countrycodes", "in");
 
   try {
-    const res = await fetch(url.toString(), { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+    const res = await fetch(url.toString(), { headers: { "User-Agent": NOMINATIM_USER_AGENT, Accept: "application/json" } });
     if (!res.ok) return null;
     const data = await res.json();
     const first = Array.isArray(data) ? data[0] : null;
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       return NextResponse.json({ error: "That doesn't look like a valid coordinate." }, { status: 400 });
     }
-    return NextResponse.json({ lat, lng });
+    return NextResponse.json({ lat, lng }, { headers: RESOLVED_CACHE });
   }
 
   if (!/^https?:\/\//i.test(input)) {
@@ -105,16 +107,16 @@ export async function GET(request: NextRequest) {
     });
     const finalUrl = res.url || input;
     const fromUrl = extractCoords(decodeURIComponent(finalUrl));
-    if (fromUrl) return NextResponse.json(fromUrl);
+    if (fromUrl) return NextResponse.json(fromUrl, { headers: RESOLVED_CACHE });
 
     // Some place links only embed coordinates in the page body, not the URL.
     const body = await res.text();
     const fromBody = extractCoords(body);
-    if (fromBody) return NextResponse.json(fromBody);
+    if (fromBody) return NextResponse.json(fromBody, { headers: RESOLVED_CACHE });
 
     // Newer links carry only a place name/address — geocode that text instead.
     const fromAddress = await geocodeAddressFromUrl(finalUrl);
-    if (fromAddress) return NextResponse.json(fromAddress);
+    if (fromAddress) return NextResponse.json(fromAddress, { headers: RESOLVED_CACHE });
 
     return NextResponse.json({ error: "Couldn't find a location in that link." }, { status: 422 });
   } catch {

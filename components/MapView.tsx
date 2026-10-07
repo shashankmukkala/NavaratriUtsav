@@ -225,7 +225,7 @@ export default function MapView({ pandals, selectedId, onSelect, onDeselect, fly
       {!loaded && (
         <div
           className={`absolute inset-0 z-10 flex items-center justify-center text-sm ${
-            dark ? "bg-[#140c26] text-white/60" : "bg-[color:var(--cream-200)] text-[color:var(--muted)]"
+            dark ? "bg-[#0c1830] text-white/60" : "bg-[color:var(--cream-200)] text-[color:var(--muted)]"
           }`}
         >
           Loading map…

@@ -7,7 +7,8 @@ import AdBannerSlideshow from "@/components/AdBannerSlideshow";
 import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { categoryInfo } from "@/lib/categories";
-import { fetchJson } from "@/lib/fetchJson";
+import { fetchJsonCached } from "@/lib/fetchJson";
+import { sponsorImages } from "@/lib/sponsors";
 import type { Pandal, Sponsor } from "@/lib/types";
 
 interface PandalDetailCardProps {
@@ -31,7 +32,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const starPending = !pandal.featured && !!pandal.star_payment_proof_url;
 
   useEffect(() => {
-    fetchJson<{ user?: { id?: string } }>("/api/auth/session").then((data) => setViewerId(data?.user?.id ?? null));
+    fetchJsonCached<{ user?: { id?: string } }>("/api/auth/session").then((data) => setViewerId(data?.user?.id ?? null));
   }, []);
 
   const copyAddress = async () => {
@@ -83,10 +84,10 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
     // a little slideshow if they uploaded more than one) — exposure
     // evens out across sponsors in aggregate over many people opening
     // many cards, rather than depending on how long any one viewer stays.
-    fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors?placement=card").then((data) => {
+    fetchJsonCached<{ sponsors: Sponsor[] }>("/api/sponsors?placement=card").then((data) => {
       if (cancelled || !data || data.sponsors.length === 0) return;
       const pick = data.sponsors[Math.floor(Math.random() * data.sponsors.length)];
-      const images = pick.banner_image_urls?.length ? pick.banner_image_urls : pick.banner_image_url ? [pick.banner_image_url] : [];
+      const images = sponsorImages(pick);
       setCardAdImages(images);
     });
     return () => {
@@ -262,7 +263,7 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
           // ownership check server-side.
           <Link
             href={`/profile?addBanner=${pandal.id}`}
-            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(234,108,29,0.35)] text-center transition-colors hover:border-[rgba(234,108,29,0.6)] hover:bg-[rgba(234,108,29,0.05)] ${fullScreen ? "h-40" : "h-28"}`}
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(184,50,31,0.35)] text-center transition-colors hover:border-[rgba(184,50,31,0.6)] hover:bg-[rgba(184,50,31,0.05)] ${fullScreen ? "h-40" : "h-28"}`}
           >
             <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your organizer banner</span>

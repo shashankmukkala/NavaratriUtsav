@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="lotus-petal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6b63e"/>
+      <stop offset="1" stop-color="#d2262f"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#lotus-petal)" stroke="#fff3d6" stroke-width="1" stroke-linejoin="round">
+    <path d="M24 6c5 6 6 14 0 24-6-10-5-18 0-24Z"/>
+    <path d="M10 14c7 1 12 7 13 16-9-1-14-7-13-16Z"/>
+    <path d="M38 14c-7 1-12 7-13 16 9-1 14-7 13-16Z"/>
+    <path d="M3 26c7-2 14 1 19 6-7 3-14 1-19-6Z"/>
+    <path d="M45 26c-7-2-14 1-19 6 7 3 14 1 19-6Z"/>
+  </g>
+  <path d="M8 36c5 4 27 4 32 0" fill="none" stroke="#f6b63e" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="24" cy="30" r="2.6" fill="#ffd36b"/>
+</svg>

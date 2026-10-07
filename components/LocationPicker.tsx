@@ -69,7 +69,7 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
     });
     mapRef.current = map;
 
-    const marker = new Marker({ color: "#EA580C", draggable: true })
+    const marker = new Marker({ color: "#b8321f", draggable: true })
       .setLngLat(DEFAULT_MAP_CENTER)
       .addTo(map);
     markerRef.current = marker;
@@ -189,7 +189,7 @@ export default function LocationPicker({ onChange }: LocationPickerProps) {
                     key={result.place_id}
                     type="button"
                     onClick={() => selectResult(result)}
-                    className="flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--foreground)] transition-colors hover:bg-[rgba(234,108,29,0.08)]"
+                    className="flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm text-[color:var(--foreground)] transition-colors hover:bg-[rgba(184,50,31,0.08)]"
                   >
                     <PinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--accent)]" />
                     <span>{result.display_name}</span>

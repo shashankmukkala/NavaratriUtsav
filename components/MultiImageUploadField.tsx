@@ -128,15 +128,15 @@ export default function MultiImageUploadField({
             }}
             className={`flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed transition-colors ${
               dragActive
-                ? "border-[color:var(--accent)] bg-[rgba(234,108,29,0.08)]"
-                : "border-[rgba(43,22,8,0.18)] bg-white/50 hover:border-[rgba(234,108,29,0.5)]"
+                ? "border-[color:var(--accent)] bg-[rgba(184,50,31,0.08)]"
+                : "border-[rgba(43,22,8,0.18)] bg-white/50 hover:border-[rgba(184,50,31,0.5)]"
             }`}
           >
             {uploading ? (
               <span className="text-[0.625rem] text-[color:var(--muted)]">Uploading…</span>
             ) : (
               <>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]">
                   <CameraIcon className="h-3.5 w-3.5" />
                 </span>
                 <span className="text-[0.625rem] font-semibold text-[color:var(--foreground)]">

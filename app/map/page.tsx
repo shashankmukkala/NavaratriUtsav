@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_OG_IMAGE } from "@/lib/siteMeta";
+import { DEFAULT_OG_IMAGE, SITE_TITLE } from "@/lib/siteMeta";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import MapPageClient from "./MapPageClient";
 
@@ -13,17 +13,17 @@ export async function generateMetadata({
   searchParams: Promise<{ pandal?: string }>;
 }): Promise<Metadata> {
   const fallback: Metadata = {
-    title: "Festival Map — Navaratri Utsav",
+    title: SITE_TITLE,
     description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
     openGraph: {
-      title: "Festival Map — Navaratri Utsav",
+      title: SITE_TITLE,
       description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
       images: [DEFAULT_OG_IMAGE],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Festival Map — Navaratri Utsav",
+      title: SITE_TITLE,
       description: "Explore pandals, dandiya nights and cultural events near you this Navaratri.",
       images: [DEFAULT_OG_IMAGE],
     },
@@ -41,11 +41,13 @@ export async function generateMetadata({
 
   if (!pandal) return fallback;
 
-  const title = `${pandal.name} — Navaratri Utsav`;
-  const description = pandal.description?.trim() || `${pandal.name} — ${pandal.address}. Find directions, timings and more on Navaratri Utsav.`;
+  // The browser tab always reads just the site name; the share preview
+  // (openGraph/twitter) still names the specific listing.
+  const title = `${pandal.name} — ${SITE_TITLE}`;
+  const description = pandal.description?.trim() || `${pandal.name} — ${pandal.address}. Find directions, timings and more on ${SITE_TITLE}.`;
 
   return {
-    title,
+    title: SITE_TITLE,
     description,
     openGraph: { title, description, images: [pandal.image_url], type: "website" },
     twitter: { card: "summary_large_image", title, description, images: [pandal.image_url] },

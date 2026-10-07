@@ -348,7 +348,7 @@ export default function AdminPage() {
               <PandalRow key={pandal.id} pandal={pandal} onSendNote={sendAdminNote} submittedBy={submitterLabel(pandal.user_id)}>
                 <StatusBadge status={pandal.status} />
                 {pandal.status !== "approved" && (
-                  <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
+                  <ActionButton color="primary" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updatePandalStatus(pandal.id, "approved")}>
                     Approve
                   </ActionButton>
                 )}
@@ -455,7 +455,7 @@ export default function AdminPage() {
                   <SponsorRow key={sponsor.id} sponsor={sponsor} onSetEditUnlocked={setSponsorEditUnlocked} settings={settings}>
                     <StatusBadge status={sponsor.status} />
                     {sponsor.status !== "approved" && (
-                      <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "approved")}>
+                      <ActionButton color="primary" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => updateSponsorStatus(sponsor.id, "approved")}>
                         Approve
                       </ActionButton>
                     )}
@@ -856,7 +856,7 @@ function AdminEditPandalModal({
               celebrations) — glows/pulses on the map pin and shows this
               text as a badge on the card. Not a paid placement, so it's a
               plain admin toggle rather than anything tied to the sponsor flow. */}
-          <div className="rounded-2xl border border-[rgba(234,108,29,0.2)] bg-[rgba(234,108,29,0.05)] p-3">
+          <div className="rounded-2xl border border-[rgba(184,50,31,0.2)] bg-[rgba(184,50,31,0.05)] p-3">
             <label className="flex items-center gap-2 text-sm font-medium text-[color:var(--foreground)]">
               <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="h-4 w-4" />
               Featured (glowing highlight on map + card)
@@ -1129,14 +1129,14 @@ function ActionButton({
   onClick,
   children,
 }: {
-  color: "orange" | "red" | "gray";
+  color: "primary" | "red" | "gray";
   icon: React.ReactNode;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   const colors = {
-    orange: "bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700",
-    red: "bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700",
+    primary: "bg-gradient-to-br from-[#1a3056] to-[#0c1830] hover:from-[#22406e] hover:to-[#13264a]",
+    red: "bg-gradient-to-br from-[#d4402c] to-[#8a2114] hover:from-[#b8321f] hover:to-[#6e1a10]",
     gray: "bg-gradient-to-br from-neutral-400 to-neutral-500 hover:from-neutral-500 hover:to-neutral-600",
   };
   return (
@@ -1171,7 +1171,7 @@ function PandalRow({
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
           <span
             className={`inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
-              "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
+              "bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]"
             }`}
           >
             {categoryInfo(pandal.category).label}
@@ -1189,7 +1189,7 @@ function PandalRow({
           <p className="text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
           <span
             className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
-              "bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]"
+              "bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]"
             }`}
           >
             {categoryInfo(pandal.category).label}
@@ -1338,7 +1338,7 @@ function SponsorRow({
         </div>
 
         {sponsor.edit_requested && !sponsor.edit_unlocked && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[rgba(234,108,29,0.1)] px-2.5 py-1.5">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[rgba(184,50,31,0.1)] px-2.5 py-1.5">
             <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Wants to edit this ad</span>
             <button
               type="button"
@@ -1394,7 +1394,7 @@ function StarRequestRow({
         </a>
       </div>
       <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
-        <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onApprove(pandal.id)}>
+        <ActionButton color="primary" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onApprove(pandal.id)}>
           Approve
         </ActionButton>
         <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onDeny(pandal.id)}>
@@ -1454,7 +1454,7 @@ function BannerRow({
           </ActionButton>
         ) : (
           <>
-            <ActionButton color="orange" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, true)}>
+            <ActionButton color="primary" icon={<CheckIcon className="h-3.5 w-3.5" />} onClick={() => onSetBannerPaid(pandal.id, true)}>
               Confirm Payment
             </ActionButton>
             <ActionButton color="red" icon={<CloseIcon className="h-3.5 w-3.5" />} onClick={() => onDeny(pandal.id)}>

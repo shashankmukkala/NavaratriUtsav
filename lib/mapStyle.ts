@@ -3,8 +3,8 @@
 // here, unlike the reference project this pattern is borrowed from.
 export const OPENFREEMAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
-// Night-sky variant for the homepage's dark "Celebrations in your city"
-// section, so the map blends into the navy panel around it.
+// Dark variant (currently unused — the homepage map uses the light style)
+// for any future dark-background placement.
 export const OPENFREEMAP_DARK_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 
 // Hyderabad, where the site launched — but pandals anywhere can be pinned,

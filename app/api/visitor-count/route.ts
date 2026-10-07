@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicCache } from "@/lib/cacheHeaders";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: total visit count (every page load, not deduped), for the small
@@ -9,5 +10,7 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ count: count ?? 0 });
+  // A full-table count is the most expensive query here — one shared copy
+  // every 5 minutes is plenty for a showcase number.
+  return NextResponse.json({ count: count ?? 0 }, { headers: publicCache(300) });
 }

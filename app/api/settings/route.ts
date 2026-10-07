@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicCache } from "@/lib/cacheHeaders";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: the UPI ID / QR code shown wherever the app asks people to pay.
@@ -13,5 +14,5 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ settings: data });
+  return NextResponse.json({ settings: data }, { headers: publicCache(300) });
 }

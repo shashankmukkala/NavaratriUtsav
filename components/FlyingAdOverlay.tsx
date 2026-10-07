@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchJson } from "@/lib/fetchJson";
+import { fetchJsonCached } from "@/lib/fetchJson";
+import { sponsorImages } from "@/lib/sponsors";
 import type { Sponsor } from "@/lib/types";
 
 interface Flight {
@@ -41,7 +42,7 @@ export default function FlyingAdOverlay({
 
   useEffect(() => {
     let cancelled = false;
-    fetchJson<{ sponsors: Sponsor[] }>("/api/sponsors?placement=crow").then((data) => {
+    fetchJsonCached<{ sponsors: Sponsor[] }>("/api/sponsors?placement=crow").then((data) => {
       if (!cancelled && data) setSponsors(data.sponsors);
     });
     return () => {
@@ -83,11 +84,7 @@ export default function FlyingAdOverlay({
 
   if (!flight) return null;
 
-  const images = flight.sponsor.banner_image_urls?.length
-    ? flight.sponsor.banner_image_urls
-    : flight.sponsor.banner_image_url
-      ? [flight.sponsor.banner_image_url]
-      : [];
+  const images = sponsorImages(flight.sponsor);
   if (images.length === 0) return null;
 
   return (

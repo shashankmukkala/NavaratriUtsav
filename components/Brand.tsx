@@ -50,7 +50,7 @@ export function LotusMark({ className }: { className?: string }) {
         <path d="M45 26c-7-2-14 1-19 6 7 3 14 1 19-6Z" />
       </g>
       <path d="M8 36c5 4 27 4 32 0" fill="none" stroke="#f6b63e" strokeWidth="2.4" strokeLinecap="round" />
-      <circle cx="24" cy="30" r="2.6" fill="#ffd36b" />
+      <circle cx="24" cy="30" r="2.6" fill="#f5cd78" />
     </svg>
   );
 }

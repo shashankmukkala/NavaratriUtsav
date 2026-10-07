@@ -130,14 +130,14 @@ export default function ImageUploadField({ label, folder, required, value, onCha
             if (file) pickFile(file);
           }}
           className={`flex h-36 w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-colors ${
-            dragActive ? "border-[color:var(--accent)] bg-[rgba(234,108,29,0.08)]" : "border-[rgba(43,22,8,0.18)] bg-white/50 hover:border-[rgba(234,108,29,0.5)]"
+            dragActive ? "border-[color:var(--accent)] bg-[rgba(184,50,31,0.08)]" : "border-[rgba(43,22,8,0.18)] bg-white/50 hover:border-[rgba(184,50,31,0.5)]"
           }`}
         >
           {uploading ? (
             <p className="text-sm text-[color:var(--muted)]">Uploading…</p>
           ) : (
             <>
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]">
                 <CameraIcon className="h-5 w-5" />
               </span>
               <span className="text-sm font-semibold text-[color:var(--foreground)]">Click or drag a photo here</span>

@@ -19,7 +19,7 @@ import {
   PinIcon,
   VerifiedIcon,
 } from "@/components/icons";
-import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { fetchJsonCached, sendJson } from "@/lib/fetchJson";
 import { UPI_FALLBACK } from "@/lib/siteMeta";
 import type { PaymentSettings } from "@/lib/types";
 
@@ -84,11 +84,11 @@ function SponsorPageInner() {
   const [upiCopied, setUpiCopied] = useState(false);
 
   useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+    fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
   useEffect(() => {
-    fetchJson<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
+    fetchJsonCached<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
   }, []);
 
   // Link is optional — the QR/UPI stays blurred until the required details
@@ -149,13 +149,7 @@ function SponsorPageInner() {
   };
 
   return (
-    <div
-      className="min-h-dvh w-full"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 45% at 15% 0%, rgba(244,169,60,0.28), transparent 60%), radial-gradient(ellipse 60% 40% at 100% 8%, rgba(234,108,29,0.18), transparent 55%), linear-gradient(180deg, var(--cream-50), var(--cream-200) 45%, var(--cream-100))",
-      }}
-    >
+    <div className="theme-wine w-full">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-4 sm:px-6">
         <nav className="nav-shell flex items-center justify-between gap-4 px-4 py-2.5 sm:px-5">
           <div className="flex items-center gap-4">
@@ -228,8 +222,8 @@ function SponsorPageInner() {
               <div
                 className="mt-8 rounded-2xl p-4 text-sm text-[color:var(--foreground)]"
                 style={{
-                  background: "linear-gradient(160deg, rgba(234,108,29,0.14), rgba(234,108,29,0.04))",
-                  boxShadow: "inset 0 0 0 1px rgba(234,108,29,0.2)",
+                  background: "linear-gradient(160deg, rgba(184,50,31,0.14), rgba(184,50,31,0.04))",
+                  boxShadow: "inset 0 0 0 1px rgba(184,50,31,0.2)",
                 }}
               >
                 <p className="font-semibold text-[color:var(--accent-deep)]">₹{price}, valid for 2 days from approval</p>
@@ -394,7 +388,7 @@ function SponsorPageInner() {
 function InfoRow({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]">
         {icon}
       </span>
       <div>
@@ -429,8 +423,8 @@ function ListingCardSkeleton() {
           <div className="h-2 w-full max-w-[10rem] rounded bg-[rgba(43,22,8,0.08)]" />
         </div>
 
-        <div className="mt-2 flex items-center gap-2 rounded-xl border-2 border-dashed border-[color:var(--accent)] bg-[rgba(234,108,29,0.08)] p-2">
-          <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-[rgba(234,108,29,0.2)]" />
+        <div className="mt-2 flex items-center gap-2 rounded-xl border-2 border-dashed border-[color:var(--accent)] bg-[rgba(184,50,31,0.08)] p-2">
+          <div className="h-8 w-8 flex-shrink-0 rounded-lg bg-[rgba(184,50,31,0.2)]" />
           <span className="text-[0.65rem] font-bold uppercase tracking-wide text-[color:var(--accent-deep)]">
             Your ad appears here
           </span>

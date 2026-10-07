@@ -12,7 +12,8 @@ import StarHighlightCTA from "@/components/StarHighlightCTA";
 import VisitorCountBadge from "@/components/VisitorCountBadge";
 import { CalendarIcon, CloseIcon, ListIcon, MapIcon, MegaphoneIcon, PinIcon, PlusIcon, SearchIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
-import { fetchJson } from "@/lib/fetchJson";
+import { fetchJson, fetchJsonCached } from "@/lib/fetchJson";
+import { sponsorImages } from "@/lib/sponsors";
 import { distanceKm } from "@/lib/geo";
 import { isServedState } from "@/lib/servedArea";
 import { CATEGORIES, categoryInfo, parseMapFilter, type MapFilter } from "@/lib/categories";
@@ -95,7 +96,7 @@ export default function MapPageClient() {
   }, []);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+    fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
@@ -375,7 +376,7 @@ export default function MapPageClient() {
   }, [filtered, effectiveCenter]);
 
   return (
-    <div className="h-dvh w-full overflow-hidden bg-[var(--background)]">
+    <div className="h-dvh w-full overflow-hidden bg-[linear-gradient(160deg,var(--utsav-wine-2)_0%,var(--utsav-wine)_60%,#260807_100%)]">
       {/* ===== Desktop / tablet layout ===== */}
       <div className="relative hidden h-full lg:block">
         {/* Full-bleed map, base layer — the nav bar and sidebar float on top
@@ -428,11 +429,16 @@ export default function MapPageClient() {
             <ProfileNavLink />
           </header>
 
-          <div className="pointer-events-auto -mt-1 flex-shrink-0 self-start">
-            <CategoryFilterBar value={category} onChange={setCategory} />
-          </div>
-
           <div className="flex min-h-0 flex-1 gap-4">
+            {/* Filter chips live in this left/middle column (not a full-width
+                row of their own) so the ad panel on the right can start
+                right under the header instead of below an empty strip. */}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+            <div className="pointer-events-auto -mt-1 flex-shrink-0 self-start">
+              <CategoryFilterBar value={category} onChange={setCategory} onMap />
+            </div>
+
+            <div className="flex min-h-0 flex-1 gap-4">
             {sidebarOpen && (
               <aside className="card-elevated pointer-events-auto flex w-[380px] flex-shrink-0 flex-col overflow-hidden">
                 <div className="flex-shrink-0 p-5 pb-4">
@@ -477,6 +483,8 @@ export default function MapPageClient() {
               // Empty spacer — the live map shows through here, unobstructed.
               <div className="flex-1" />
             )}
+            </div>
+            </div>
 
             {!selected && <AdSlotPanel sponsors={sponsors} />}
           </div>
@@ -676,11 +684,6 @@ const AD_SLOT_COUNT = 4;
  * map. Approved sponsor banners (paid ads shown on the map screen, not tied
  * to any pandal) fill the slots first; any remaining slots show an empty
  * "Advertise here" placeholder that links into the sponsor flow. */
-function sponsorImages(sponsor: Sponsor): string[] {
-  if (sponsor.banner_image_urls && sponsor.banner_image_urls.length > 0) return sponsor.banner_image_urls;
-  return sponsor.banner_image_url ? [sponsor.banner_image_url] : [];
-}
-
 function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
   const filled = sponsors.filter((s) => sponsorImages(s).length > 0).slice(0, AD_SLOT_COUNT);
   const emptySlots = AD_SLOT_COUNT - filled.length;
@@ -696,7 +699,7 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">Sponsored</p>
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)]";
+        const className = "aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(184,50,31,0.35)]";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -711,9 +714,9 @@ function AdSlotPanel({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] px-2 text-center transition-colors hover:border-[rgba(234,108,29,0.8)] hover:bg-[rgba(234,108,29,0.05)]"
+          className="flex aspect-square h-[17vh] max-h-[150px] max-w-[150px] flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(184,50,31,0.5)] px-2 text-center transition-colors hover:border-[rgba(184,50,31,0.8)] hover:bg-[rgba(184,50,31,0.05)]"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(234,108,29,0.12)] text-[color:var(--accent-deep)]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(184,50,31,0.12)] text-[color:var(--accent-deep)]">
             <MegaphoneIcon className="h-3.5 w-3.5" />
           </span>
           <span className="text-[0.6875rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise here</span>
@@ -734,7 +737,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
     <div className="pointer-events-auto flex max-w-full gap-2 overflow-x-auto px-1 pb-0.5">
       {filled.map((sponsor) => {
         const images = sponsorImages(sponsor);
-        const className = "h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(234,108,29,0.35)] shadow-sm";
+        const className = "h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-[rgba(184,50,31,0.35)] shadow-sm";
         return sponsor.link_url ? (
           <a key={sponsor.id} href={sponsor.link_url} target="_blank" rel="noopener noreferrer" className={className}>
             <AdBannerSlideshow images={images} alt={sponsor.sponsor_name} />
@@ -749,7 +752,7 @@ function MobileAdStrip({ sponsors }: { sponsors: Sponsor[] }) {
         <Link
           key={i}
           href="/sponsor"
-          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(234,108,29,0.5)] bg-white/70 text-center"
+          className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[rgba(184,50,31,0.5)] bg-white/70 text-center"
         >
           <MegaphoneIcon className="h-3.5 w-3.5 text-[color:var(--accent-deep)]" />
           <span className="text-[0.625rem] font-semibold leading-tight text-[color:var(--foreground)]">Advertise</span>
@@ -776,19 +779,22 @@ function CategoryBadge({ pandal }: { pandal: Pandal }) {
 /** The one filter for the one map — every kind of celebration, a single
  * kind (each with its pin colour), or just the starred ones. Scrolls
  * sideways on narrow screens rather than wrapping onto a second row. */
-function CategoryFilterBar({ value, onChange }: { value: MapFilter; onChange: (f: MapFilter) => void }) {
+/** `onMap` = floating straight over the map (desktop), where the chips need
+ * a solid background to stay legible; inside the mobile nav card they keep
+ * the plain light style. */
+function CategoryFilterBar({ value, onChange, onMap = false }: { value: MapFilter; onChange: (f: MapFilter) => void; onMap?: boolean }) {
   return (
     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5">
-      <FilterChip active={value === "all"} onClick={() => onChange("all")}>
+      <FilterChip active={value === "all"} onMap={onMap} onClick={() => onChange("all")}>
         All
       </FilterChip>
       {CATEGORIES.map((c) => (
-        <FilterChip key={c.value} active={value === c.value} onClick={() => onChange(c.value)}>
+        <FilterChip key={c.value} active={value === c.value} onMap={onMap} onClick={() => onChange(c.value)}>
           <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: c.color }} />
           {c.plural}
         </FilterChip>
       ))}
-      <FilterChip active={value === "star"} onClick={() => onChange("star")}>
+      <FilterChip active={value === "star"} onMap={onMap} onClick={() => onChange("star")}>
         ★ Featured
       </FilterChip>
     </div>
@@ -797,15 +803,21 @@ function CategoryFilterBar({ value, onChange }: { value: MapFilter; onChange: (f
 
 function FilterChip({
   active,
+  onMap,
   onClick,
   children,
 }: {
   active: boolean;
+  onMap: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <button type="button" onClick={onClick} className={`filter-chip ${active ? "filter-chip-active" : ""}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`filter-chip ${onMap ? "filter-chip-on-map" : ""} ${active ? "filter-chip-active" : ""}`}
+    >
       {children}
     </button>
   );
@@ -921,7 +933,7 @@ function NearbyListHeader({
         </button>
       </div>
       {searchOutOfArea && (
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-[rgba(234,108,29,0.35)] bg-white p-2.5 text-xs text-[color:var(--foreground)] shadow-sm">
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-[rgba(184,50,31,0.35)] bg-white p-2.5 text-xs text-[color:var(--foreground)] shadow-sm">
           <PinIcon className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--accent-deep)]" />
           We&apos;re not serving {searchOutOfArea} yet — try a place in Telangana or Andhra Pradesh, like Hyderabad.
         </div>
@@ -965,7 +977,7 @@ function LocationPrompt({
 }) {
   if (status === "pending") {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(184,50,31,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         Finding your location…
       </div>
@@ -974,7 +986,7 @@ function LocationPrompt({
 
   if (status === "unsupported") {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(184,50,31,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         Location isn&apos;t supported here — search an area above to sort by distance.
       </div>
@@ -983,7 +995,7 @@ function LocationPrompt({
 
   if (status === "outside-area") {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
+      <div className="mb-3 flex items-center gap-2 rounded-2xl border border-[rgba(184,50,31,0.35)] bg-white shadow-sm p-3 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         We&apos;re not serving {outOfAreaName ?? "your area"} yet — search a place in Telangana or Andhra Pradesh
         (e.g. Hyderabad) above.
@@ -992,7 +1004,7 @@ function LocationPrompt({
   }
 
   return (
-    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[rgba(234,108,29,0.35)] bg-white shadow-sm p-3">
+    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-[rgba(184,50,31,0.35)] bg-white shadow-sm p-3">
       <p className="flex items-center gap-2 text-sm text-[color:var(--foreground)]">
         <PinIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--accent-deep)]" />
         {status === "denied"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ImageUploadField from "@/components/ImageUploadField";
 import { CopyIcon } from "@/components/icons";
-import { fetchJson, sendJson } from "@/lib/fetchJson";
+import { fetchJsonCached, sendJson } from "@/lib/fetchJson";
 import { UPI_FALLBACK } from "@/lib/siteMeta";
 import type { Pandal, PaymentSettings } from "@/lib/types";
 
@@ -21,7 +21,7 @@ export default function AddStarModal({ pandal, onClose, onSaved }: { pandal: Pan
   const [upiCopied, setUpiCopied] = useState(false);
 
   useEffect(() => {
-    fetchJson<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
+    fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
   }, []);
 
   const copyUpiId = async () => {
