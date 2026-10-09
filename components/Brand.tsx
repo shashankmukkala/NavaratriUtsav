@@ -12,16 +12,18 @@ interface BrandProps {
 // the site so the brand reads identically on the hero, the map, and every
 // form. Always links back to the homepage, like any site logo.
 export default function Brand({ tagline = false, size = "sm", tone = "dark" }: BrandProps) {
-  const markSize = size === "lg" ? "h-11 w-11" : "h-9 w-9";
-  const nameSize = size === "lg" ? "text-2xl" : "text-lg";
+  // The small size shrinks further on phones so the wordmark stays on one
+  // line next to the top bar's buttons.
+  const markSize = size === "lg" ? "h-11 w-11" : "h-7 w-7 sm:h-9 sm:w-9";
+  const nameSize = size === "lg" ? "text-2xl" : "text-[0.95rem] sm:text-lg";
   const nameColor = tone === "light" ? "text-[#fff6e6]" : "text-[color:var(--foreground)]";
   const taglineColor = tone === "light" ? "text-[#f3d9a8]/80" : "text-[color:var(--muted)]";
 
   return (
-    <Link href="/" className="flex items-center gap-2.5">
+    <Link href="/" className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
       <LotusMark className={`${markSize} flex-shrink-0`} />
       <div className="leading-none">
-        <p className={`font-display ${nameSize} font-bold tracking-tight ${nameColor}`}>Navaratri Utsav</p>
+        <p className={`whitespace-nowrap font-display ${nameSize} font-bold tracking-tight ${nameColor}`}>Navaratri Utsav</p>
         {tagline && (
           <p className={`mt-1 hidden text-[0.55rem] font-semibold uppercase tracking-[0.2em] sm:block ${taglineColor}`}>
             People · Pandals · Culture

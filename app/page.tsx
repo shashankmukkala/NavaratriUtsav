@@ -515,6 +515,41 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== Publish ads / partner with us ===== */}
+      <section className="bg-[linear-gradient(160deg,var(--utsav-wine-2)_0%,var(--utsav-wine)_60%,#260807_100%)] text-[color:var(--utsav-ink-light)]">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:gap-10 sm:px-6 sm:py-14 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:gap-14">
+          <div className="text-center lg:text-left">
+            <p className="utsav-eyebrow">Partner with us</p>
+            <h2 className="utsav-title mt-3 text-[1.9rem] sm:text-4xl">
+              Grow your brand
+              <br />
+              <span className="text-[color:var(--utsav-gold)]">this Navratri.</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-sm text-[color:var(--utsav-ink-light)]/80 sm:text-base lg:mx-0">
+              Put your business in front of festival-goers across Hyderabad while they plan which pandals, dandiya nights and
+              events to visit. Affordable 2-day slots, reviewed before going live.
+            </p>
+            <div className="mx-auto mt-6 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center lg:justify-start [&>*]:justify-center">
+              <Link href="/ads" className="btn-gold">
+                <MegaphoneIcon className="h-4 w-4" />
+                Publish Ads
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+              <a href="mailto:bappaseva2026@gmail.com?subject=Partnership%20enquiry" className="btn-ghost-light">
+                Partnership enquiry
+              </a>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <PartnerPerk icon={<UsersIcon className="h-5 w-5" />} title="Festival-ready audience" text="Reach people actively looking for celebrations to attend." />
+            <PartnerPerk icon={<PinIcon className="h-5 w-5" />} title="Hyper-local reach" text="Be seen by visitors browsing celebrations near your business." />
+            <PartnerPerk icon={<SparkleIcon className="h-5 w-5" />} title="Standout placements" text="Map slots, listing cards or a banner that flies across the map." />
+            <PartnerPerk icon={<HeartIcon className="h-5 w-5" />} title="Support the community" text="Your ad keeps the festival map free for everyone." />
+          </div>
+        </div>
+      </section>
+
       {/* ===== Footer ===== */}
       <footer className="border-t border-[rgba(43,22,8,0.08)] bg-[color:var(--cream-50)] px-4 py-8 sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center lg:flex-row lg:justify-between lg:text-left">
@@ -678,6 +713,20 @@ function PlanStep({ icon, title, text }: { icon: React.ReactNode; title: string;
       <span className="utsav-step-icon">{icon}</span>
       <p className="mt-3 text-sm font-semibold sm:mt-4 sm:text-base">{title}</p>
       <p className="mt-1 text-[0.7rem] text-[color:var(--utsav-ink-light)]/75 sm:text-xs">{text}</p>
+    </div>
+  );
+}
+
+function PartnerPerk({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex gap-3 rounded-2xl border border-[rgba(232,169,58,0.25)] bg-white/5 p-4 backdrop-blur-sm">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
+        {icon}
+      </span>
+      <div>
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="mt-0.5 text-xs text-[color:var(--utsav-ink-light)]/70">{text}</p>
+      </div>
     </div>
   );
 }
