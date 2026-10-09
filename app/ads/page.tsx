@@ -19,32 +19,32 @@ const BENEFITS = [
   {
     icon: <UsersIcon className="h-5 w-5" />,
     title: "Reach festival-goers",
-    text: "Everyone on the map is actively looking for pandals, dandiya nights and events to attend — an audience already in the festive mood.",
+    text: "People actively planning which events to attend.",
   },
   {
     icon: <PinIcon className="h-5 w-5" />,
     title: "Hyper-local audience",
-    text: "Visitors are browsing celebrations near them in Hyderabad, so local shops, restaurants and services reach people right around the corner.",
+    text: "Be seen by visitors browsing near your business.",
   },
   {
     icon: <CalendarIcon className="h-5 w-5" />,
     title: "Peak-season visibility",
-    text: "Show up during the nine nights when people are out, spending and making plans — the busiest stretch of the festive calendar.",
+    text: "Show up during the busiest nine nights of the year.",
   },
   {
     icon: <SparkleIcon className="h-5 w-5" />,
     title: "Eye-catching placements",
-    text: "From map slots to listing cards to the flying banner, pick a placement that fits your goal and budget.",
+    text: "Map slots, listing cards or a flying banner.",
   },
   {
     icon: <MegaphoneIcon className="h-5 w-5" />,
     title: "Affordable and flexible",
-    text: "Short 2-day slots with no long-term commitment — run a quick promotion or keep renewing through the festival.",
+    text: "Short 2-day slots, no long-term commitment.",
   },
   {
     icon: <HeartIcon className="h-5 w-5" />,
     title: "Support the community",
-    text: "Your ad helps keep the festival map free for everyone, and your brand is seen as part of the celebration.",
+    text: "Your ad keeps the festival map free for all.",
   },
 ];
 
@@ -162,11 +162,19 @@ export default async function AdsChoicePage() {
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {BENEFITS.map(({ icon, title, text }) => (
-              <div key={title} className="card-elevated flex gap-4 p-5">
-                <span className="icon-tile icon-tile-circle h-11 w-11 flex-shrink-0">{icon}</span>
-                <div>
-                  <h3 className="text-base font-bold text-[color:var(--foreground)]">{title}</h3>
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">{text}</p>
+              // Frosted glass on the wine backdrop (like the location pill),
+              // so these read as supporting points rather than as more of the
+              // solid, clickable ad-option cards above.
+              <div
+                key={title}
+                className="flex items-center gap-3.5 rounded-2xl border border-[rgba(255,246,230,0.16)] bg-[rgba(255,246,230,0.06)] p-4 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:border-[rgba(232,169,58,0.45)] hover:bg-[rgba(255,246,230,0.1)]"
+              >
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
+                  {icon}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-[color:var(--foreground)] sm:text-base">{title}</h3>
+                  <p className="mt-0.5 text-xs text-[color:var(--muted)] sm:text-sm">{text}</p>
                 </div>
               </div>
             ))}
