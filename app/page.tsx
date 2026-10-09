@@ -573,18 +573,18 @@ function ChoiceTile({
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+      className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[rgba(184,50,31,0.25)] hover:bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)] hover:shadow-lg ${
         highlighted
           ? "border-[rgba(184,50,31,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
           : "border-[rgba(43,22,8,0.08)] bg-white"
       }`}
     >
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)] lg:h-9 lg:w-9 [&>svg]:h-5 [&>svg]:w-5">
+      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate whitespace-nowrap text-[0.8rem] font-bold text-[color:var(--utsav-crimson)]">{title}</span>
-        <span className="mt-0.5 block truncate whitespace-nowrap text-[0.7rem] text-[color:var(--muted)] lg:text-[0.65rem]">{text}</span>
+        <span className="block truncate whitespace-nowrap text-sm font-bold text-[color:var(--utsav-crimson)]">{title}</span>
+        <span className="mt-0.5 block text-xs text-[color:var(--muted)]">{text}</span>
       </span>
       <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--muted)] transition-transform group-hover:translate-x-1" />
     </Link>
