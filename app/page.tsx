@@ -230,7 +230,6 @@ export default function HomePage() {
             title="Puja Darshan"
             text="Explore Durga Maa pandals near you"
             href="/map?category=pandal"
-            highlighted
           />
           <ChoiceTile
             icon={<DandiyaIcon className="h-6 w-6" />}
@@ -562,22 +561,16 @@ function ChoiceTile({
   title,
   text,
   href,
-  highlighted = false,
 }: {
   icon: React.ReactNode;
   title: string;
   text: string;
   href: string;
-  highlighted?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[rgba(184,50,31,0.25)] hover:bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)] hover:shadow-lg ${
-        highlighted
-          ? "border-[rgba(184,50,31,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
-          : "border-[rgba(43,22,8,0.08)] bg-white"
-      }`}
+      className="group flex items-center gap-3 rounded-2xl border border-[rgba(43,22,8,0.08)] bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-[rgba(184,50,31,0.25)] hover:bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)] hover:shadow-lg"
     >
       <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
         {icon}
