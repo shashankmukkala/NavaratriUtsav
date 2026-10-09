@@ -79,17 +79,49 @@ export default async function AdsChoicePage() {
           <ProfileNavLink />
         </nav>
 
-        <div className="mt-10 text-center sm:mt-16">
-          <p className="eyebrow">Publish Ads</p>
-          <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
+        <section className="mt-10 sm:mt-16">
+          <div className="text-center">
+            <p className="eyebrow">Publish Ads · Why partner with us</p>
+            <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-4xl">
+              Benefits of advertising with Navaratri Utsav
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm text-[color:var(--muted)] sm:text-base">
+              Put your brand in front of people at the exact moment they&apos;re planning where to go this Navratri.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {BENEFITS.map(({ icon, title, text }) => (
+              // Frosted glass on the wine backdrop (like the location pill),
+              // so these read as supporting points rather than as more of the
+              // solid, clickable ad-option cards below.
+              <div
+                key={title}
+                className="flex items-center gap-3.5 rounded-2xl border border-[rgba(255,246,230,0.16)] bg-[rgba(255,246,230,0.06)] p-4 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:border-[rgba(232,169,58,0.45)] hover:bg-[rgba(255,246,230,0.1)]"
+              >
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
+                  {icon}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-[color:var(--foreground)] sm:text-base">{title}</h3>
+                  <p className="mt-0.5 text-xs text-[color:var(--muted)] sm:text-sm">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="mt-16 text-center">
+          <p className="eyebrow">Choose a placement</p>
+          <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-3xl">
             Where should your ad show up?
-          </h1>
-          <p className="mx-auto mt-4 max-w-lg text-base text-[color:var(--muted)]">
+          </h2>
+          <p className="mx-auto mt-3 max-w-lg text-sm text-[color:var(--muted)] sm:text-base">
             Every payment covers 2 days of display, reviewed before it goes live.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Link href="/sponsor" className="card-elevated group flex flex-col p-6 transition-transform hover:-translate-y-1 sm:p-8">
             <div className="flex items-center justify-between">
               <span className="icon-tile icon-tile-circle h-12 w-12">
@@ -148,38 +180,6 @@ export default async function AdsChoicePage() {
             </span>
           </Link>
         </div>
-
-        <section className="mt-16">
-          <div className="text-center">
-            <p className="eyebrow">Why partner with us</p>
-            <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-3xl">
-              Benefits of advertising with Navaratri Utsav
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-[color:var(--muted)] sm:text-base">
-              Put your brand in front of people at the exact moment they&apos;re planning where to go this Navratri.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {BENEFITS.map(({ icon, title, text }) => (
-              // Frosted glass on the wine backdrop (like the location pill),
-              // so these read as supporting points rather than as more of the
-              // solid, clickable ad-option cards above.
-              <div
-                key={title}
-                className="flex items-center gap-3.5 rounded-2xl border border-[rgba(255,246,230,0.16)] bg-[rgba(255,246,230,0.06)] p-4 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:border-[rgba(232,169,58,0.45)] hover:bg-[rgba(255,246,230,0.1)]"
-              >
-                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
-                  {icon}
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-[color:var(--foreground)] sm:text-base">{title}</h3>
-                  <p className="mt-0.5 text-xs text-[color:var(--muted)] sm:text-sm">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
         <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-[color:var(--muted)]">
           <span className="inline-flex items-center gap-2">
