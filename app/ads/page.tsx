@@ -2,8 +2,51 @@ import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ProfileNavLink from "@/components/ProfileNavLink";
-import { ArrowRightIcon, HeartIcon, MapIcon, MegaphoneIcon, VerifiedIcon } from "@/components/icons";
+import {
+  ArrowRightIcon,
+  CalendarIcon,
+  HeartIcon,
+  MapIcon,
+  MegaphoneIcon,
+  PinIcon,
+  SparkleIcon,
+  UsersIcon,
+  VerifiedIcon,
+} from "@/components/icons";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+
+const BENEFITS = [
+  {
+    icon: <UsersIcon className="h-5 w-5" />,
+    title: "Reach festival-goers",
+    text: "Everyone on the map is actively looking for pandals, dandiya nights and events to attend — an audience already in the festive mood.",
+  },
+  {
+    icon: <PinIcon className="h-5 w-5" />,
+    title: "Hyper-local audience",
+    text: "Visitors are browsing celebrations near them in Hyderabad, so local shops, restaurants and services reach people right around the corner.",
+  },
+  {
+    icon: <CalendarIcon className="h-5 w-5" />,
+    title: "Peak-season visibility",
+    text: "Show up during the nine nights when people are out, spending and making plans — the busiest stretch of the festive calendar.",
+  },
+  {
+    icon: <SparkleIcon className="h-5 w-5" />,
+    title: "Eye-catching placements",
+    text: "From map slots to listing cards to the flying banner, pick a placement that fits your goal and budget.",
+  },
+  {
+    icon: <MegaphoneIcon className="h-5 w-5" />,
+    title: "Affordable and flexible",
+    text: "Short 2-day slots with no long-term commitment — run a quick promotion or keep renewing through the festival.",
+  },
+  {
+    icon: <HeartIcon className="h-5 w-5" />,
+    title: "Support the community",
+    text: "Your ad helps keep the festival map free for everyone, and your brand is seen as part of the celebration.",
+  },
+];
 
 export default async function AdsChoicePage() {
   // Server component, so this reads the live prices directly rather than
@@ -105,6 +148,30 @@ export default async function AdsChoicePage() {
             </span>
           </Link>
         </div>
+
+        <section className="mt-16">
+          <div className="text-center">
+            <p className="eyebrow">Why partner with us</p>
+            <h2 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-[color:var(--foreground)] sm:text-3xl">
+              Benefits of advertising with Navaratri Utsav
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-[color:var(--muted)] sm:text-base">
+              Put your brand in front of people at the exact moment they&apos;re planning where to go this Navratri.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {BENEFITS.map(({ icon, title, text }) => (
+              <div key={title} className="card-elevated flex gap-4 p-5">
+                <span className="icon-tile icon-tile-circle h-11 w-11 flex-shrink-0">{icon}</span>
+                <div>
+                  <h3 className="text-base font-bold text-[color:var(--foreground)]">{title}</h3>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-[color:var(--muted)]">
           <span className="inline-flex items-center gap-2">

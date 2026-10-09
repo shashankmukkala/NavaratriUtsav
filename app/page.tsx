@@ -16,6 +16,7 @@ import {
   HeartIcon,
   InstagramIcon,
   MapIcon,
+  MegaphoneIcon,
   PinIcon,
   PlusIcon,
   SearchIcon,
@@ -52,7 +53,6 @@ const NAV_LINKS = [
   { href: "/map?category=dandiya", label: "Dandiya" },
   { href: "/map?category=pandal", label: "Pandal Map" },
   { href: "/map?category=cultural", label: "Events" },
-  { href: "/#plan", label: "Stories" },
 ];
 
 const FILTERS: { value: CategoryFilter; label: string }[] = [
@@ -159,6 +159,14 @@ export default function HomePage() {
                 Hyderabad
                 <ChevronDownIcon className="h-3.5 w-3.5 opacity-70" />
               </span>
+              <Link
+                href="/ads"
+                aria-label="Publish Ads"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/20 px-2.5 py-2 text-xs font-semibold backdrop-blur-sm transition-colors hover:border-[color:var(--utsav-gold)] hover:text-[color:var(--utsav-gold)] sm:px-4 sm:text-sm"
+              >
+                <MegaphoneIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Publish Ads</span>
+              </Link>
               <Link href="/submit" className="btn-gold px-3.5! py-2! text-xs! sm:px-4! sm:text-sm!">
                 <PlusIcon className="h-4 w-4" />
                 Add Event

@@ -275,7 +275,7 @@ export default function AdminPage() {
             onClick={refresh}
             disabled={refreshing}
             aria-label="Refresh"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(43,22,8,0.06)] disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--muted)] transition-colors hover:bg-[rgba(184,50,31,0.1)] hover:text-[color:var(--accent-deep)] disabled:opacity-50"
           >
             <RefreshIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           </button>
@@ -312,22 +312,13 @@ export default function AdminPage() {
 
       {tab === "pandals" && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-1.5">
+          <ChipRow label="Type">
             {pandalTypeFilters.map(({ value, label, count }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setPandalCategoryFilter(value)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  pandalCategoryFilter === value
-                    ? "bg-[color:var(--accent)] text-white"
-                    : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
-                }`}
-              >
+              <FilterChip key={value} active={pandalCategoryFilter === value} onClick={() => setPandalCategoryFilter(value)}>
                 {label} ({count})
-              </button>
+              </FilterChip>
             ))}
-          </div>
+          </ChipRow>
           <FilterBar
             filter={pandalFilter}
             onFilterChange={setPandalFilter}
@@ -360,7 +351,7 @@ export default function AdminPage() {
                 <ActionButton color="gray" icon={<PencilIcon className="h-3.5 w-3.5" />} onClick={() => setEditingPandal(pandal)}>
                   Edit
                 </ActionButton>
-                <ActionButton color="gray" icon={<TrashIcon className="h-3.5 w-3.5" />} onClick={() => deletePandal(pandal.id)}>
+                <ActionButton color="danger" icon={<TrashIcon className="h-3.5 w-3.5" />} onClick={() => deletePandal(pandal.id)}>
                   Delete
                 </ActionButton>
               </PandalRow>
@@ -392,26 +383,17 @@ export default function AdminPage() {
           {adsSubTab === "banners" ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <div className="flex flex-wrap gap-1.5">
+                <ChipRow label="Payment">
                   {(["all", "unpaid", "paid"] as const).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setBannerFilter(f)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                        bannerFilter === f
-                          ? "bg-[color:var(--accent)] text-white"
-                          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
-                      }`}
-                    >
+                    <FilterChip key={f} active={bannerFilter === f} onClick={() => setBannerFilter(f)}>
                       {f === "all" ? "All" : f === "unpaid" ? "Unpaid" : "Paid"} (
                       {f === "all"
                         ? pandalsWithBanner.length
                         : pandalsWithBanner.filter((p) => (f === "paid") === p.banner_paid).length}
                       )
-                    </button>
+                    </FilterChip>
                   ))}
-                </div>
+                </ChipRow>
                 <input
                   value={bannerSearch}
                   onChange={(e) => setBannerSearch(e.target.value)}
@@ -1049,7 +1031,7 @@ function SubTabButton({ active, onClick, children }: { active: boolean; onClick:
       className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
         active
           ? "bg-[color:var(--accent-deep)] text-white"
-          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
+          : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(184,50,31,0.12)] hover:text-[color:var(--accent-deep)]"
       }`}
     >
       {children}
@@ -1080,22 +1062,13 @@ function FilterBar({
   ];
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5">
+      <ChipRow label="Status">
         {options.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onFilterChange(o.value)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              filter === o.value
-                ? "bg-[color:var(--accent)] text-white"
-                : "bg-[rgba(43,22,8,0.06)] text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.1)]"
-            }`}
-          >
+          <FilterChip key={o.value} active={filter === o.value} onClick={() => onFilterChange(o.value)}>
             {o.label} ({counts[o.value]})
-          </button>
+          </FilterChip>
         ))}
-      </div>
+      </ChipRow>
       <input
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
@@ -1103,6 +1076,33 @@ function FilterBar({
         className="field-input text-sm"
       />
     </div>
+  );
+}
+
+/** A labelled row of filter chips, so stacked rows (type vs status) don't
+ * read as one undifferentiated cluster of pills. */
+function ChipRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="mr-1 w-16 flex-shrink-0 text-[0.6875rem] font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+        active
+          ? "border-transparent bg-[color:var(--accent)] text-white"
+          : "border-[rgba(43,22,8,0.1)] bg-white text-[color:var(--muted)] hover:border-[rgba(184,50,31,0.4)] hover:bg-[rgba(184,50,31,0.08)] hover:text-[color:var(--accent-deep)]"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -1129,20 +1129,24 @@ function ActionButton({
   onClick,
   children,
 }: {
-  color: "primary" | "red" | "gray";
+  color: "primary" | "red" | "gray" | "danger";
   icon: React.ReactNode;
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  // Green = approve/confirm, solid red = reject/deny, outlined red = delete
+  // (destructive but secondary), outlined neutral = edit/revoke — so each
+  // action's meaning reads from its colour alone.
   const colors = {
-    primary: "bg-gradient-to-br from-[#1a3056] to-[#0c1830] hover:from-[#22406e] hover:to-[#13264a]",
-    red: "bg-gradient-to-br from-[#d4402c] to-[#8a2114] hover:from-[#b8321f] hover:to-[#6e1a10]",
-    gray: "bg-gradient-to-br from-neutral-400 to-neutral-500 hover:from-neutral-500 hover:to-neutral-600",
+    primary: "border border-transparent bg-gradient-to-br from-[#2f9e55] to-[#1d6b38] text-white hover:brightness-110 hover:shadow-md",
+    red: "border border-transparent bg-gradient-to-br from-[#d4402c] to-[#8a2114] text-white hover:brightness-110 hover:shadow-md",
+    gray: "border border-[rgba(43,22,8,0.18)] bg-white text-[color:var(--foreground)] hover:border-[rgba(184,50,31,0.4)] hover:bg-[rgba(184,50,31,0.08)] hover:text-[color:var(--accent-deep)]",
+    danger: "border border-[rgba(184,50,31,0.35)] bg-white text-[#b8321f] hover:border-transparent hover:bg-[#b8321f] hover:text-white",
   };
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5 ${colors[color]}`}
+      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${colors[color]}`}
     >
       {icon}
       {children}
@@ -1343,14 +1347,14 @@ function SponsorRow({
             <button
               type="button"
               onClick={() => onSetEditUnlocked(sponsor.id, true)}
-              className="rounded-full bg-[rgba(34,139,34,0.16)] px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800"
+              className="rounded-full bg-[rgba(34,139,34,0.16)] px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800 transition-colors hover:bg-[#2f9e55] hover:text-white"
             >
               Allow edit
             </button>
             <button
               type="button"
               onClick={() => onSetEditUnlocked(sponsor.id, false)}
-              className="rounded-full bg-[rgba(43,22,8,0.08)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[color:var(--muted)]"
+              className="rounded-full bg-[rgba(43,22,8,0.08)] px-2 py-0.5 text-[0.6875rem] font-semibold text-[color:var(--muted)] transition-colors hover:bg-[#b8321f] hover:text-white"
             >
               Deny
             </button>
