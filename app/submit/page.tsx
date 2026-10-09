@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
@@ -15,8 +15,6 @@ import {
   CameraIcon,
   CheckCircleIcon,
   ClockIcon,
-  CopyIcon,
-  MegaphoneIcon,
   PinIcon,
   UserIcon,
   VerifiedIcon,
@@ -39,8 +37,6 @@ interface SubmitDraft {
   timingText: string;
   description: string;
   imageUrl: string | null;
-  bannerUrls: string[];
-  bannerProofUrl: string | null;
   location: { lat: number; lng: number; address: string } | null;
   address: string;
 }
@@ -79,10 +75,6 @@ export default function SubmitPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [extraImageUrls, setExtraImageUrls] = useState<string[]>([]);
-  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
-  const [bannerProofUrl, setBannerProofUrl] = useState<string | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [upiCopied, setUpiCopied] = useState(false);
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -90,15 +82,6 @@ export default function SubmitPage() {
   const [done, setDone] = useState(false);
   const [session, setSession] = useState<{ user?: { name?: string } } | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
-
-  // Closes the success modal and brings the still-visible banner uploader
-  // in the live preview into view, instead of leaving the person to hunt
-  // for it after the submission is already done.
-  const goToBannerSection = () => {
-    setDone(false);
-    setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-  };
 
   useEffect(() => {
     // Read once on mount rather than via useSearchParams, which would force
@@ -127,8 +110,6 @@ export default function SubmitPage() {
     setTimingText(draft.timingText);
     setDescription(draft.description);
     setImageUrl(draft.imageUrl);
-    setBannerUrls(draft.bannerUrls);
-    setBannerProofUrl(draft.bannerProofUrl);
     setLocation(draft.location);
     setAddress(draft.address);
     /* eslint-enable react-hooks/set-state-in-effect */
@@ -143,22 +124,6 @@ export default function SubmitPage() {
   useEffect(() => {
     fetchJsonCached<{ user?: { name?: string } }>("/api/auth/session").then((data) => setSession(data ?? null));
   }, []);
-
-  const handleBannerChange = (urls: string[]) => {
-    setBannerUrls(urls);
-    if (urls.length > 0 && !bannerProofUrl) setShowPaymentModal(true);
-  };
-
-  const copyUpiId = async () => {
-    try {
-      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
-      setUpiCopied(true);
-      setTimeout(() => setUpiCopied(false), 1500);
-    } catch {
-      // Clipboard access can be blocked (permissions, non-secure context) —
-      // failing silently is fine, the UPI ID is still right there to select.
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,11 +145,6 @@ export default function SubmitPage() {
       setError("Please fill in the address.");
       return;
     }
-    if (bannerUrls.length > 0 && !bannerProofUrl) {
-      setError("Please complete the banner payment (or remove the banner images) before submitting.");
-      setShowPaymentModal(true);
-      return;
-    }
     if (wantsFeatured && !starProofUrl) {
       setError("Please upload the featured-listing payment screenshot, or untick \"Feature this celebration\".");
       return;
@@ -201,8 +161,6 @@ export default function SubmitPage() {
         timingText,
         description,
         imageUrl,
-        bannerUrls,
-        bannerProofUrl,
         location,
         address,
       };
@@ -231,8 +189,6 @@ export default function SubmitPage() {
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl,
       extra_image_urls: extraImageUrls,
-      banner_image_urls: bannerUrls,
-      banner_payment_proof_url: bannerProofUrl,
       category,
       star_payment_proof_url: wantsFeatured ? starProofUrl : null,
     });
@@ -278,86 +234,10 @@ export default function SubmitPage() {
                 celebrations happening around them this Navaratri.
               </p>
 
-              <button
-                type="button"
-                onClick={goToBannerSection}
-                className="mt-2 w-full rounded-2xl border-2 border-dashed border-[rgba(184,50,31,0.3)] bg-white/50 p-4 text-left transition-colors hover:border-[rgba(184,50,31,0.5)] hover:bg-[rgba(184,50,31,0.06)]"
-              >
-                <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--foreground)]">
-                  <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-                  Want to showcase your banner?
-                </p>
-                <p className="mt-1 text-xs text-[color:var(--muted)]">
-                  Pay a one-time fee of ₹{settings?.banner_price ?? 200} to unlock a banner on your card, for good.
-                </p>
-              </button>
-
               <Link href="/map" className="btn-secondary mt-2 self-start">
                 <ArrowLeftIcon className="h-4 w-4" />
                 Back to map
               </Link>
-            </div>
-          </div>
-        )}
-
-        {showPaymentModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="card-elevated relative w-full max-w-sm p-6">
-              <button
-                type="button"
-                onClick={() => setShowPaymentModal(false)}
-                aria-label="Close"
-                className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(43,22,8,0.06)] text-sm text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.12)]"
-              >
-                ×
-              </button>
-              <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">Pay ₹{settings?.banner_price ?? 200} for your banner</p>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">One-time payment — unlocks your banner for good.</p>
-
-              <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
-                {settings?.qr_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={settings.qr_image_url} alt="Payment QR code" className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover" />
-                ) : (
-                  <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
-                    QR code
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-                    {settings?.upi_id || UPI_FALLBACK}
-                    <button
-                      type="button"
-                      onClick={copyUpiId}
-                      aria-label="Copy UPI ID"
-                      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
-                    >
-                      <CopyIcon className="h-3.5 w-3.5" />
-                    </button>
-                    {upiCopied && <span className="text-xs font-medium text-green-700">Copied</span>}
-                  </p>
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.banner_price ?? 200} to this UPI ID.</p>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <ImageUploadField
-                  label="Payment screenshot"
-                  folder="payment-proofs"
-                  required
-                  value={bannerProofUrl}
-                  onChange={setBannerProofUrl}
-                />
-              </div>
-
-              <button
-                type="button"
-                disabled={!bannerProofUrl}
-                onClick={() => setShowPaymentModal(false)}
-                className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Done
-              </button>
             </div>
           </div>
         )}
@@ -544,11 +424,11 @@ export default function SubmitPage() {
                 {submitting ? "Submitting…" : "Submit — it's free"}
               </button>
               <p className="text-center text-xs text-[color:var(--muted-soft)]">
-                Listing your celebration costs nothing. The ₹{settings?.banner_price ?? 200} banner on the right is a separate, optional add-on.
+                Listing your celebration costs nothing.
               </p>
             </form>
 
-            <div ref={previewRef} className="min-w-0 lg:sticky lg:top-8 lg:order-2">
+            <div className="min-w-0 lg:sticky lg:top-8 lg:order-2">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
                 This is how it&apos;ll look
               </p>
@@ -560,11 +440,6 @@ export default function SubmitPage() {
                 address={address}
                 dateLabel={previewDateLabel}
                 timingText={timingText}
-                bannerUrls={bannerUrls}
-                onBannerChange={handleBannerChange}
-                proofUrl={bannerProofUrl}
-                onOpenPayment={() => setShowPaymentModal(true)}
-                bannerPrice={settings?.banner_price ?? 200}
               />
             </div>
           </div>
@@ -664,11 +539,6 @@ function LivePreviewCard({
   address,
   dateLabel,
   timingText,
-  bannerUrls,
-  onBannerChange,
-  proofUrl,
-  onOpenPayment,
-  bannerPrice,
 }: {
   imageUrl: string | null;
   name: string;
@@ -677,11 +547,6 @@ function LivePreviewCard({
   address: string;
   dateLabel: string;
   timingText: string;
-  bannerUrls: string[];
-  onBannerChange: (urls: string[]) => void;
-  proofUrl: string | null;
-  onOpenPayment: () => void;
-  bannerPrice: number;
 }) {
   return (
     <div className="card-elevated max-w-md overflow-hidden">
@@ -740,91 +605,6 @@ function LivePreviewCard({
           )}
         </div>
       </div>
-
-      <div className="border-t border-[rgba(43,22,8,0.1)] p-5 pt-4">
-        <BannerUploader value={bannerUrls} onChange={onBannerChange} />
-
-        {bannerUrls.length === 0 ? (
-          <p className="mt-2 text-xs text-[color:var(--muted)]">
-            Optional, not required to list — a one-time ₹{bannerPrice} unlocks a banner on this card for good.
-          </p>
-        ) : proofUrl ? (
-          <p className="mt-2 text-xs text-[color:var(--muted)]">
-            Payment screenshot received — submit the form below. We&apos;ll verify and turn your banner on.
-          </p>
-        ) : (
-          <button
-            type="button"
-            onClick={onOpenPayment}
-            className="mt-2 text-xs font-semibold text-[color:var(--accent-deep)] underline"
-          >
-            Complete the ₹{bannerPrice} payment
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** A single rectangular upload slot spanning the full card width — matches
- * the shape the banner actually renders in once live. */
-function BannerUploader({ value, onChange }: { value: string[]; onChange: (urls: string[]) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFile = async (file: File) => {
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "pandals");
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Upload failed");
-      onChange([data.url]);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const remove = () => onChange([]);
-
-  return (
-    <div className="space-y-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
-          e.target.value = "";
-        }}
-        className="hidden"
-      />
-
-      {value[0] ? (
-        <div className="relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value[0]} alt="" className="h-20 w-full rounded-xl object-cover" />
-          <button
-            type="button"
-            onClick={remove}
-            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-xs text-white hover:bg-black/70"
-          >
-            ×
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 text-xs font-medium text-[color:var(--muted)] hover:border-[rgba(184,50,31,0.5)]"
-        >
-          <CameraIcon className="h-4 w-4" />
-          {uploading ? "Uploading…" : "Add your association banner"}
-        </button>
-      )}
     </div>
   );
 }

@@ -7,12 +7,11 @@ import BackButton from "@/components/BackButton";
 import Brand from "@/components/Brand";
 import ImageUploadField from "@/components/ImageUploadField";
 import SignInPrompt from "@/components/SignInPrompt";
-import { CalendarIcon, ClockIcon, CopyIcon, MegaphoneIcon, PinIcon, TrashIcon } from "@/components/icons";
+import { CalendarIcon, ClockIcon, PinIcon, TrashIcon } from "@/components/icons";
 import { CATEGORIES, categoryInfo } from "@/lib/categories";
 import { formatEventDateRange } from "@/lib/eventStatus";
 import { fetchJson, fetchJsonCached, sendJson } from "@/lib/fetchJson";
-import { UPI_FALLBACK } from "@/lib/siteMeta";
-import type { Pandal, PaymentSettings, Sponsor } from "@/lib/types";
+import type { Pandal, Sponsor } from "@/lib/types";
 
 
 type SponsorWithPandal = Sponsor & { pandals: { name: string } | null };
@@ -25,32 +24,12 @@ export default function ProfilePage() {
   const [sponsors, setSponsors] = useState<SponsorWithPandal[]>([]);
   const [editing, setEditing] = useState<Pandal | null>(null);
   const [highlightDates, setHighlightDates] = useState(false);
-  const [addingBannerTo, setAddingBannerTo] = useState<Pandal | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<SponsorWithPandal | null>(null);
   const [requestingEdit, setRequestingEdit] = useState<string | null>(null);
-  const [settings, setSettings] = useState<PaymentSettings | null>(null);
-
-  useEffect(() => {
-    fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
-  }, []);
-
   const loadData = useCallback(() => {
-    fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => {
-      const list = data?.pandals ?? [];
-      setPandals(list);
-      // Deep link from a listing's own card ("Add your association
-      // banner") — only ever opens the modal if that pandal is actually in
-      // this signed-in user's own list, so it can't be used to jump to
-      // someone else's listing even if the id in the URL isn't theirs.
-      const addBannerId = new URLSearchParams(window.location.search).get("addBanner");
-      if (addBannerId) {
-        const match = list.find((p) => p.id === addBannerId);
-        if (match) setAddingBannerTo(match);
-        router.replace("/profile", { scroll: false });
-      }
-    });
+    fetchJson<{ pandals: Pandal[] }>("/api/me/pandals").then((data) => setPandals(data?.pandals ?? []));
     fetchJson<{ sponsors: SponsorWithPandal[] }>("/api/me/sponsors").then((data) => setSponsors(data?.sponsors ?? []));
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     fetchJsonCached<{ user?: SessionUser }>("/api/auth/session").then((data) => setSession(data ?? null));
@@ -227,54 +206,6 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
-                My banners ({pandals.length})
-              </h2>
-              <p className="mb-3 text-xs text-[color:var(--muted-soft)]">
-                A one-time ₹{settings?.banner_price ?? 200} per listing, live for as long as the listing is —
-                unlike the ads below, which run for a limited time.
-              </p>
-              {pandals.length === 0 ? (
-                <Empty>Add a celebration first, then you can give it a banner.</Empty>
-              ) : (
-                <div className="space-y-2">
-                  {pandals.map((pandal) => {
-                    const hasBanner = (pandal.banner_image_urls?.length ?? 0) > 0;
-                    return (
-                      <div key={pandal.id} className="card-elevated flex items-center gap-3 p-3">
-                        {hasBanner ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={pandal.banner_image_urls![0]} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-cover" />
-                        ) : (
-                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(43,22,8,0.06)] text-[color:var(--muted-soft)]">
-                            <MegaphoneIcon className="h-5 w-5" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-[color:var(--foreground)]">{pandal.name}</p>
-                          {hasBanner ? (
-                            <span className={hasBanner && pandal.banner_paid ? "text-xs font-medium text-green-700" : "text-xs font-medium text-[color:var(--accent-deep)]"}>
-                              {pandal.banner_paid ? "Live" : "Pending payment review"}
-                            </span>
-                          ) : (
-                            <p className="truncate text-xs text-[color:var(--muted)]">No banner yet</p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setAddingBannerTo(pandal)}
-                          className="btn-secondary flex-shrink-0 px-3 py-1.5 text-xs"
-                        >
-                          {hasBanner ? "Update" : "Add banner"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[color:var(--muted-soft)]">
                 My ads ({sponsors.length})
               </h2>
@@ -353,17 +284,6 @@ export default function ProfilePage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            loadData();
-          }}
-        />
-      )}
-
-      {addingBannerTo && (
-        <AddBannerModal
-          pandal={addingBannerTo}
-          onClose={() => setAddingBannerTo(null)}
-          onSaved={() => {
-            setAddingBannerTo(null);
             loadData();
           }}
         />
@@ -561,130 +481,6 @@ function EditPandalModal({
           </button>
         </div>
       </form>
-    </div>
-  );
-}
-
-/** Lets an owner add (or replace) their ₹200 association banner after the
- * listing is already live — this never needed edit approval even during
- * the original /submit flow, so it doesn't here either; admin still has to
- * confirm the payment (banner_paid) before it actually shows anywhere. */
-function AddBannerModal({ pandal, onClose, onSaved }: { pandal: Pandal; onClose: () => void; onSaved: () => void }) {
-  const alreadyPaid = pandal.banner_paid;
-  const [settings, setSettings] = useState<PaymentSettings | null>(null);
-  const [bannerUrl, setBannerUrl] = useState<string | null>(pandal.banner_image_urls?.[0] ?? null);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [upiCopied, setUpiCopied] = useState(false);
-
-  useEffect(() => {
-    if (!alreadyPaid) fetchJsonCached<{ settings: PaymentSettings }>("/api/settings").then((data) => setSettings(data?.settings ?? null));
-  }, [alreadyPaid]);
-
-  const copyUpiId = async () => {
-    try {
-      await navigator.clipboard.writeText(settings?.upi_id || UPI_FALLBACK);
-      setUpiCopied(true);
-      setTimeout(() => setUpiCopied(false), 1500);
-    } catch {
-      // Clipboard access can be blocked (permissions, non-secure context) —
-      // failing silently is fine, the UPI ID is still right there to select.
-    }
-  };
-
-  // Once it's already paid, swapping the image is free — no need to pay or
-  // prove payment again for a banner that's already live.
-  const canSave = alreadyPaid ? Boolean(bannerUrl) : Boolean(bannerUrl && proofUrl);
-
-  const handleSave = async () => {
-    if (!canSave) return;
-    setError(null);
-    setSaving(true);
-    const patch: Record<string, unknown> = { banner_image_urls: bannerUrl ? [bannerUrl] : [] };
-    if (!alreadyPaid) patch.banner_payment_proof_url = proofUrl;
-    const result = await sendJson(`/api/me/pandals/${pandal.id}`, patch, "PATCH");
-    setSaving(false);
-    if (result.ok) {
-      onSaved();
-    } else {
-      setError(result.error);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="card-elevated relative w-full max-w-sm p-6">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(43,22,8,0.06)] text-sm text-[color:var(--muted)] hover:bg-[rgba(43,22,8,0.12)]"
-        >
-          ×
-        </button>
-        <p className="pr-8 text-lg font-bold text-[color:var(--foreground)]">
-          {alreadyPaid ? "Update your banner" : "Add your association banner"}
-        </p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {alreadyPaid
-            ? `Already paid — swap the image on ${pandal.name}'s card any time, for free.`
-            : `One-time ₹${settings?.banner_price ?? 200} — shows on ${pandal.name}'s card, for good.`}
-        </p>
-
-        <div className="mt-4">
-          <ImageUploadField label="Banner image" folder="pandals" value={bannerUrl} onChange={setBannerUrl} aspect={16 / 9} />
-        </div>
-
-        {!alreadyPaid && bannerUrl && (
-          <>
-            <div className="mt-4 flex items-center gap-3 rounded-xl border-2 border-dashed border-[rgba(43,22,8,0.18)] bg-white/50 p-3">
-              {settings?.qr_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={settings.qr_image_url}
-                  alt="Payment QR code"
-                  className="h-20 w-20 flex-shrink-0 rounded-lg border border-[rgba(43,22,8,0.12)] object-cover"
-                />
-              ) : (
-                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg border border-[rgba(43,22,8,0.12)] bg-white text-[0.6rem] text-[color:var(--muted-soft)]">
-                  QR code
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-mono font-semibold text-[color:var(--foreground)]">
-                  {settings?.upi_id || UPI_FALLBACK}
-                  <button
-                    type="button"
-                    onClick={copyUpiId}
-                    aria-label="Copy UPI ID"
-                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[color:var(--muted-soft)] transition-colors hover:bg-[rgba(43,22,8,0.08)] hover:text-[color:var(--accent-deep)]"
-                  >
-                    <CopyIcon className="h-3.5 w-3.5" />
-                  </button>
-                  {upiCopied && <span className="text-xs font-medium text-green-700">Copied</span>}
-                </p>
-                <p className="mt-1 text-xs text-[color:var(--muted)]">Scan or pay ₹{settings?.banner_price ?? 200} to this UPI ID.</p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <ImageUploadField label="Payment screenshot" folder="payment-proofs" required value={proofUrl} onChange={setProofUrl} />
-            </div>
-          </>
-        )}
-
-        {error && <p className="mt-3 text-sm text-[color:var(--coral-deep)]">{error}</p>}
-
-        <button
-          type="button"
-          disabled={!canSave || saving}
-          onClick={handleSave}
-          className="btn-primary mt-4 w-full justify-center py-2.5 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {saving ? "Saving…" : alreadyPaid ? "Save banner" : "Submit banner"}
-        </button>
-      </div>
     </div>
   );
 }

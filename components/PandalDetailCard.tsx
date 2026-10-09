@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import AddStarModal from "@/components/AddStarModal";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PhoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, PhoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { categoryInfo } from "@/lib/categories";
 import { fetchJsonCached } from "@/lib/fetchJson";
@@ -22,10 +21,8 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const [cardAdImages, setCardAdImages] = useState<string[]>([]);
   const [addressCopied, setAddressCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  // Sponsorship is money changing hands for a specific listing — the
-  // "add a banner" prompt below must only ever be a real, actionable offer
-  // to the person who actually owns this listing, never a generic link
-  // that happens to be sitting on someone else's card.
+  // The paid "add a star" offer below must only ever be shown to the person
+  // who actually owns this listing, never on someone else's card.
   const [viewerId, setViewerId] = useState<string | null>(null);
   const isOwner = !!viewerId && viewerId === pandal.user_id;
   const [showStarModal, setShowStarModal] = useState(false);
@@ -98,12 +95,6 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
   const eventStatus = getEventStatus(pandal.event_date, pandal.event_date_end);
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pandal.lat},${pandal.lng}`;
   const galleryImages = [pandal.image_url, ...(pandal.extra_image_urls ?? [])];
-
-  // A pandal's own paid banner takes priority; otherwise rotate through the
-  // generic sponsor pool. Either way it's shown as a plain rectangle, no
-  // name/label, to keep this compact and consistent.
-  const ownBanner = pandal.banner_paid && pandal.banner_image_urls && pandal.banner_image_urls.length > 0 ? pandal.banner_image_urls : null;
-  const bannerImages = ownBanner ?? cardAdImages;
 
   // Mobile: a fixed height matching the popup wrapper (app/map/page.tsx)
   // exactly — the whole card never scrolls. Only the text block below
@@ -253,41 +244,18 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
         Get Directions
       </a>
 
-      {/* Always reserves this space (rather than collapsing to nothing
-          when there's no ad to show) so the card doesn't look broken —
-          paying for a banner slot should mean it's always visibly there,
-          whether filled or waiting for one. A plain fixed height, not an
-          aspect ratio — simplest way to guarantee it always fits
-          completely, at the cost of sometimes cropping into an upload
+      {/* Only takes up space when a listing-card sponsor ad is actually
+          running — no empty placeholder box otherwise. A plain fixed
+          height, not an aspect ratio — simplest way to guarantee it always
+          fits completely, at the cost of sometimes cropping into an upload
           that isn't exactly this shape. */}
-      <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
-        {bannerImages.length > 0 ? (
+      {cardAdImages.length > 0 && (
+        <div className="flex flex-col border-t border-[rgba(43,22,8,0.1)] pt-2.5">
           <div className={`overflow-hidden rounded-lg ${fullScreen ? "h-40" : "h-28"}`}>
-            <AdBannerSlideshow images={bannerImages} alt="" fit="contain" />
+            <AdBannerSlideshow images={cardAdImages} alt="" fit="contain" />
           </div>
-        ) : isOwner ? (
-          // Only the person who actually submitted this listing ever sees
-          // this as a clickable offer — deep-links straight to this
-          // listing's own banner flow, which is itself still gated by an
-          // ownership check server-side.
-          <Link
-            href={`/profile?addBanner=${pandal.id}`}
-            className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(184,50,31,0.35)] text-center transition-colors hover:border-[rgba(184,50,31,0.6)] hover:bg-[rgba(184,50,31,0.05)] ${fullScreen ? "h-40" : "h-28"}`}
-          >
-            <MegaphoneIcon className="h-4 w-4 text-[color:var(--accent-deep)]" />
-            <span className="text-xs font-semibold text-[color:var(--accent-deep)]">Add your organizer banner</span>
-          </Link>
-        ) : (
-          // Anyone else just sees an inert placeholder — no link, and
-          // wording that makes clear this isn't an offer to sponsor
-          // someone else's listing.
-          <div className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[rgba(43,22,8,0.15)] px-3 text-center ${fullScreen ? "h-40" : "h-28"}`}>
-            <MegaphoneIcon className="h-4 w-4 text-[color:var(--muted-soft)]" />
-            <span className="text-xs font-semibold text-[color:var(--muted)]">No sponsor banner yet</span>
-            <span className="text-[0.6875rem] text-[color:var(--muted-soft)]">Only the organizer can add one</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 
