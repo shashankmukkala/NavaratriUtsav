@@ -26,7 +26,7 @@ import {
   UsersIcon,
   VerifiedIcon,
   XLogoIcon,
-  YoutubeIcon,
+  
 } from "@/components/icons";
 import { formatEventDateRange, getEventStatus } from "@/lib/eventStatus";
 import { fetchJson } from "@/lib/fetchJson";
@@ -43,8 +43,8 @@ const SAVED_KEY = "utsav_saved_listings";
 // Placeholder profile URLs — swap for the real handles once they exist.
 const SOCIAL_LINKS = {
   instagram: "https://www.instagram.com/hydnavaratriutsav?obrf=dnFhNHJ5cjU1cTBt&utm_source=qr/",
-  youtube: "https://www.youtube.com/",
-  x: "https://x.com/",
+
+  x: "https://x.com/shashankmukkal?s=11&t=TJr5VqFUeisSxS3XK61XpA",
 };
 
 const NAV_LINKS = [
@@ -523,9 +523,7 @@ export default function HomePage() {
             <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-[color:var(--utsav-crimson)]">
               <InstagramIcon className="h-6 w-6" />
             </a>
-            <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-[color:var(--utsav-crimson)]">
-              <YoutubeIcon className="h-6 w-6" />
-            </a>
+           
             <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" aria-label="X" className="hover:text-[color:var(--utsav-crimson)]">
               <XLogoIcon className="h-5 w-5" />
             </a>
