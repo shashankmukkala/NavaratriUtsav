@@ -15,6 +15,12 @@ import {
 } from "@/components/icons";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+// Without this the page is prerendered once at build time, freezing the
+// prices below until the next deploy — so an admin price change wouldn't
+// show here (while /sponsor, which fetches live, already showed the new
+// one). Re-read at most once a minute, same as the listings cache.
+export const revalidate = 60;
+
 const BENEFITS = [
   {
     icon: <UsersIcon className="h-5 w-5" />,
