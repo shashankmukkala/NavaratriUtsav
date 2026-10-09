@@ -458,6 +458,7 @@ export default function SubmitPage() {
                   placeholder="10-digit mobile number"
                   className="field-input"
                 />
+                <p className="mt-1 text-xs text-[color:var(--muted)]">Shown on your listing so visitors can call you.</p>
               </Field>
 
               <div>

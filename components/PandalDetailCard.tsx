@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AddStarModal from "@/components/AddStarModal";
 import AdBannerSlideshow from "@/components/AdBannerSlideshow";
-import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
+import { CalendarIcon, CloseIcon, CopyIcon, DirectionsIcon, MegaphoneIcon, PhoneIcon, PinIcon, ShareIcon, UserIcon, VerifiedIcon } from "@/components/icons";
 import { getEventStatus, eventStatusLabel, formatEventDateRange } from "@/lib/eventStatus";
 import { categoryInfo } from "@/lib/categories";
 import { fetchJsonCached } from "@/lib/fetchJson";
@@ -228,6 +228,13 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
         </MetaRow>
         {pandal.organizer_name.trim() && (
           <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
+        )}
+        {pandal.contact_phone?.trim() && (
+          <MetaRow icon={<PhoneIcon className="h-4 w-4" />}>
+            <a href={`tel:${pandal.contact_phone.replace(/[^\d+]/g, "")}`} className="font-medium text-[color:var(--accent-deep)] hover:underline">
+              {pandal.contact_phone}
+            </a>
+          </MetaRow>
         )}
       </div>
     </>

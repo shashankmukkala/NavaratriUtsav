@@ -6,11 +6,11 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Public: only approved pandals are visible on the map. Explicit column
 // list (not "*") — this is an unauthenticated, unrestricted endpoint
-// anyone can scrape, so it must never leak organizer phone numbers,
-// payment proof screenshots, admin notes, or internal review-workflow
-// flags that the public map/list UI never actually reads.
+// anyone can scrape, so it must never leak payment proof screenshots,
+// admin notes, or internal review-workflow flags that the public map/list
+// UI never actually reads.
 const PUBLIC_FIELDS =
-  "id, name, organizer_name, lat, lng, address, event_date, event_date_end, timing_text, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, category, status, created_at";
+  "id, name, organizer_name, contact_phone, lat, lng, address, event_date, event_date_end, timing_text, description, image_url, thumbnail_url, extra_image_urls, banner_image_urls, banner_paid, user_id, featured, milestone_text, category, status, created_at";
 
 export async function GET() {
   const { data, error } = await supabaseAdmin()
@@ -21,6 +21,12 @@ export async function GET() {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  // The phone is shown only for listings an organizer submitted themselves
+  // through /submit (the form tells them it's public). Admin-imported rows
+  // (no user_id) carry a placeholder number, so it's blanked out here.
+  for (const row of data) {
+    if (!row.user_id) row.contact_phone = "";
   }
   // Shared CDN copy for a minute — a newly approved listing can take up to
   // that long to appear, in exchange for one database read per minute
