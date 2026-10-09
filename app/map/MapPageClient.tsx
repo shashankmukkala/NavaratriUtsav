@@ -550,6 +550,12 @@ export default function MapPageClient() {
                   searchOutOfArea={searchOutOfArea}
                   starPrice={settings?.star_price ?? 99}
                 />
+                {/* Same filter as the header's chips, repeated here because a
+                    pulled-up sheet covers the header and the list is where the
+                    thumb already is. Outside the scroll area so it stays put. */}
+                <div className="mt-3">
+                  <CategoryFilterBar value={category} onChange={setCategory} />
+                </div>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-20">
                 {!effectiveCenter && <LocationPrompt status={locationStatus} outOfAreaName={outOfAreaName} onEnable={requestLocation} />}
