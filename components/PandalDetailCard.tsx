@@ -226,7 +226,9 @@ export default function PandalDetailCard({ pandal, onClose, fullScreen = false }
             pandal.timing_text || "Dates to be announced"
           )}
         </MetaRow>
-        <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
+        {pandal.organizer_name.trim() && (
+          <MetaRow icon={<UserIcon className="h-4 w-4" />}>Organized by {pandal.organizer_name}</MetaRow>
+        )}
       </div>
     </>
   );

@@ -1206,7 +1206,7 @@ function PandalRow({
         </div>
         <p className="text-xs text-[color:var(--muted)]">{pandal.address}</p>
         <p className="text-xs text-[color:var(--muted-soft)]">
-          {pandal.organizer_name} · {pandal.contact_phone}
+          {[pandal.organizer_name.trim(), pandal.contact_phone].filter(Boolean).join(" · ")}
           {pandal.event_date
             ? ` · ${pandal.event_date}${pandal.event_date_end ? ` to ${pandal.event_date_end}` : ""} · ${pandal.timing_text}`
             : " · No date set"}
