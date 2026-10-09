@@ -38,11 +38,12 @@ export default function VisitorCountBadge() {
   if (count === null) return null;
 
   return (
-    // Mobile's header is two rows (brand+location, then search) so it needs
-    // more clearance than desktop's single-row nav-shell. Dark pill + a
+    // Sits below the category chips on both layouts — on mobile they're the
+    // header's third row, on desktop they float just under the single-row
+    // nav-shell — so the badge never ends up hidden behind them. Dark pill + a
     // pulsing green dot reads as a "live" counter, distinct from the
     // light/cream chrome used everywhere else on the map.
-    <div className="pointer-events-none absolute left-3 top-32 z-10 flex items-center gap-1.5 rounded-full bg-[rgba(20,12,4,0.82)] px-2.5 py-1 text-[0.6875rem] font-semibold text-white shadow-sm backdrop-blur-sm lg:top-20">
+    <div className="pointer-events-none absolute left-3 top-[11.75rem] z-10 flex items-center gap-1.5 rounded-full bg-[rgba(20,12,4,0.82)] px-2.5 py-1 text-[0.6875rem] font-semibold text-white shadow-sm backdrop-blur-sm lg:left-4 lg:top-[8.25rem]">
       <span className="relative flex h-2 w-2 flex-shrink-0">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />

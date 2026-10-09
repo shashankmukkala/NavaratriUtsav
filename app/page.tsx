@@ -42,7 +42,7 @@ const SAVED_KEY = "utsav_saved_listings";
 
 // Placeholder profile URLs — swap for the real handles once they exist.
 const SOCIAL_LINKS = {
-  instagram: "https://www.instagram.com/",
+  instagram: "https://www.instagram.com/hydnavaratriutsav?obrf=dnFhNHJ5cjU1cTBt&utm_source=qr/",
   youtube: "https://www.youtube.com/",
   x: "https://x.com/",
 };
@@ -117,12 +117,6 @@ export default function HomePage() {
   );
   const featured = useMemo(() => (pandals ?? []).filter((p) => p.featured).slice(0, FEATURED_SLOT_COUNT), [pandals]);
   const emptyFeaturedSlots = FEATURED_SLOT_COUNT - featured.length;
-
-  const chooseCategory = (value: CategoryFilter) => {
-    setFilter(value);
-    setSelectedPandal(null);
-    document.getElementById("explore")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const selectedKm =
     selectedPandal && coords ? distanceKm(coords.lat, coords.lng, selectedPandal.lat, selectedPandal.lng) : null;
@@ -235,20 +229,20 @@ export default function HomePage() {
             icon={<TempleIcon className="h-6 w-6" />}
             title="Puja Darshan"
             text="Explore Durga Maa pandals near you"
-            onClick={() => chooseCategory("pandal")}
+            href="/map?category=pandal"
             highlighted
           />
           <ChoiceTile
             icon={<DandiyaIcon className="h-6 w-6" />}
             title="Dandiya Nights"
             text="Garba & dandiya events in your city"
-            onClick={() => chooseCategory("dandiya")}
+            href="/map?category=dandiya"
           />
           <ChoiceTile
             icon={<SparkleIcon className="h-6 w-6" />}
             title="Events & Workshops"
             text="Cultural shows & garba classes"
-            onClick={() => chooseCategory("cultural")}
+            href="/map?category=cultural"
           />
 
           <div className="space-y-3 border-[rgba(43,22,8,0.08)] md:col-span-3 lg:col-span-1 lg:border-l lg:pl-5">
@@ -458,11 +452,11 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.1fr_1px_1fr] lg:gap-12 lg:pl-40">
           <div>
             <p className="utsav-eyebrow">Plan your Navratri</p>
-            <h2 className="utsav-title mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-4xl sm:text-5xl">
+            <h2 className="utsav-title mt-3 flex items-center gap-x-2.5 whitespace-nowrap text-[1.7rem] sm:gap-x-3.5 sm:text-4xl">
               Discover
-              <ArrowRightIcon className="h-6 w-6 text-[color:var(--utsav-gold)]" />
+              <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-[color:var(--utsav-gold)] sm:h-6 sm:w-6" />
               Save
-              <ArrowRightIcon className="h-6 w-6 text-[color:var(--utsav-gold)]" />
+              <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-[color:var(--utsav-gold)] sm:h-6 sm:w-6" />
               Go
             </h2>
             <p className="mt-3 text-sm text-[color:var(--utsav-ink-light)]/80 sm:text-base">
@@ -569,34 +563,33 @@ function ChoiceTile({
   icon,
   title,
   text,
-  onClick,
+  href,
   highlighted = false,
 }: {
   icon: React.ReactNode;
   title: string;
   text: string;
-  onClick: () => void;
+  href: string;
   highlighted?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+    <Link
+      href={href}
+      className={`group flex items-center gap-2.5 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-lg ${
         highlighted
           ? "border-[rgba(184,50,31,0.25)] bg-[linear-gradient(135deg,#fff3e2,#ffe4cc)]"
           : "border-[rgba(43,22,8,0.08)] bg-white"
       }`}
     >
-      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)]">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#ffe4a8,#e8a93a)] text-[color:var(--utsav-crimson-deep)] lg:h-9 lg:w-9 [&>svg]:h-5 [&>svg]:w-5">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-[color:var(--utsav-crimson)]">{title}</span>
-        <span className="mt-0.5 block text-xs text-[color:var(--muted)]">{text}</span>
+        <span className="block truncate whitespace-nowrap text-[0.8rem] font-bold text-[color:var(--utsav-crimson)]">{title}</span>
+        <span className="mt-0.5 block truncate whitespace-nowrap text-[0.7rem] text-[color:var(--muted)] lg:text-[0.65rem]">{text}</span>
       </span>
       <ArrowRightIcon className="h-4 w-4 flex-shrink-0 text-[color:var(--muted)] transition-transform group-hover:translate-x-1" />
-    </button>
+    </Link>
   );
 }
 
@@ -684,8 +677,8 @@ function PlanStep({ icon, title, text }: { icon: React.ReactNode; title: string;
   return (
     <div>
       <span className="utsav-step-icon">{icon}</span>
-      <p className="mt-4 text-base font-semibold">{title}</p>
-      <p className="mt-1 text-xs text-[color:var(--utsav-ink-light)]/75">{text}</p>
+      <p className="mt-3 text-sm font-semibold sm:mt-4 sm:text-base">{title}</p>
+      <p className="mt-1 text-[0.7rem] text-[color:var(--utsav-ink-light)]/75 sm:text-xs">{text}</p>
     </div>
   );
 }
